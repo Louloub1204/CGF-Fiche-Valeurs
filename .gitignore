@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.streamlit/secrets.toml
+sorties/
+*.log
+.DS_Store
+# Classeurs réels : à ne pas publier par défaut
+Etats_Financiers*.xlsx
+Base*de*donn*.xlsx
