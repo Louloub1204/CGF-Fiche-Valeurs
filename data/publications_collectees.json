@@ -188,6 +188,20 @@
   }
  },
  {
+  "ticker": "FTSC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Saisie CGF",
+  "values": {
+   "ca": 8901.0,
+   "re": 75.0,
+   "rao": -119.0,
+   "rn": -154.0
+  }
+ },
+ {
   "ticker": "LNBB",
   "year": 2025,
   "period": "S1",
@@ -267,6 +281,60 @@
    "ca": 70821.658,
    "rao": 10874.637,
    "rn": 7525.623
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Saisie CGF",
+  "values": {
+   "ca": 73806.0,
+   "re": 12109.0,
+   "rao": 10453.0,
+   "rn": 7670.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Saisie CGF",
+  "values": {
+   "ca": 36173.0,
+   "rao": 5200.0,
+   "rn": 3745.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Saisie CGF",
+  "values": {
+   "ca": 75948.0,
+   "re": 11883.0,
+   "rao": 9979.0,
+   "rn": 7082.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Saisie CGF",
+  "values": {
+   "ca": 37137.0,
+   "rao": 4884.0,
+   "rn": 3577.0
   }
  },
  {
