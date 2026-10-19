@@ -202,6 +202,45 @@ IMF_INDICATORS = {
 EUR_XOF = 655.957
 EURUSD_FALLBACK = 1.15
 
+def guess_country(ticker: str) -> str:
+    """Pays probable d'après la convention de code BRVM (dernière lettre : C Côte d'Ivoire, S Sénégal...)."""
+    t = ticker.upper()
+    if t.endswith("BF"):
+        return "BF"
+    return {"C": "CI", "S": "SN", "B": "BJ", "T": "TG", "N": "NE", "M": "ML", "G": "GW"}.get(t[-1:], "CI")
+
+
+def register_ticker(ticker: str, nom: str, pays: str = "CI", secteur: str = "Non classé") -> None:
+    """Ajoute (ou met à jour) un titre absent du référentiel : introduction récente, saisie libre."""
+    TICKERS[ticker.upper()] = {"nom": nom or ticker.upper(), "pays": pays, "secteur": secteur}
+
+
+# Multiples de référence par secteur, utilisés quand le classeur ne contient pas assez de
+# sociétés comparables (moins de deux). Valeurs indicatives de la cote régionale, à ajuster.
+SECTOR_MULTIPLES = {
+    "Services financiers": {"pe": 7.5, "pb": 1.0, "ev_ebitda": None, "div_yield": 0.070},
+    "Télécommunications": {"pe": 10.5, "pb": 3.0, "ev_ebitda": 5.0, "div_yield": 0.070},
+    "Consommation de base": {"pe": 10.0, "pb": 1.5, "ev_ebitda": 6.0, "div_yield": 0.060},
+    "Consommation discrétionnaire": {"pe": 9.0, "pb": 1.3, "ev_ebitda": 5.5, "div_yield": 0.060},
+    "Industriels": {"pe": 9.0, "pb": 1.2, "ev_ebitda": 5.0, "div_yield": 0.060},
+    "Énergie": {"pe": 9.0, "pb": 1.8, "ev_ebitda": 5.0, "div_yield": 0.065},
+    "Services publics": {"pe": 10.0, "pb": 2.5, "ev_ebitda": 5.5, "div_yield": 0.060},
+    "Non classé": {"pe": 9.0, "pb": 1.3, "ev_ebitda": 5.5, "div_yield": 0.060},
+}
+
+# Niveaux de complétude des données d'un titre
+LEVELS = {
+    "complet": ("Niveau 1 - Analyse complète",
+                "États financiers détaillés sur au moins trois exercices (compte de résultat et bilan)."),
+    "partiel": ("Niveau 1b - Analyse complète avec lacunes",
+                "États financiers présents mais incomplets (exercices ou postes manquants)."),
+    "chiffres_cles": ("Niveau 2 - Chiffres clés",
+                      "Chiffre d'affaires, résultat net, BNPA et dividendes, sans bilan détaillé."),
+    "marche": ("Niveau 3 - Données de marché",
+               "Cours, volumes et dividendes uniquement : analyse technique et valorisation par les "
+               "dividendes, signal indicatif prudent."),
+}
+
 # ---------------------------------------------------------------------------
 # Paramètres d'analyse par défaut
 # ---------------------------------------------------------------------------
@@ -233,6 +272,7 @@ class Settings:
     seuil_technique_defavorable: float = 35.0
     # Données en ligne
     en_ligne: bool = True
+    multiples_defaut: bool = True       # multiples sectoriels de référence si pairs insuffisants
     annees_historique: int = 3
     fx_eurusd: float = EURUSD_FALLBACK
     # Commentaire assisté par Claude (facultatif)

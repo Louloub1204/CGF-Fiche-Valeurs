@@ -352,13 +352,20 @@ def build_pptx(a) -> bytes:
     _bullets(s, Inches(8.6), Inches(5.15), Inches(4.2), Inches(1.8),
              (tx.get("vigilances") or ["Aucun point saillant."])[:4], size=10.5, bullet_color=rgb(config.NEG))
 
+    if c.level != "complet" and a.coverage is not None:
+        _rect(s, Inches(0.6), Inches(6.15), Inches(7.6), Inches(0.75), rgb("#FBF3E0"), name="Niveau de données")
+        _rect(s, Inches(0.6), Inches(6.15), Inches(0.06), Inches(0.75), GOLD)
+        _text(s, Inches(0.8), Inches(6.2), Inches(7.3), Inches(0.65),
+              f"{config.LEVELS[c.level][0]} | couverture {fmt_num(a.coverage.score, 0)}%. Conviction plafonnée : "
+              f"signal à confirmer avec les états financiers.", size=10.5, color=INK)
+
     # 3. Profil boursier --------------------------------------------------------
     s = d.slide("Profil boursier", "Données de marché et évolution du cours", notes=tx.get("technique"))
     liq = t.liquidity if t.available else {}
     rows = [["Indicateur", "Valeur"],
             ["Cours", fmt_price(v.price)], ["Capitalisation", fmt_fcfa(a.market.market_cap)],
             ["Nombre de titres", fmt_num(a.market.shares)], ["Flottant", fmt_pct(a.market.float_pct, 0)],
-            [f"PER {y}", fmt_x(v.pe)], ["P/B", fmt_x(v.pb, 2)], [f"BPA {y}", fmt_price(v.eps)],
+            ["PER" + (f" {y}" if y else ""), fmt_x(v.pe)], ["P/B", fmt_x(v.pb, 2)], ["BPA" + (f" {y}" if y else ""), fmt_price(v.eps)],
             ["DPA net", fmt_price(v.dps)], ["Rendement net", fmt_pct(v.div_yield)],
             ["Bêta (BRVM-C)", fmt_num(v.beta, 2)],
             ["Perf. depuis le 1er janv.", fmt_pct(t.performance.get("ytd"), sign=True) if t.available else "n.d."],
@@ -371,62 +378,100 @@ def build_pptx(a) -> bytes:
     else:
         _text(s, Inches(4.8), Inches(3), Inches(7), Inches(1), "Historique de cours indisponible.", size=14, color=MUTED)
 
-    # 4. Soldes intermédiaires de gestion ---------------------------------------
-    years = c.years[-5:]
-    s = d.slide("Soldes intermédiaires de gestion", f"En milliards de FCFA, exercices {years[0]}-{years[-1]}",
-                notes=tx.get("activite"))
-    rows = [["Mds FCFA"] + [str(yy) for yy in years] + ["Var."]]
-    for key, label, ser in sig_rows(c):
-        rows.append([label] + [fmt_mds(ser.get(yy)) for yy in years] + [_var_txt(ser, years)])
-    rh = min(0.34, 4.9 / max(len(rows), 1))
-    _table(s, Inches(0.6), Inches(1.5), Inches(7.4), rows, [2.6] + [1] * (len(years) + 1), font=10, row_h=rh)
-    rev = c.fields.get(c.revenue_field, {})
-    rn = c.fields.get(c.net_income_field, {})
-    _bar_chart(s, Inches(8.25), Inches(1.4), Inches(4.6), Inches(3.6), years,
-               [("PNB" if c.is_bank else "Chiffre d'affaires", [rev.get(yy, 0) / 1e9 if is_num(rev.get(yy)) else None for yy in years]),
-                ("Résultat net", [rn.get(yy) / 1e9 if is_num(rn.get(yy)) else None for yy in years])],
-               [S1, S2], fmt='#,##0', title="Revenus et résultat net (Mds FCFA)", labels_last=False)
-    _text(s, Inches(8.25), Inches(5.15), Inches(4.6), Inches(1.8), tx.get("activite", ""), size=10, color=INK)
+    if c.level in ("complet", "partiel"):
+        # 4. Soldes intermédiaires de gestion ---------------------------------------
+        years = c.years[-5:]
+        s = d.slide("Soldes intermédiaires de gestion", f"En milliards de FCFA, exercices {years[0]}-{years[-1]}",
+                    notes=tx.get("activite"))
+        rows = [["Mds FCFA"] + [str(yy) for yy in years] + ["Var."]]
+        for key, label, ser in sig_rows(c):
+            rows.append([label] + [fmt_mds(ser.get(yy)) for yy in years] + [_var_txt(ser, years)])
+        rh = min(0.34, 4.9 / max(len(rows), 1))
+        _table(s, Inches(0.6), Inches(1.5), Inches(7.4), rows, [2.6] + [1] * (len(years) + 1), font=10, row_h=rh)
+        rev = c.fields.get(c.revenue_field, {})
+        rn = c.fields.get(c.net_income_field, {})
+        _bar_chart(s, Inches(8.25), Inches(1.4), Inches(4.6), Inches(3.6), years,
+                   [("PNB" if c.is_bank else "Chiffre d'affaires", [rev.get(yy, 0) / 1e9 if is_num(rev.get(yy)) else None for yy in years]),
+                    ("Résultat net", [rn.get(yy) / 1e9 if is_num(rn.get(yy)) else None for yy in years])],
+                   [S1, S2], fmt='#,##0', title="Revenus et résultat net (Mds FCFA)", labels_last=False)
+        _text(s, Inches(8.25), Inches(5.15), Inches(4.6), Inches(1.8), tx.get("activite", ""), size=10, color=INK)
 
-    # 5. Ratios ------------------------------------------------------------------
-    s = d.slide("Rentabilité et structure financière", "Ratios calculés à partir des états financiers publiés",
-                notes="Lecture des ratios : " + tx.get("activite", ""))
-    order = RATIO_ORDER_BANK if c.is_bank else RATIO_ORDER_CORP
-    rows = [["Ratio"] + [str(yy) for yy in years]]
-    for k in order:
-        ser = fd.ratios.get(k, {})
-        if any(is_num(ser.get(yy)) for yy in years):
-            rows.append([RATIO_META[k][0]] + [_fmt_ratio(k, ser.get(yy)) for yy in years])
-    rows = rows[:15]
-    _table(s, Inches(0.6), Inches(1.5), Inches(7.4), rows, [3.0] + [1] * len(years), font=9.5,
-           row_h=min(0.33, 5.3 / len(rows)))
-    lines = [("roe", "ROE", S1), ("marge_nette", "Marge nette", S2),
-             ("coef_exploitation", "Coefficient d'exploitation", S3) if c.is_bank else ("marge_ebe", "Marge d'EBE", S3)]
-    series = [(lab, [fd.ratios.get(k, {}).get(yy) for yy in years]) for k, lab, _ in lines]
-    _line_chart(s, Inches(8.25), Inches(1.4), Inches(4.6), Inches(3.9), [str(yy) for yy in years], series,
-                [col for *_, col in lines], fmt='0%', title="Rentabilité")
-    sol = fd.solidity
-    _text(s, Inches(8.25), Inches(5.45), Inches(4.6), Inches(1.4),
-          [(("Score de solidité ", {"bold": True, "color": NAVY}), (f"{sol.score}/{sol.maximum}", {"bold": True})),
-           f"Z'' d'Altman : {fmt_num(sol.altman, 2)} (zone de {sol.altman_zone})" if sol.altman is not None else
-           "Tests : rentabilité, efficacité, risque, transformation, solvabilité."], size=11)
+        # 5. Ratios ------------------------------------------------------------------
+        s = d.slide("Rentabilité et structure financière", "Ratios calculés à partir des états financiers publiés",
+                    notes="Lecture des ratios : " + tx.get("activite", ""))
+        order = RATIO_ORDER_BANK if c.is_bank else RATIO_ORDER_CORP
+        rows = [["Ratio"] + [str(yy) for yy in years]]
+        for k in order:
+            ser = fd.ratios.get(k, {})
+            if any(is_num(ser.get(yy)) for yy in years):
+                rows.append([RATIO_META[k][0]] + [_fmt_ratio(k, ser.get(yy)) for yy in years])
+        rows = rows[:15]
+        _table(s, Inches(0.6), Inches(1.5), Inches(7.4), rows, [3.0] + [1] * len(years), font=9.5,
+               row_h=min(0.33, 5.3 / len(rows)))
+        lines = [("roe", "ROE", S1), ("marge_nette", "Marge nette", S2),
+                 ("coef_exploitation", "Coefficient d'exploitation", S3) if c.is_bank else ("marge_ebe", "Marge d'EBE", S3)]
+        series = [(lab, [fd.ratios.get(k, {}).get(yy) for yy in years]) for k, lab, _ in lines]
+        _line_chart(s, Inches(8.25), Inches(1.4), Inches(4.6), Inches(3.9), [str(yy) for yy in years], series,
+                    [col for *_, col in lines], fmt='0%', title="Rentabilité")
+        sol = fd.solidity
+        _text(s, Inches(8.25), Inches(5.45), Inches(4.6), Inches(1.4),
+              [(("Score de solidité ", {"bold": True, "color": NAVY}), (f"{sol.score}/{sol.maximum}", {"bold": True})),
+               f"Z'' d'Altman : {fmt_num(sol.altman, 2)} (zone de {sol.altman_zone})" if sol.altman is not None else
+               "Tests : rentabilité, efficacité, risque, transformation, solvabilité."], size=11)
 
-    # 6. Solidité et pairs ---------------------------------------------------------
-    s = d.slide("Solidité et positionnement sectoriel", f"Comparaison avec les pairs : {fd.peer_label}")
-    rows = [["Test de solidité", "Résultat"]] + [[lab, "Validé" if ok else ("Non validé" if ok is False else "n.d.")]
-                                               for lab, ok in sol.tests]
-    _table(s, Inches(0.6), Inches(1.5), Inches(5.6), rows, [3.6, 1.2], font=10, row_h=0.34)
-    peers = [(p.ticker, p.roe) for p in fd.peers if is_num(p.roe) and -0.5 < p.roe < 1]
-    me = fd.ratios.get("roe", {}).get(y)
-    if is_num(me):
-        peers.append((c.ticker, me))
-    peers.sort(key=lambda z: z[1], reverse=True)
-    if len(peers) >= 2:
-        idx = [i for i, (tk, _) in enumerate(peers) if tk == c.ticker]
-        pc = {i: S1 for i in idx}
-        _bar_chart(s, Inches(6.6), Inches(1.4), Inches(6.2), Inches(5.4), [tk for tk, _ in peers],
-                   [("ROE", [r for _, r in peers])], [GRAY], fmt='0.0%', title=f"ROE {y} : {c.ticker} et ses pairs",
-                   horizontal=True, legend=False, gap=45, point_colors=pc)
+        # 6. Solidité et pairs ---------------------------------------------------------
+        s = d.slide("Solidité et positionnement sectoriel", f"Comparaison avec les pairs : {fd.peer_label}")
+        rows = [["Test de solidité", "Résultat"]] + [[lab, "Validé" if ok else ("Non validé" if ok is False else "n.d.")]
+                                                   for lab, ok in sol.tests]
+        _table(s, Inches(0.6), Inches(1.5), Inches(5.6), rows, [3.6, 1.2], font=10, row_h=0.34)
+        peers = [(p.ticker, p.roe) for p in fd.peers if is_num(p.roe) and -0.5 < p.roe < 1]
+        me = fd.ratios.get("roe", {}).get(y)
+        if is_num(me):
+            peers.append((c.ticker, me))
+        peers.sort(key=lambda z: z[1], reverse=True)
+        if len(peers) >= 2:
+            idx = [i for i, (tk, _) in enumerate(peers) if tk == c.ticker]
+            pc = {i: S1 for i in idx}
+            _bar_chart(s, Inches(6.6), Inches(1.4), Inches(6.2), Inches(5.4), [tk for tk, _ in peers],
+                       [("ROE", [r for _, r in peers])], [GRAY], fmt='0.0%', title=f"ROE {y} : {c.ticker} et ses pairs",
+                       horizontal=True, legend=False, gap=45, point_colors=pc)
+
+    else:
+        years = c.years[-5:]
+        if c.level == "chiffres_cles" and years:
+            s = d.slide("Chiffres clés", f"Exercices {years[0]}-{years[-1]}, source : {clean_text(c.data_source)}",
+                        notes=tx.get("activite"))
+            rev, rn = c.fields.get(c.revenue_field, {}), c.fields.get(c.net_income_field, {})
+            eps, dps = c.fields.get("bpa_pub", {}), c.fields.get("dps", {})
+            cp = c.fields.get(c.equity_field, {})
+            rows = [["Mds FCFA sauf mention"] + [str(yy) for yy in years]]
+            for lab, ser, fn in (("PNB" if c.is_bank else "Chiffre d'affaires", rev, fmt_mds), ("Résultat net", rn, fmt_mds),
+                                 ("Capitaux propres", cp, fmt_mds), ("BNPA (FCFA)", eps, fmt_num),
+                                 ("Dividende net (FCFA)", dps, fmt_num)):
+                if any(is_num(ser.get(yy)) for yy in years):
+                    rows.append([lab] + [fn(ser.get(yy)) if is_num(ser.get(yy)) else "n.d." for yy in years])
+            mn = [(rn[yy] / rev[yy]) if is_num(rn.get(yy)) and is_num(rev.get(yy)) and rev[yy] else None for yy in years]
+            if any(is_num(m_) for m_ in mn):
+                rows.append(["Marge nette"] + [fmt_pct(m_) if is_num(m_) else "n.d." for m_ in mn])
+            _table(s, Inches(0.6), Inches(1.5), Inches(7.4), rows, [2.6] + [1] * len(years), font=10.5, row_h=0.4)
+            _bar_chart(s, Inches(8.25), Inches(1.4), Inches(4.6), Inches(3.6), years,
+                       [("PNB" if c.is_bank else "Chiffre d'affaires",
+                         [rev.get(yy, 0) / 1e9 if is_num(rev.get(yy)) else None for yy in years]),
+                        ("Résultat net", [rn.get(yy) / 1e9 if is_num(rn.get(yy)) else None for yy in years])],
+                       [S1, S2], fmt='#,##0', title="Revenus et résultat net (Mds FCFA)", labels_last=False)
+            _text(s, Inches(8.25), Inches(5.15), Inches(4.6), Inches(1.8), tx.get("activite", ""), size=10, color=INK)
+        cov = a.coverage
+        s = d.slide("Données disponibles et compléments",
+                    f"{config.LEVELS[c.level][0]} | couverture des données {fmt_num(cov.score, 0)}%")
+        lab = {"ok": "Disponible", "partiel": "Partiel", "absent": "Absent"}
+        rows = [["Donnée", "Statut", "Détail"]] + [[i.name, lab[i.status], clean_text(i.detail)[:70]] for i in cov.items]
+        _table(s, Inches(0.6), Inches(1.5), Inches(7.6), rows, [2.3, 1.0, 3.6], font=9.5, row_h=0.42,
+               left_cols=(0, 1, 2))
+        todo = [f"{i.name} : {clean_text(i.action)}" for i in cov.missing][:6]
+        _text(s, Inches(8.5), Inches(1.5), Inches(4.3), Inches(0.35), "Pour compléter l'analyse", size=14, bold=True,
+              color=NAVY)
+        _bullets(s, Inches(8.5), Inches(1.95), Inches(4.3), Inches(4.9),
+                 todo or ["Toutes les données principales sont disponibles."], size=10.5)
 
     # 7. Valorisation ----------------------------------------------------------------
     s = d.slide("Valorisation", f"Juste valeur {fmt_price(v.fair_value)}, potentiel {fmt_pct(v.upside, sign=True)}",

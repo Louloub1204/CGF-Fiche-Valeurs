@@ -41,6 +41,7 @@ class Decision:
     tech_zone: str = ""
     trace: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    level: str = "complet"
 
 
 def _wavg(pillars: dict, weights: dict, keys) -> float | None:
@@ -50,17 +51,24 @@ def _wavg(pillars: dict, weights: dict, keys) -> float | None:
 
 
 def decide(pillars: dict, st: Settings, valuation, technical, news=None, liquidity: dict | None = None,
-           major_event: bool = False) -> Decision:
+           major_event: bool = False, level: str = "complet") -> Decision:
     w = st.poids
     fund_keys = [k for k in PILLAR_LABELS if k != "technique"]
     F = _wavg(pillars, w, fund_keys)
+    F_shown = F
+    if level == "marche":
+        # Sans états financiers, la vue fondamentale est neutre par construction
+        F = 50.0
+        F_shown = None
     T = pillars.get("technique")
     composite = _wavg(pillars, w, list(PILLAR_LABELS))
+    if sum(1 for k in PILLAR_LABELS if is_num(pillars.get(k))) < 3:
+        composite = None      # trop peu de piliers renseignés pour une note globale significative
     U = valuation.upside if valuation else None
-    d = Decision(signal="ATTENDRE", conviction="Moyenne", composite=composite, fundamental=F, technical=T,
+    d = Decision(signal="ATTENDRE", conviction="Moyenne", composite=composite, fundamental=F_shown, technical=T,
                  pillars=pillars, weights=dict(w), upside=U,
                  target=valuation.fair_value if valuation else None,
-                 total_return=valuation.total_return if valuation else None)
+                 total_return=valuation.total_return if valuation else None, level=level)
 
     # Zones --------------------------------------------------------------------
     if is_num(F):
@@ -107,8 +115,12 @@ def decide(pillars: dict, st: Settings, valuation, technical, news=None, liquidi
     base = matrix[(d.fund_zone, d.val_zone)]
     phrase = {"décote": "en décote", "surcote": "en surcote",
               "proche de la juste valeur": "proche de sa juste valeur"}[d.val_zone]
-    d.trace.append(f"Fondamentaux {d.fund_zone}s ({F:.0f}/100), titre {phrase} "
-                   f"(potentiel de {fmt_pct(U, sign=True)}) : signal de base {base}.")
+    if level == "marche":
+        d.trace.append(f"Sans états financiers, vue fondamentale neutre ; titre {phrase} "
+                       f"(potentiel de {fmt_pct(U, sign=True)}) : signal de base {base}.")
+    else:
+        d.trace.append(f"Fondamentaux {d.fund_zone}s ({F:.0f}/100), titre {phrase} "
+                       f"(potentiel de {fmt_pct(U, sign=True)}) : signal de base {base}.")
     sig = base
     if sig == "ACHAT" and tech_bear:
         sig = "ATTENDRE"
@@ -135,7 +147,30 @@ def _downgrade(level: str) -> str:
     return {"Forte": "Moyenne", "Moyenne": "Faible"}.get(level, "Faible")
 
 
+def _apply_level(d: Decision) -> None:
+    """Prudence proportionnelle à la qualité des données."""
+    if d.level == "marche":
+        if d.signal == "ACHAT" and not (d.tech_zone == "haussière" and is_num(d.upside) and d.upside >= 0.25):
+            d.signal = "ATTENDRE"
+            d.trace.append("Données de marché seules : l'achat exige un potentiel d'au moins 25% et une tendance "
+                           "haussière ; signal ramené à ATTENDRE.")
+        elif d.signal == "VENDRE":
+            d.signal = "ALLÉGER"
+            d.trace.append("Données de marché seules : la vente intégrale n'est pas préconisée sans états "
+                           "financiers ; signal ramené à ALLÉGER.")
+        d.conviction = "Faible"
+        d.warnings.append("Analyse sur données de marché seules : signal indicatif, à confirmer avec les états "
+                          "financiers.")
+    elif d.level in ("chiffres_cles", "partiel"):
+        if d.conviction == "Forte":
+            d.conviction = "Moyenne"
+        if d.level == "chiffres_cles":
+            d.warnings.append("Analyse sur chiffres clés : bilan et solidité financière non évalués, conviction "
+                              "plafonnée.")
+
+
 def _finalise(d: Decision, valuation, technical, liquidity, available, news, major_event) -> Decision:
+    _apply_level(d)
     if major_event and d.signal != "VENDRE":
         d.trace.append("Événement majeur en cours signalé par l'analyste : position d'attente jusqu'à "
                        "clarification.")

@@ -12,8 +12,10 @@ from .macro import Macro, analyse_macro
 from .market import MarketBase, MarketData, build_market_data
 from .news import News, add_user_notes, fetch_news
 from .parser import CompanyData, Workbook
+from .partial import Coverage, KeyFigures, assess, build_company, fetch_sika_societe
 from .scoring import Decision, clamp_pillars, decide, pillar_dict
 from .technical import Technical, analyse_technical
+from .utils import is_num
 from .valuation import Valuation, analyse_valuation
 
 
@@ -32,14 +34,37 @@ class Analysis:
     as_of: date = field(default_factory=date.today)
     ai_used: bool = False
     errors: list[str] = field(default_factory=list)
+    coverage: Coverage | None = None
+    key_figures: KeyFigures | None = None
 
 
-def run_analysis(wb: Workbook, ticker: str, settings: Settings | None = None,
+def resolve_company(wb: Workbook | None, ticker: str, st: Settings, figures: KeyFigures | None,
+                    errors: list[str]) -> tuple[CompanyData, KeyFigures | None]:
+    """Société du classeur si elle y figure ; sinon chiffres clés (saisis ou en ligne) ; sinon marché seul."""
+    if wb is not None and ticker in wb.companies and figures is None:
+        return wb.companies[ticker], None
+    kf = figures
+    if kf is None and st.en_ligne:
+        kf = fetch_sika_societe(ticker, config.TICKERS.get(ticker, {}).get("pays"), errors)
+    return build_company(ticker, kf), kf
+
+
+def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = None,
                  market_base: MarketBase | None = None, price_file=None, overrides: dict | None = None,
                  user_notes: str = "", major_event: bool = False, bceao: dict | None = None,
-                 use_claude: bool = False, progress=None) -> Analysis:
+                 use_claude: bool = False, progress=None, figures: KeyFigures | None = None,
+                 custom: dict | None = None) -> Analysis:
+    """Analyse d'un titre. ``wb`` peut être vide ou absent : le titre est alors traité au niveau 2 ou 3.
+
+    ``figures`` : chiffres clés saisis (prioritaires sur ceux du classeur) ; ``custom`` : nom, pays et
+    secteur d'un titre absent du référentiel.
+    """
     st = settings or Settings()
-    c = wb.companies[ticker]
+    if custom:
+        config.register_ticker(ticker, custom.get("nom", ticker), custom.get("pays", "CI"),
+                               custom.get("secteur", "Non classé"))
+    pre_errors: list[str] = []
+    c, kf = resolve_company(wb, ticker, st, figures, pre_errors)
 
     def step(msg):
         if progress:
@@ -48,8 +73,12 @@ def run_analysis(wb: Workbook, ticker: str, settings: Settings | None = None,
     step("Données de marché")
     md = build_market_data(ticker, c, market_base, price_file, online=st.en_ligne,
                            years=st.annees_historique, overrides=overrides)
+    md.errors[:0] = pre_errors
+    if kf is not None and kf.float_pct and md.float_shares is None and is_num(md.shares):
+        md.float_shares = kf.float_pct * md.shares
+        md.sources["flottant"] = kf.source
     step("Analyse fondamentale")
-    fd = analyse_fundamentals(c, wb, md.peer_prices, md.peer_shares)
+    fd = analyse_fundamentals(c, wb, md.peer_prices, md.peer_shares, use_defaults=st.multiples_defaut)
     step("Analyse technique")
     tech = analyse_technical(md.history, md.index_history, md.float_shares)
     step("Valorisation")
@@ -64,9 +93,11 @@ def run_analysis(wb: Workbook, ticker: str, settings: Settings | None = None,
     add_user_notes(news, user_notes)
     step("Synthèse et signal")
     pillars = clamp_pillars(pillar_dict(val, fd, tech, mac, news))
-    dec = decide(pillars, st, val, tech, news, tech.liquidity if tech.available else None, major_event)
+    cov = assess(c, md, fd)
+    dec = decide(pillars, st, val, tech, news, tech.liquidity if tech.available else None, major_event,
+                 level=c.level)
     a = Analysis(company=c, market=md, fundamentals=fd, technical=tech, valuation=val, macro=mac, news=news,
-                 decision=dec, settings=st, errors=errors)
+                 decision=dec, settings=st, errors=errors, coverage=cov, key_figures=kf)
     a.texts = build_commentary(a)
     if use_claude and st.claude_api_key:
         step("Rédaction assistée")

@@ -221,3 +221,97 @@ def test_parse_rss():
     assert "Dividende / détachement" in news.events
     assert news.sentiment > 0 and news.score > 50
     assert parse_rss(b"pas du xml", "SNTS", "Sonatel").error
+
+
+# --------------------------------------------------------------------------- titres à données partielles
+
+SIKA_SOCIETE_HTML = """<html><body><div>Les chiffres sont en millions de FCFA</div>
+<table><tr><td></td><td>2021</td><td>2022</td><td>2023</td><td>2024</td><td>2025</td></tr>
+<tr><td>Chiffre d'affaires</td><td>80 000</td><td>88 000</td><td>95 000</td><td>104 000</td><td>112 000</td></tr>
+<tr><td>Croissance CA</td><td></td><td>10,00 %</td><td>7,95 %</td><td>9,47 %</td><td>7,69 %</td></tr>
+<tr><td>Résultat net</td><td>18 000</td><td>20 000</td><td>22 000</td><td>24 000</td><td>27 000</td></tr>
+<tr><td>BNPA</td><td>720,00</td><td>800,00</td><td>880,00</td><td>960,00</td><td>1 080,00</td></tr>
+<tr><td>PER</td><td>10,5</td><td>9,8</td><td>9,1</td><td>8,9</td><td>8,6</td></tr>
+<tr><td>Dividende</td><td>400,00</td><td>450,00</td><td>500,00</td><td>550,00</td><td>600,00</td></tr></table>
+<p>Nombre de titres : 25 000 000</p><p>Flottant : 22,5 %</p>
+<p>Principaux actionnaires : GROUPE X 60 % ; PUBLIC (BRVM) 22,5 %</p></body></html>"""
+
+
+def test_parse_sika_societe():
+    from fiche_valeur.partial import parse_sika_societe
+    kf = parse_sika_societe(SIKA_SOCIETE_HTML)
+    assert kf.revenue[2025] == 112_000e6 and kf.net_income[2021] == 18_000e6
+    assert kf.dps[2023] == 500 and kf.eps[2025] == 1080 and kf.per[2021] == 10.5
+    assert kf.shares == 25_000_000 and kf.float_pct == pytest.approx(0.225)
+    assert parse_sika_societe("<html><body>rien</body></html>") is None
+
+
+def test_manual_figures_table():
+    from fiche_valeur.partial import empty_manual_table, figures_from_table
+    assert figures_from_table(empty_manual_table()) is None
+    df = empty_manual_table(2025, 3)
+    df.iloc[:, 1] = [100.0, 110.0, 120.0]       # chiffre d'affaires, millions
+    df.iloc[:, 2] = [10.0, 12.0, 15.0]          # résultat net
+    kf = figures_from_table(df)
+    assert kf.revenue[2025] == 120e6 and kf.net_income[2023] == 10e6
+
+
+@pytest.fixture(scope="module")
+def partial_env(mb):
+    config.register_ticker("DAGC", "Agro démo", "CI", "Consommation de base")
+    config.register_ticker("DBQC", "Banque démo", "CI", "Services financiers")
+    return mb
+
+
+def test_level2_key_figures(partial_env, offline):
+    from fiche_valeur.partial import parse_sika_societe
+    kf = parse_sika_societe(SIKA_SOCIETE_HTML)
+    a = run_analysis(None, "DAGC", offline, market_base=partial_env, figures=kf)
+    assert a.company.level == "chiffres_cles"
+    assert a.decision.signal in SIGNALS and a.decision.conviction in {"Moyenne", "Faible"}
+    assert a.valuation.pe and a.valuation.fair_value
+    assert a.coverage.level == "chiffres_cles" and 0 < a.coverage.score < 100
+    assert any(i.name.startswith("Bilan") and i.status == "absent" for i in a.coverage.items)
+
+
+def test_level3_market_only(partial_env, offline):
+    a = run_analysis(None, "DBQC", offline, market_base=partial_env)
+    assert a.company.level == "marche"
+    d = a.decision
+    assert d.signal in {"ATTENDRE", "CONSERVER", "ALLÉGER", "ACHAT"} and d.signal != "VENDRE"
+    assert d.conviction == "Faible" and d.fundamental is None
+    assert a.technical.available and a.valuation.fair_value
+
+
+def test_level3_without_any_data(offline):
+    config.register_ticker("ZZZZ", "Titre sans données", "CI", "Non classé")
+    a = run_analysis(None, "ZZZZ", offline)
+    assert a.decision.signal == "ATTENDRE" and a.decision.conviction == "Faible"
+    assert a.coverage.score < 40
+
+
+def test_partial_reports(partial_env, offline):
+    from pptx import Presentation
+
+    from fiche_valeur.export import build_excel
+    from fiche_valeur.partial import parse_sika_societe
+    from fiche_valeur.report_pdf import build_pdf
+    from fiche_valeur.report_pptx import build_pptx
+    cases = [run_analysis(None, "DAGC", offline, market_base=partial_env, figures=parse_sika_societe(SIKA_SOCIETE_HTML)),
+             run_analysis(None, "DBQC", offline, market_base=partial_env),
+             run_analysis(None, "ZZZZ", offline)]
+    for a in cases:
+        assert build_pdf(a)[:4] == b"%PDF" and build_pdf(a, compact=True)[:4] == b"%PDF"
+        assert len(Presentation(io.BytesIO(build_pptx(a))).slides) >= 9
+        assert "Couverture" in pd.read_excel(io.BytesIO(build_excel(a)), sheet_name=None)
+
+
+def test_guess_country():
+    assert config.guess_country("BOABF") == "BF" and config.guess_country("BOAS") == "SN"
+    assert config.guess_country("SGBC") == "CI" and config.guess_country("ETIT") == "TG"
+
+
+def test_full_referential():
+    assert len(config.TICKERS) >= 47
+    assert all(v["pays"] in config.COUNTRIES and v["secteur"] in config.SECTOR_MULTIPLES
+               for v in config.TICKERS.values())

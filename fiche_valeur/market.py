@@ -672,7 +672,7 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
         nb = company.fields.get("nb_actions", {})
         if nb:
             md.shares = nb[max(nb)]
-            md.sources["nombre de titres"] = "Classeur des états financiers"
+            md.sources["nombre de titres"] = getattr(company, "data_source", "Classeur des états financiers")
 
     # Dividendes ------------------------------------------------------------
     if base is not None and base.dividends.get(ticker):
@@ -685,8 +685,9 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
             md.sources["dividendes"] = divs[0].source
     if not md.dividends and company is not None and company.fields.get("dps"):
         dps = company.fields["dps"]
-        md.dividends = [Dividend(y, v, None, "Classeur des états financiers") for y, v in sorted(dps.items())]
-        md.sources["dividendes"] = "Classeur des états financiers"
+        origin = getattr(company, "data_source", "Classeur des états financiers")
+        md.dividends = [Dividend(y, v, None, origin) for y, v in sorted(dps.items())]
+        md.sources["dividendes"] = origin
 
     # Saisies manuelles (prioritaires) -------------------------------------------
     if is_num(overrides.get("price")):

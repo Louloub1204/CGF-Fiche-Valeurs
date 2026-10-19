@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from . import config
 from .parser import CompanyData, Workbook
 from .utils import cagr, clamp, growth, is_num, mean_of, median_of, safe_div, scale
 
@@ -482,17 +483,30 @@ class Fundamentals:
     growth_parts: list
     year: int | None
     notes: list[str] = field(default_factory=list)
+    default_multiples: list[str] = field(default_factory=list)   # multiples issus des références par défaut
 
 
-def analyse_fundamentals(c: CompanyData, wb: Workbook, prices=None, shares=None) -> Fundamentals:
+def analyse_fundamentals(c: CompanyData, wb: Workbook | None, prices=None, shares=None,
+                         use_defaults: bool = True) -> Fundamentals:
     r = compute_ratios(c)
     sol = solidity(c, r)
     gs = growth_stats(c)
-    rows = peer_rows(wb, prices, shares)
-    peers, label = peer_group(rows, c)
+    rows = peer_rows(wb, prices, shares) if wb is not None and wb.companies else []
+    peers, label = peer_group(rows, c) if rows else ([], "aucun comparable dans le classeur")
     med = peer_medians(peers)
+    defaults: list[str] = []
+    if use_defaults:
+        ref = config.SECTOR_MULTIPLES.get(c.sector, config.SECTOR_MULTIPLES["Non classé"])
+        for key in ("pe", "pb", "ev_ebitda", "div_yield"):
+            if not is_num(med.get(key)) and is_num(ref.get(key)):
+                med[key] = ref[key]
+                defaults.append(key)
+        if defaults:
+            label = f"{label} ; multiples de référence du secteur {c.sector} pour " + ", ".join(
+                {"pe": "le PER", "pb": "le P/B", "ev_ebitda": "le VE/EBE", "div_yield": "le rendement"}[k]
+                for k in defaults)
     qs, qparts = quality_score(c, r, sol, peers)
     gsc, gparts = growth_score(c, r, gs)
     return Fundamentals(ratios=r, solidity=sol, growth=gs, peers=peers, peer_label=label, medians=med,
                         quality_score=qs, quality_parts=qparts, growth_score=gsc, growth_parts=gparts,
-                        year=c.last_year(c.net_income_field))
+                        year=c.last_year(c.net_income_field), default_multiples=defaults)

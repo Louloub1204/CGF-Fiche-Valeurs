@@ -7,6 +7,7 @@ import json
 import requests
 
 from .config import SIGNAL_DEFINITIONS
+from . import config
 from .utils import (clean_text, fmt_bp, fmt_fcfa, fmt_num, fmt_pct, fmt_price, fmt_pts, fmt_x,
                     growth, is_num)
 
@@ -72,6 +73,13 @@ def build_commentary(a) -> dict:
         s.append(f"{lab} atteint {fmt_fcfa(rn[y])}" + (f" ({fmt_pct(g_rn, sign=True)})" if is_num(g_rn) else "")
                  + (f", pour une marge nette de {fmt_pct(mn)}" if is_num(mn) else "")
                  + (f" et un ROE de {fmt_pct(roe)}" if is_num(roe) else "") + ".")
+    if c.level == "marche":
+        s = [f"Aucun état financier n'est disponible pour {c.name} : l'analyse repose sur les données de marché "
+             f"(cours, volumes, dividendes), l'environnement macroéconomique et les actualités. La qualité et la "
+             f"croissance des résultats ne sont pas évaluées."]
+    elif c.level == "chiffres_cles":
+        s.append("Analyse sur chiffres clés : le bilan et les soldes intermédiaires de gestion ne sont pas "
+                 "disponibles.")
     out["activite"] = " ".join(s)
 
     # ---- Valorisation -----------------------------------------------------------
@@ -90,9 +98,10 @@ def build_commentary(a) -> dict:
             medtxt.append(f"PER {fmt_x(med['pe'])}")
         if is_num(med.get("pb")):
             medtxt.append(f"P/B {fmt_x(med['pb'], 2)}")
-        v.append(f"Au cours de {fmt_price(val.price)}, le titre se traite sur "
-                 + (", ".join(mult) if mult else "des multiples non calculables")
-                 + (f" (médianes des pairs, {fd.peer_label} : {', '.join(medtxt)})" if medtxt else "")
+        v.append(f"Au cours de {fmt_price(val.price)}, "
+                 + ("le titre se traite sur " + ", ".join(mult) if mult else
+                    "les multiples de résultat ne sont pas calculables faute de résultat net ou de nombre de titres")
+                 + (f" (références {fd.peer_label} : {', '.join(medtxt)})" if medtxt else "")
                  + (f" et offre un rendement net de {fmt_pct(val.div_yield)}" if is_num(val.div_yield) else "")
                  + ".")
     if is_num(val.fair_value):
@@ -278,7 +287,10 @@ def _strengths_risks(a) -> tuple[list[str], list[str]]:
     for w in dec.warnings:
         if "Actualité" in w:
             R.append(w)
-    if c.notes:
+    if c.level in ("chiffres_cles", "marche"):
+        R.insert(0, f"Données limitées ({config.LEVELS[c.level][0].split(' - ')[1].lower()}) : conviction plafonnée, "
+                    f"signal à confirmer avec les états financiers.")
+    elif c.notes:
         R.append("Qualité des données : " + str(len(c.notes)) + " point(s) relevé(s) dans les états financiers "
                  "(voir annexe méthodologique).")
     return [clean_text(x) for x in S[:6]], [clean_text(x) for x in R[:6]]

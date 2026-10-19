@@ -68,6 +68,8 @@ class CompanyData:
     field_labels: dict[str, str] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
     estimated: set = field(default_factory=set)
+    level: str = "complet"         # "complet" | "partiel" | "chiffres_cles" | "marche"
+    data_source: str = "Classeur des états financiers"
 
     # Accès pratique ------------------------------------------------------
     def get(self, name: str, year: int | None = None):

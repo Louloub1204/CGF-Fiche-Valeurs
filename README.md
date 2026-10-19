@@ -14,8 +14,10 @@ actualisation des dividendes), l'analyse technique du titre, l'environnement mac
 (UEMOA, BCEAO, FMI) et les actualités de l'émetteur. Les données de marché sont récupérées en ligne
 quand c'est possible, sinon lues dans une base de marché locale ou saisies à la main.
 
-Un tableau de bord multi-valeurs analyse tout le classeur en une fois et exporte les signaux et les
-fiches dans une archive.
+**Tous les titres de la BRVM sont analysables** (48 valeurs dans le référentiel), y compris ceux qui
+ne figurent pas dans votre classeur : l'analyse s'adapte aux données disponibles (voir « Niveaux
+d'analyse »). Un tableau de bord multi-valeurs traite toute la cote en une fois et exporte les signaux
+et les fiches dans une archive.
 
 ---
 
@@ -30,9 +32,11 @@ streamlit run app.py
 ```
 
 L'application s'ouvre sur http://localhost:8501. Chargez votre classeur des états financiers dans
-la barre latérale, choisissez une valeur, puis cliquez sur **Lancer l'analyse**. Sans fichier,
-l'application s'ouvre sur les classeurs de démonstration (sociétés fictives) pour découvrir l'outil.
-L'option **Compléter avec les données en ligne** active les sources listées plus bas.
+la barre latérale, choisissez une valeur parmi les 48 titres de la cote, puis cliquez sur **Lancer
+l'analyse**. Sans classeur, les titres sont analysés sur chiffres clés ou données de marché lues en
+ligne. L'option **Compléter avec les données en ligne** active les sources listées plus bas, et
+**Utiliser les classeurs de démonstration** ouvre six sociétés fictives pour découvrir l'outil.
+Chaque champ de la barre latérale est expliqué (icône d'aide et guide « Quelles données fournir ? »).
 
 Python 3.10 ou plus récent est requis.
 
@@ -42,15 +46,18 @@ Python 3.10 ou plus récent est requis.
 # Une valeur
 python cli.py --ef Etats_Financiers_2021_2025.xlsx --ticker SNTS
 
-# Tout le classeur, avec la base de marché, le PowerPoint et le détail Excel
+# Un titre hors classeur, sans fichier (chiffres clés et cours lus en ligne)
+python cli.py --ticker BOAB
+
+# Toute la cote (titres du classeur et titres hors classeur), avec la base de marché, le PowerPoint et le détail Excel
 python cli.py --ef Etats_Financiers_2021_2025.xlsx --smf "Base de données - SMF.xlsx" --all --pptx --xlsx
 
 # Démonstration hors ligne
 python cli.py --ef sample_data/demo_etats_financiers.xlsx --smf sample_data/demo_base_marche.xlsx --all --hors-ligne
 ```
 
-Options : `--compact` (fiche d'une page), `--hors-ligne`, `--rf 6.5` (taux sans risque en %),
-`--prime 5.5` (prime de risque actions en %), `--g 3` (croissance perpétuelle en %),
+Options : `--compact` (fiche d'une page), `--hors-ligne`, `--rf 6.5` (taux sans risque, en pourcentage),
+`--prime 5.5` (prime de risque actions), `--g 3` (croissance perpétuelle),
 `--maison "CGF Gestion"`, `--out sorties`. Les fichiers sont écrits dans `sorties/` avec un
 `Tableau_des_signaux.xlsx` récapitulatif.
 
@@ -76,6 +83,33 @@ Options : `--compact` (fiche d'une page), `--hors-ligne`, `--rf 6.5` (taux sans 
    En local, placez la même ligne dans `.streamlit/secrets.toml` (fichier ignoré par git).
 
 Le workflow `.github/workflows/tests.yml` exécute les tests à chaque push.
+
+---
+
+## Niveaux d'analyse selon les données disponibles
+
+Les titres n'ont pas tous la même information. Plutôt que d'écarter ceux qui sont incomplets,
+l'application mesure ce qui est disponible, fait tourner les moteurs sur ce qui existe, neutralise
+le reste et plafonne la conviction du signal.
+
+| Niveau | Données | Ce qui est évalué | Garde-fous sur le signal |
+|---|---|---|---|
+| **1 - Complet** | États financiers du classeur (3 exercices ou plus, bilan inclus) | SIG, ratios, solidité, croissance, pairs, valorisation (PER, P/B, Gordon, dividendes, VE/EBE), technique, macro, actualités | Aucun |
+| **1b - Complet avec lacunes** | Classeur incomplet (exercices ou postes manquants) | Idem, sur les données présentes | Conviction plafonnée à Moyenne si elle était Forte |
+| **2 - Chiffres clés** | Chiffre d'affaires, résultat net, BNPA, dividendes (lus sur la fiche société sikafinance ou saisis dans l'application), capitaux propres et total bilan facultatifs | Croissance, marge nette, PER, rendement, valorisation (PER, dividendes, rendement de référence), ROE et P/B si fonds propres saisis, technique, macro, actualités | Conviction plafonnée à Moyenne ; solidité financière non évaluée |
+| **3 - Marché seul** | Cours, volumes, dividendes | Technique, valorisation par les dividendes (actualisation et rendement de référence), macro, actualités | Vue fondamentale neutre par construction ; conviction Faible ; VENDRE ramené à ALLÉGER ; ACHAT seulement si potentiel de 25% ou plus et tendance haussière |
+
+Chaque fiche affiche son niveau, un **taux de couverture des données** (de 0 à 100%) et le tableau
+« Données disponibles et compléments à apporter » : pour chaque donnée absente, l'effet sur
+l'analyse et le moyen de la compléter. Sans comparables suffisants dans le classeur, les multiples
+sont remplacés par des **multiples de référence par secteur** (`SECTOR_MULTIPLES` dans `config.py`,
+modifiables et signalés comme tels dans la fiche).
+
+### Ajouter un titre
+
+Le référentiel (`fiche_valeur/config.py`) compte 48 valeurs. Pour une introduction récente, utilisez
+« Ajouter ou mettre à jour un titre » dans la barre latérale, ou « Rechercher les nouveaux titres »
+qui compare la cote publiée sur brvm.org au référentiel.
 
 ---
 
@@ -141,6 +175,7 @@ section « Sources » de la fiche.
 | Historique des cours (OHLCV) et indice BRVM Composite | sikafinance.com |
 | Nombre de titres, cours du jour, capitalisation flottante | brvm.org (capitalisations) |
 | Dividendes publiés | brvm.org (paiement de dividendes), puis sikafinance.com |
+| Chiffres clés (CA, résultat net, BNPA, PER, dividende, actionnariat) des titres hors classeur | sikafinance.com (fiche société) |
 | Croissance du PIB et inflation par pays (2024-2027) | FMI, API DataMapper (valeurs de repli intégrées) |
 | Parité EUR/USD (sociétés en USD) | frankfurter.app (parité fixe EUR/XOF 655,957) |
 | Actualités de l'émetteur | Google Actualités (flux RSS) |
@@ -245,6 +280,7 @@ fiche-valeur-brvm/
 │   ├── config.py              référentiel des valeurs, paramètres, BCEAO, pondérations
 │   ├── parser.py              lecture et contrôle du classeur des états financiers
 │   ├── market.py              cours, titres, dividendes (fichiers et sources en ligne)
+│   ├── partial.py             titres à données partielles : chiffres clés, saisie, couverture
 │   ├── fundamentals.py        SIG, ratios, solidité, pairs
 │   ├── valuation.py           juste valeur multi-méthodes
 │   ├── technical.py           indicateurs techniques et niveaux
@@ -279,13 +315,15 @@ Pour régénérer les données de démonstration : `python sample_data/make_demo
 ## Limites
 
 - Les sites de données peuvent changer leur présentation ; les analyseurs sont isolés
-  (`parse_capitalisations`, `parse_sika_payload`, `parse_rss`) pour être ajustés facilement.
+  (`parse_capitalisations`, `parse_sika_payload`, `parse_sika_societe`, `parse_rss`) pour être ajustés facilement.
   Une base de marché locale garantit des résultats reproductibles.
 - Les paramètres BCEAO et les valeurs macroéconomiques de repli datent de la dernière mise à jour
   du code : vérifiez-les dans la barre latérale avant diffusion.
 - La tonalité des actualités repose sur les titres d'articles ; les informations communiquées par
   la société (communiqués, AG, rapports) peuvent être saisies dans l'application pour être prises en
   compte.
+- - Les chiffres clés lus en ligne (niveau 2) n'incluent pas le bilan : sans capitaux propres saisis, ni
+  ROE ni P/B. Les multiples de référence par secteur sont indicatifs.
 - Les sociétés de démonstration sont fictives.
 
 ## Avertissement

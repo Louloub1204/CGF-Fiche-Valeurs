@@ -54,6 +54,18 @@ class Valuation:
     notes: list[str] = field(default_factory=list)
 
 
+def _dividend_growth(md: MarketData) -> float | None:
+    """Taux de croissance annuel moyen du dividende net sur l'historique disponible."""
+    byy = {}
+    for d in md.dividends:
+        if is_num(d.montant_net) and d.montant_net > 0 and d.exercice:
+            byy[d.exercice] = d.montant_net
+    ys = sorted(byy)
+    if len(ys) < 3 or ys[-1] == ys[0]:
+        return None
+    return (byy[ys[-1]] / byy[ys[0]]) ** (1 / (ys[-1] - ys[0])) - 1
+
+
 def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Technical,
                       st: Settings) -> Valuation:
     y = fd.year
@@ -118,20 +130,24 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
     bank = c.is_bank
     w = ({"pe": 25, "pb": 20, "pbj": 30, "ddm": 25, "ev": 0} if bank else
          {"pe": 30, "pb": 10, "pbj": 10, "ddm": 25, "ev": 25})
+    dflt = set(fd.default_multiples)
     methods: list[Method] = []
     if is_num(v.eps) and v.eps > 0 and is_num(med.get("pe")):
         methods.append(Method("PER sectoriel", med["pe"] * v.eps, w["pe"],
-                              f"PER médian des pairs {med['pe']:.1f}x appliqué au BPA {y}".replace(".", ",")))
+                              f"PER {'médian des pairs' if 'pe' not in dflt else 'de référence'} {med['pe']:.1f}x "
+                              f"appliqué au BPA {y}".replace(".", ",")))
     if is_num(v.bvps) and v.bvps > 0 and is_num(med.get("pb")):
         methods.append(Method("P/B sectoriel", med["pb"] * v.bvps, w["pb"],
-                              f"P/B médian des pairs {med['pb']:.2f}x appliqué aux fonds propres par action"
-                              .replace(".", ",")))
+                              f"P/B {'médian des pairs' if 'pb' not in dflt else 'de référence'} {med['pb']:.2f}x "
+                              f"appliqué aux fonds propres par action".replace(".", ",")))
     if is_num(v.pb_justified) and is_num(v.bvps) and v.bvps > 0:
         methods.append(Method("P/B justifié (Gordon)", v.pb_justified * v.bvps, w["pbj"],
                               f"(ROE normatif {v.roe_norm * 100:.1f}% - g) / (k - g) = {v.pb_justified:.2f}x"
                               .replace(".", ",")))
     if is_num(v.dps) and v.dps > 0:
         g1 = fd.growth.get("tcam_rn")
+        if not is_num(g1):
+            g1 = _dividend_growth(md)
         g1 = min(0.12, max(0.0, g1)) if is_num(g1) else g
         pv, d = 0.0, v.dps
         for t in range(1, 6):
@@ -146,8 +162,17 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
         eq = med["ev_ebitda"] * ebitda - (nd or 0)
         if eq > 0:
             methods.append(Method("VE/EBE sectoriel", eq / shares, w["ev"],
-                                  f"VE/EBE médian des pairs {med['ev_ebitda']:.1f}x, dette nette déduite"
-                                  .replace(".", ",")))
+                                  f"VE/EBE {'médian des pairs' if 'ev_ebitda' not in dflt else 'de référence'} "
+                                  f"{med['ev_ebitda']:.1f}x, dette nette déduite".replace(".", ",")))
+    # Rendement cible : dividende capitalisé au rendement de référence (utile sans états financiers)
+    if (c.level in ("chiffres_cles", "marche") and is_num(v.dps) and v.dps > 0
+            and is_num(med.get("div_yield")) and med["div_yield"] > 0):
+        methods.append(Method("Rendement de référence", v.dps / med["div_yield"], 25 if not is_num(v.eps) else 15,
+                              f"DPA {fmt_num(v.dps)} FCFA capitalisé au rendement {'médian des pairs' if 'div_yield' not in dflt else 'de référence du secteur'} "
+                              f"de {fmt_pct(med['div_yield'])}"))
+    if dflt:
+        v.notes.append("Multiples de référence du secteur utilisés faute de comparables suffisants dans le classeur : "
+                       "charger le classeur complet pour des multiples issus des pairs.")
     methods = [m for m in methods if is_num(m.value) and m.value > 0 and m.weight > 0]
     v.methods = methods
     if methods:

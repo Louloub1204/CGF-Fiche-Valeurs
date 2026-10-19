@@ -406,7 +406,10 @@ def _news_table(a, st):
 
 def _sources(a, st):
     s = dict(a.market.sources)
-    s["états financiers"] = f"Classeur {a.company.sheet} ({a.company.unit_label})"
+    if a.company.level in ("complet", "partiel"):
+        s["états financiers"] = f"Classeur {a.company.sheet} ({a.company.unit_label})"
+    elif a.company.level == "chiffres_cles":
+        s["chiffres clés"] = a.company.data_source
     s["macroéconomie"] = a.macro.source
     s["politique monétaire"] = f"BCEAO, Comité de Politique Monétaire du {a.macro.bceao.get('date_reference')}"
     if a.news.items:
@@ -414,6 +417,68 @@ def _sources(a, st):
     rows = [[k.capitalize(), P(v, st["cell"])] for k, v in s.items()]
     return _table(rows, [40 * mm, CONTENT_W - 40 * mm], st, header=False, bold_cols=(0,))
 
+
+
+def _level_banner(a, st):
+    """Bandeau signalant un niveau de données inférieur à l'analyse complète."""
+    c, cov = a.company, a.coverage
+    if c.level == "complet" or cov is None:
+        return None
+    title, desc = config.LEVELS[c.level]
+    miss = [i.name for i in cov.missing][:4]
+    txt = (f"<b>{escape(clean_text(title))}</b> | couverture des données {fmt_num(cov.score, 0)}%. "
+           f"{escape(clean_text(desc))}" + (f" À compléter : {escape(clean_text(', '.join(miss).lower()))}." if miss else ""))
+    t = Table([[Paragraph(txt, st["small"])]], colWidths=[CONTENT_W])
+    t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FBF3E0")),
+                           ("LINEBEFORE", (0, 0), (0, -1), 2.5, GOLD), ("LEFTPADDING", (0, 0), (-1, -1), 7),
+                           ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
+    return t
+
+
+def _keyfig_table(a, st):
+    """Chiffres clés annuels (niveau 2) : revenus, résultat, par action, dividende."""
+    c = a.company
+    years = c.years[-5:]
+    rev_key, rn_key = c.revenue_field, c.net_income_field
+    rev, rn = c.fields.get(rev_key, {}), c.fields.get(rn_key, {})
+    eps, dps = c.fields.get("bpa_pub", {}), c.fields.get("dps", {})
+    cp, ta = c.fields.get(c.equity_field, {}), c.fields.get("total_actif", {})
+    rows = [["En Mds FCFA sauf mention"] + [str(y) for y in years]]
+
+    def line(label, fn):
+        vals = [fn(y) for y in years]
+        if any(v not in ("n.d.", "") for v in vals):
+            rows.append([label] + vals)
+    line("PNB" if c.is_bank else "Chiffre d'affaires", lambda y: fmt_mds(rev.get(y)) if is_num(rev.get(y)) else "n.d.")
+    line("Croissance", lambda y: fmt_pct((rev[y] / rev[y - 1]) - 1, sign=True)
+         if is_num(rev.get(y)) and is_num(rev.get(y - 1)) and rev[y - 1] else "n.d.")
+    line("Résultat net", lambda y: fmt_mds(rn.get(y)) if is_num(rn.get(y)) else "n.d.")
+    line("Croissance du résultat", lambda y: fmt_pct((rn[y] / rn[y - 1]) - 1, sign=True)
+         if is_num(rn.get(y)) and is_num(rn.get(y - 1)) and rn[y - 1] > 0 else "n.d.")
+    line("Marge nette", lambda y: fmt_pct(rn[y] / rev[y]) if is_num(rn.get(y)) and is_num(rev.get(y)) and rev[y] else "n.d.")
+    line("BNPA (FCFA)", lambda y: fmt_num(eps.get(y)) if is_num(eps.get(y)) else "n.d.")
+    line("Dividende net par action (FCFA)", lambda y: fmt_num(dps.get(y)) if is_num(dps.get(y)) else "n.d.")
+    line("Taux de distribution", lambda y: fmt_pct(dps[y] / eps[y]) if is_num(dps.get(y)) and is_num(eps.get(y)) and eps[y] > 0 else "n.d.")
+    line("Capitaux propres", lambda y: fmt_mds(cp.get(y)) if is_num(cp.get(y)) else "n.d.")
+    line("Total du bilan", lambda y: fmt_mds(ta.get(y)) if is_num(ta.get(y)) else "n.d.")
+    r = a.fundamentals.ratios
+    line("ROE", lambda y: fmt_pct(r["roe"][y]) if is_num(r.get("roe", {}).get(y)) else "n.d.")
+    if len(rows) < 2:
+        return P("Aucun chiffre clé disponible.", st["body"])
+    first = 62 * mm
+    other = (CONTENT_W - first) / len(years)
+    return _table(rows, [first] + [other] * len(years), st)
+
+
+def _coverage_table(a, st):
+    cov = a.coverage
+    label = {"ok": "Disponible", "partiel": "Partiel", "absent": "Absent"}
+    rows = [["Donnée", "Statut", "Détail", "Effet sur l'analyse et comment compléter"]]
+    for i in cov.items:
+        eff = i.impact if i.status == "ok" or not i.impact else f"{i.impact} {i.action}"
+        rows.append([P(clean_text(i.name), st["cell"]), label[i.status], P(clean_text(i.detail), st["cell"]),
+                     P(clean_text(eff), st["cell"])])
+    return _table(rows, [38 * mm, 18 * mm, 46 * mm, CONTENT_W - 102 * mm], st, left_cols=(0, 1, 2, 3))
 
 # ---------------------------------------------------------------------------
 # Construction
@@ -443,6 +508,9 @@ def build_pdf(a, compact: bool = False) -> bytes:
                              ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0),
                              ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
     story += [top, Spacer(1, 5)]
+    banner = _level_banner(a, st)
+    if banner is not None:
+        story += [banner, Spacer(1, 4)]
     story.append(P("Thèse d'investissement" + (" (rédaction assistée)" if a.ai_used else ""), st["h2"]))
     for para in tx.get("these", []):
         story.append(P(para, st["body"]))
@@ -458,44 +526,66 @@ def build_pdf(a, compact: bool = False) -> bytes:
     story.append(KeepTogether(_two_cols([P("Notation par pilier (/100)", st["h2"]), pil] if pil else [], just)))
 
     if not compact:
-        # ---------------- Page 2 : analyse financière ----------------
-        story += [PageBreak(), P("Soldes intermédiaires de gestion", st["h1"]), _sig_table(a, st), Spacer(1, 3)]
-        fin = _img(charts.financials_chart(c, a.fundamentals.ratios, size=(7.4, 2.35)), CONTENT_W, 56 * mm)
-        if fin:
-            story.append(fin)
-        story += [P("Ratios financiers", st["h1"]), _ratio_table(a, st)]
+        partial = c.level in ("chiffres_cles", "marche")
 
-        # ---------------- Page 3 : solidité, pairs, valorisation ----------------
-        sol = a.fundamentals.solidity
-        sol_rows = [["Test de solidité", "Résultat"]] + [
-            [lab, "Validé" if ok else ("Non validé" if ok is False else "n.d.")] for lab, ok in sol.tests]
-        sol_tb = _table(sol_rows, [CONTENT_W * 0.37, CONTENT_W * 0.13], st)
-        sol_side = [P(f"Score de solidité : {sol.score}/{sol.maximum}", st["h2"]), sol_tb]
-        if sol.altman is not None:
-            sol_side.append(P(f"Score Z'' d'Altman (marchés émergents) : {fmt_num(sol.altman, 2)}, zone de "
-                              f"{sol.altman_zone}.", st["small"]))
-        med = a.fundamentals.medians
-        med_rows = [["Médianes des pairs", ""], ["Groupe", P(a.fundamentals.peer_label, st["cellr"])],
-                    ["Nombre de pairs", fmt_num(med.get("n"))], ["PER", fmt_x(med.get("pe"))],
-                    ["P/B", fmt_x(med.get("pb"), 2)], ["ROE", fmt_pct(med.get("roe"))],
-                    ["Marge nette", fmt_pct(med.get("net_margin"))], ["Rendement du dividende", fmt_pct(med.get("div_yield"))]]
-        if not c.is_bank:
-            med_rows.insert(5, ["VE/EBE", fmt_x(med.get("ev_ebitda"))])
-        med_tb = _table(med_rows, [CONTENT_W * 0.25, CONTENT_W * 0.20], st)
-        story += [PageBreak(), P("Solidité financière et positionnement sectoriel", st["h1"]),
-                  _two_cols(sol_side, [P("Positionnement sectoriel", st["h2"]), med_tb], ratio=0.52)]
-        peers = _img(charts.peers_chart(a.fundamentals, c, v, size=(7.4, 2.1)), CONTENT_W, 52 * mm)
-        if peers:
-            story += [Spacer(1, 2), peers]
-        story += [P("Valorisation", st["h1"]), P(tx.get("valorisation", ""), st["body"]), Spacer(1, 3)]
-        if v.methods:
-            story += [_valuation_table(a, st), Spacer(1, 2)]
-        vimg = _img(charts.valuation_chart(v, a.technical, size=(7.4, 2.2)), CONTENT_W, 52 * mm)
-        if vimg:
-            story.append(vimg)
-        story += [KeepTogether([P("Hypothèses", st["h2"]), _hypotheses(a, st)])]
-        for n in v.notes:
-            story.append(P(n, st["muted"]))
+        def valuation_block():
+            blk = [P("Valorisation", st["h1"]), P(tx.get("valorisation", ""), st["body"]), Spacer(1, 3)]
+            if v.methods:
+                blk += [_valuation_table(a, st), Spacer(1, 2)]
+            vimg = _img(charts.valuation_chart(v, a.technical, size=(7.4, 2.2)), CONTENT_W, 52 * mm)
+            if vimg:
+                blk.append(vimg)
+            blk += [KeepTogether([P("Hypothèses", st["h2"]), _hypotheses(a, st)])]
+            blk += [P(n, st["muted"]) for n in v.notes]
+            return blk
+
+        def positioning_block():
+            med = a.fundamentals.medians
+            med_rows = [["Médianes des pairs", ""], ["Groupe", P(a.fundamentals.peer_label, st["cellr"])],
+                        ["Nombre de pairs", fmt_num(med.get("n"))], ["PER", fmt_x(med.get("pe"))],
+                        ["P/B", fmt_x(med.get("pb"), 2)], ["ROE", fmt_pct(med.get("roe"))],
+                        ["Marge nette", fmt_pct(med.get("net_margin"))],
+                        ["Rendement du dividende", fmt_pct(med.get("div_yield"))]]
+            if not c.is_bank:
+                med_rows.insert(5, ["VE/EBE", fmt_x(med.get("ev_ebitda"))])
+            return _table(med_rows, [CONTENT_W * 0.25, CONTENT_W * 0.20], st)
+
+        if not partial:
+            # ---------------- Page 2 : analyse financière ----------------
+            story += [PageBreak(), P("Soldes intermédiaires de gestion", st["h1"]), _sig_table(a, st), Spacer(1, 3)]
+            fin = _img(charts.financials_chart(c, a.fundamentals.ratios, size=(7.4, 2.35)), CONTENT_W, 56 * mm)
+            if fin:
+                story.append(fin)
+            story += [P("Ratios financiers", st["h1"]), _ratio_table(a, st)]
+
+            # ---------------- Page 3 : solidité, pairs, valorisation ----------------
+            sol = a.fundamentals.solidity
+            sol_rows = [["Test de solidité", "Résultat"]] + [
+                [lab, "Validé" if ok else ("Non validé" if ok is False else "n.d.")] for lab, ok in sol.tests]
+            sol_tb = _table(sol_rows, [CONTENT_W * 0.37, CONTENT_W * 0.13], st)
+            sol_side = [P(f"Score de solidité : {sol.score}/{sol.maximum}", st["h2"]), sol_tb]
+            if sol.altman is not None:
+                sol_side.append(P(f"Score Z'' d'Altman (marchés émergents) : {fmt_num(sol.altman, 2)}, zone de "
+                                  f"{sol.altman_zone}.", st["small"]))
+            story += [PageBreak(), P("Solidité financière et positionnement sectoriel", st["h1"]),
+                      _two_cols(sol_side, [P("Positionnement sectoriel", st["h2"]), positioning_block()], ratio=0.52)]
+            peers = _img(charts.peers_chart(a.fundamentals, c, v, size=(7.4, 2.1)), CONTENT_W, 52 * mm)
+            if peers:
+                story += [Spacer(1, 2), peers]
+            story += valuation_block()
+        else:
+            # ---------------- Page 2 : chiffres clés, couverture, valorisation ----------------
+            story.append(PageBreak())
+            if c.level == "chiffres_cles":
+                story += [P("Chiffres clés", st["h1"]), _keyfig_table(a, st),
+                          P(f"Source : {clean_text(c.data_source)}. Les états financiers détaillés (bilan, soldes "
+                            f"intermédiaires de gestion) ne sont pas disponibles : solidité financière non évaluée.",
+                            st["muted"]), Spacer(1, 4)]
+            story += [P("Données disponibles et compléments à apporter", st["h1"]), _coverage_table(a, st),
+                      Spacer(1, 5)]
+            story += valuation_block()
+            if len(a.fundamentals.peers) >= 2:
+                story += [P("Positionnement sectoriel", st["h2"]), positioning_block()]
 
         # ---------------- Page 4 : technique et environnement ----------------
         story += [PageBreak(), P("Analyse technique", st["h1"]), P(tx.get("technique", ""), st["body"]), Spacer(1, 2)]
@@ -528,8 +618,10 @@ def build_pdf(a, compact: bool = False) -> bytes:
             just_all += [P("Réserves", st["h2"])] + _bullets(d.warnings, st)
         story += [P("Matrice de décision", st["h1"]), _two_cols([mat] if mat else [], just_all, ratio=0.48)]
         story += [CondPageBreak(40 * mm), P("Sources et qualité des données", st["h1"]), _sources(a, st)]
+        if c.level in ("complet", "partiel") and a.coverage is not None and a.coverage.missing:
+            story += [P("Couverture des données", st["h2"]), _coverage_table(a, st)]
         if c.notes:
-            story += [Spacer(1, 2)] + [P("Contrôle des états financiers : " + n, st["muted"]) for n in c.notes]
+            story += [Spacer(1, 2)] + [P("Contrôle des données : " + n, st["muted"]) for n in c.notes]
         if a.errors:
             story += [P("Accès aux données : " + "; ".join(a.errors[:5]), st["muted"])]
         story += [P("Méthodologie", st["h2"]), P(METHODO, st["small"]), Spacer(1, 3), P(config.DISCLAIMER, st["muted"])]

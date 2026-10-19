@@ -16,6 +16,8 @@ def analysis_frames(a) -> dict[str, pd.DataFrame]:
     synth = pd.DataFrame([
         ("Société", c.name), ("Ticker", c.ticker), ("Secteur", c.sector),
         ("Pays", config.COUNTRIES.get(c.country, {}).get("nom", c.country)), ("Date d'analyse", a.as_of),
+        ("Niveau de données", config.LEVELS[c.level][0]),
+        ("Couverture des données", a.coverage.score / 100 if a.coverage else None),
         ("Signal", d.signal), ("Conviction", d.conviction), ("Note globale /100", d.composite),
         ("Vue fondamentale /100", d.fundamental), ("Score technique /100", d.technical),
         ("Cours (FCFA)", v.price), ("Juste valeur (FCFA)", v.fair_value), ("Potentiel", v.upside),
@@ -45,8 +47,11 @@ def analysis_frames(a) -> dict[str, pd.DataFrame]:
     if not hist.empty:
         hist.index.name = "Date"
     notes = pd.DataFrame({"Contrôles et accès aux données": c.notes + a.errors + d.warnings})
+    cov = pd.DataFrame([(i.name, {"ok": "Disponible", "partiel": "Partiel", "absent": "Absent"}[i.status], i.detail,
+                         i.impact, i.action) for i in a.coverage.items],
+                       columns=["Donnée", "Statut", "Détail", "Effet sur l'analyse", "Pour compléter"]) if a.coverage else pd.DataFrame()
     return {"Synthèse": synth, "SIG": sig, "Ratios": ratios, "Valorisation": val, "Technique": tech,
-            "Pairs": peers, "Historique": hist, "Contrôles": notes}
+            "Pairs": peers, "Historique": hist, "Couverture": cov, "Contrôles": notes}
 
 
 def build_excel(a) -> bytes:
@@ -69,6 +74,8 @@ def screening_frame(analyses: list) -> pd.DataFrame:
         d, v = a.decision, a.valuation
         rows.append({
             "Ticker": a.company.ticker, "Société": a.company.name, "Secteur": a.company.sector,
+            "Niveau de données": config.LEVELS[a.company.level][0].split(" - ")[0].replace("Niveau ", "N"),
+            "Couverture": a.coverage.score / 100 if a.coverage else None,
             "Signal": d.signal, "Conviction": d.conviction, "Note globale": d.composite,
             "Vue fondamentale": d.fundamental, "Technique": d.technical, "Cours": v.price,
             "Juste valeur": v.fair_value, "Potentiel": v.upside, "Rendement": v.div_yield, "PER": v.pe,
@@ -91,7 +98,7 @@ def build_screening_excel(df: pd.DataFrame) -> bytes:
         for col in ws.columns:
             width = max(len(str(cell.value or "")) for cell in col[:80])
             ws.column_dimensions[col[0].column_letter].width = min(45, max(9, width + 2))
-        pct_cols = {"Potentiel", "Rendement", "ROE"}
+        pct_cols = {"Potentiel", "Rendement", "ROE", "Couverture"}
         for j, name in enumerate(df.columns, start=1):
             for i in range(2, len(df) + 2):
                 cell = ws.cell(row=i, column=j)
