@@ -267,6 +267,32 @@ def build_template(records: list[dict] | None = None, years: list[int] | None = 
                     cell.alignment = Alignment(horizontal="center")
                 if j == 6:
                     cell.number_format = "dd/mm/yyyy"
+        # variations face à la même période de l'exercice précédent (colonnes calculées, à droite du contrôle)
+        v0 = last_c + 1
+        for i, (k, _) in enumerate(cols):
+            cv = get_column_letter(v0 + i)
+            h = ws.cell(4, v0 + i, f"Var. {HEAD_LABELS[k].split(' (')[0].lower()} vs même période N-1")
+            h.font, h.fill, h.border = f_head, fill_head, border
+            h.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            ws.column_dimensions[cv].width = 15
+            x = idx[k]
+            crit = (f"$A${FIRST_ROW}:$A${last},$A{{r}},$C${FIRST_ROW}:$C${last},$C{{r}}-1,"
+                    f"$D${FIRST_ROW}:$D${last},$D{{r}}")
+            for rr in range(FIRST_ROW, last + 1):
+                cr = crit.format(r=rr)
+                prev = f"SUMIFS({x}${FIRST_ROW}:{x}${last},{cr})"
+                cnt = f"COUNTIFS({cr},{x}${FIRST_ROW}:{x}${last},\"<>\")"
+                ws[f"{cv}{rr}"] = (f'=IF(OR($A{rr}="",{x}{rr}="",$C{rr}=""),"",IF({cnt}=0,"",'
+                                   f'IF(OR({prev}=0,{x}{rr}*{prev}<0),"n.s.",ABS({x}{rr})/ABS({prev})-1)))')
+                ws[f"{cv}{rr}"].number_format = '+0.0%;-0.0%;0.0%'
+                ws[f"{cv}{rr}"].font = f_calc
+                ws[f"{cv}{rr}"].border = border
+                ws[f"{cv}{rr}"].alignment = Alignment(horizontal="right")
+            ws.conditional_formatting.add(f"{cv}{FIRST_ROW}:{cv}{last}", FormulaRule(
+                formula=[f'AND(ISNUMBER({cv}{FIRST_ROW}),{cv}{FIRST_ROW}<0)'], font=Font(color="9B1C1C")))
+            ws.conditional_formatting.add(f"{cv}{FIRST_ROW}:{cv}{last}", FormulaRule(
+                formula=[f'AND(ISNUMBER({cv}{FIRST_ROW}),{cv}{FIRST_ROW}>0)'], font=Font(color="1E7B34")))
+        last_c = v0 + len(cols) - 1
         dvs = [(DataValidation(type="list", formula1="=Titres!$A$2:$A$400", allow_blank=True, showErrorMessage=True,
                                errorTitle="Ticker", error="Choisissez un ticker de la feuille « Titres »."), f"A{FIRST_ROW}:A{last}"),
                (DataValidation(type="whole", operator="between", formula1="1990", formula2="2100", allow_blank=True,
@@ -352,6 +378,7 @@ def build_template(records: list[dict] | None = None, years: list[int] | None = 
                                "2. Trouvez la ligne du titre, de l'exercice et de la période, ou ajoutez une ligne sous les dernières.\n"
                                "3. Saisissez les montants de la publication en millions de FCFA, cumulés depuis le 1er janvier.\n"
                                "4. Une publication donne N et N-1 : renseignez aussi la ligne de l'exercice précédent (même période).\n"
+                               "   Les colonnes « Var. ... vs même période N-1 » (à droite, calculées) comparent chaque ligne à la même période de l'exercice précédent.\n"
                                "5. Indiquez le statut, la date de publication et la source (lien richbourse ou brvm.org).\n"
                                "6. Contrôlez la colonne « Contrôle de cohérence » et suivez l'avancement dans « Suivi »."),
         ("Cumul et périodes", "Toutes les valeurs sont cumulées depuis le 1er janvier : T1 = 3 mois, S1 = 6 mois, T3 = 9 mois. Si une société publie "
