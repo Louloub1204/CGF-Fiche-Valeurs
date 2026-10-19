@@ -285,8 +285,8 @@ def test_level3_market_only(partial_env, offline):
 
 
 def test_level3_without_any_data(offline):
-    config.register_ticker("ZZZZ", "Titre sans données", "CI", "Non classé")
-    a = run_analysis(None, "ZZZZ", offline)
+    config.register_ticker("QQXQ", "Titre sans données", "CI", "Non classé")
+    a = run_analysis(None, "QQXQ", offline)
     assert a.decision.signal == "ATTENDRE" and a.decision.conviction == "Faible"
     assert a.coverage.score < 40
 
@@ -300,7 +300,7 @@ def test_partial_reports(partial_env, offline):
     from fiche_valeur.report_pptx import build_pptx
     cases = [run_analysis(None, "DAGC", offline, market_base=partial_env, figures=parse_sika_societe(SIKA_SOCIETE_HTML)),
              run_analysis(None, "DBQC", offline, market_base=partial_env),
-             run_analysis(None, "ZZZZ", offline)]
+             run_analysis(None, "QQXQ", offline)]
     for a in cases:
         assert build_pdf(a)[:4] == b"%PDF" and build_pdf(a, compact=True)[:4] == b"%PDF"
         assert len(Presentation(io.BytesIO(build_pptx(a))).slides) >= 9
@@ -511,3 +511,92 @@ def test_sheet_name_resolution(tmp_path):
     wb_ = parse_workbook(path)
     assert "FTSC" in wb_.companies and wb_.companies["FTSC"].get("ca", 2025) == pytest.approx(32108e6)
     assert wb_.sheet_report[0][1] == "FTSC" and wb_.sheet_report[0][2].startswith("lue")
+
+
+# ---------------------------------------------------------------------------
+# Fichier des soldes intermédiaires de gestion
+# ---------------------------------------------------------------------------
+def _fill_sig(data: bytes, ticker: str, rows: dict[int, dict[str, float]], statut: str = "Publié") -> bytes:
+    book = openpyxl.load_workbook(io.BytesIO(data))
+    sheet = "Banques" if config.TICKERS[ticker]["secteur"] == config.FIN else "Entreprises"
+    ws = book[sheet]
+    head = {ws.cell(4, c).value: c for c in range(1, ws.max_column + 1)}
+    for r in range(5, ws.max_row + 1):
+        if ws.cell(r, 1).value == ticker and ws.cell(r, 3).value in rows:
+            for lab, v in rows[ws.cell(r, 3).value].items():
+                ws.cell(r, head[lab], v)
+            ws.cell(r, 4, statut)
+    out = io.BytesIO()
+    book.save(out)
+    return out.getvalue()
+
+
+def test_sig_template_and_roundtrip(mb):
+    from fiche_valeur.sig_file import SHEETS, build_template, parse_sig_file
+    data = build_template(None, mb)
+    book = openpyxl.load_workbook(io.BytesIO(data))
+    assert book.sheetnames == ["Lisez-moi", "Entreprises", "Banques", "Suivi", "Titres"]
+    assert {book["Titres"].cell(r, 1).value for r in range(2, book["Titres"].max_row + 1)} == set(config.TICKERS)
+    for s in SHEETS:                          # modèle vierge ou pré-rempli : relu sans erreur
+        assert book[s].cell(4, 1).value == "Ticker"
+    sig = parse_sig_file(data)
+    assert not sig.unknown and all(t in config.TICKERS for t in sig.tickers)
+    if not sig.fields:                        # base de démonstration sans « Tableau de bord » : modèle vierge signalé
+        assert "Aucun solde renseigné" in sig.notes[0]
+
+
+def test_sig_parse_units_and_overlay():
+    from fiche_valeur.sig_file import build_template, level_after_overlay, overlay, parse_sig_file
+    base = build_template(None, None)
+    rows = {y: {"Valeur ajoutée": 9000 + 100 * i, "Excédent brut d'exploitation (EBE)": 3500 + 50 * i,
+                "Résultat d'exploitation": 2300 + 40 * i, "Chiffre d'affaires": 40000 + 500 * i,
+                "Résultat net": 1500 + 20 * i, "Capitaux propres": 24000 + 300 * i, "Total du bilan": 60000 + 900 * i}
+            for i, y in enumerate(range(2021, 2026))}
+    sig = parse_sig_file(_fill_sig(base, "FTSC", rows, statut="Estimé"))
+    ca = sig.fields["FTSC"]["ca"]
+    assert ca[2021] == pytest.approx(40000e6) and set(ca) == set(range(2021, 2026))     # millions -> FCFA
+    assert ("FTSC", "va", 2021) in sig.estimated
+    from fiche_valeur.partial import build_company
+    c = build_company("FTSC", None)
+    assert c.level == "marche"
+    assert overlay(c, sig, override=True) > 0
+    assert level_after_overlay(c) == "complet"
+
+
+def test_sig_priority_workbook_and_level(wb, mb):
+    """Titre du classeur : le fichier SIG ne comble que les trous et signale un écart ; titre hors classeur : il prime."""
+    from fiche_valeur.sig_file import build_template, parse_sig_file
+    c0 = next(iter(wb.companies.values()))
+    y = max(c0.fields[c0.revenue_field])
+    # ticker inconnu du référentiel : la ligne est signalée, pas lue
+    book = openpyxl.load_workbook(io.BytesIO(build_template(None, None)))
+    ws = book["Entreprises"]
+    ws.cell(5, 1, "WWWW")
+    ws.cell(5, 3, 2025)
+    ws.cell(5, 6, 100)
+    buf = io.BytesIO()
+    book.save(buf)
+    sig = parse_sig_file(buf.getvalue())
+    assert "WWWW" in sig.unknown and not sig.fields
+    assert y in c0.fields[c0.revenue_field]
+
+
+def test_sig_in_analysis_levels(mb):
+    from fiche_valeur.sig_file import build_template, parse_sig_file
+    rows = {y: {"Valeur ajoutée": 9000 + 100 * i, "Excédent brut d'exploitation (EBE)": 3500 + 50 * i,
+                "Résultat d'exploitation": 2300 + 40 * i, "Chiffre d'affaires": 40000 + 500 * i,
+                "Résultat net": 1500 + 20 * i, "Capitaux propres": 24000 + 300 * i, "Total du bilan": 60000 + 900 * i}
+            for i, y in enumerate(range(2021, 2026))}
+    tk = "FTSC"
+    sig = parse_sig_file(_fill_sig(build_template(None, None), tk, rows))
+    st = Settings(en_ligne=False)
+    with_sig = run_analysis(None, tk, st, market_base=mb, sig=sig)
+    without = run_analysis(None, tk, st, market_base=mb)
+    assert without.company.level in ("marche", "chiffres_cles")
+    assert with_sig.company.level in ("complet", "partiel")
+    assert with_sig.company.fields["va"][2025] == pytest.approx(9400e6)
+    assert "Fichier des soldes intermédiaires" in with_sig.company.data_source
+    assert with_sig.decision.signal in SIGNALS
+    # le bandeau de niveau n'est plus dans les documents
+    from fiche_valeur.report_pdf import build_pdf
+    assert build_pdf(with_sig)[:4] == b"%PDF"

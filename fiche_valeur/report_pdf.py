@@ -435,7 +435,8 @@ def _news_table(a, st):
 def _sources(a, st):
     s = dict(a.market.sources)
     if a.company.level in ("complet", "partiel"):
-        s["états financiers"] = f"Classeur {a.company.sheet} ({a.company.unit_label})"
+        s["états financiers"] = (f"Classeur {a.company.sheet} ({a.company.unit_label})" if a.company.sheet
+                            else f"{a.company.data_source} ({a.company.unit_label})")
     elif a.company.level == "chiffres_cles":
         s["chiffres clés"] = a.company.data_source
     s["macroéconomie"] = a.macro.source

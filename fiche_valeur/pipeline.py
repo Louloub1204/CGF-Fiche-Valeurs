@@ -13,6 +13,9 @@ from .macro import Macro, analyse_macro
 from .market import MarketBase, MarketData, build_market_data
 from .news import News, add_user_notes, fetch_news
 from .parser import CompanyData, Workbook
+from .parser import _derive_and_check as derive_and_check
+from .sig_file import SigData, level_after_overlay
+from .sig_file import overlay as sig_overlay
 from .partial import (Coverage, KeyFigures, assess, build_company, fetch_sika_societe, figures_from_market_base,
                       fill_company_gaps, merge_figures, smf_peer_rows)
 from .publications import InterimReport, Publication, latest_report, momentum
@@ -44,26 +47,39 @@ class Analysis:
 
 
 def resolve_company(wb: Workbook | None, ticker: str, st: Settings, figures: KeyFigures | None,
-                    errors: list[str], market_base: MarketBase | None = None) -> tuple[CompanyData, KeyFigures | None]:
-    """Société du classeur si elle y figure (exercices manquants complétés par la base SMF) ; sinon chiffres
-    clés (saisis, puis base SMF, puis lecture en ligne) ; sinon données de marché seules."""
+                    errors: list[str], market_base: MarketBase | None = None,
+                    sig: SigData | None = None) -> tuple[CompanyData, KeyFigures | None]:
+    """Société du classeur si elle y figure (exercices manquants complétés par le fichier des soldes
+    intermédiaires, puis par la base SMF) ; sinon chiffres clés (saisis, puis base SMF, puis lecture en ligne)
+    surchargés par le fichier des soldes intermédiaires ; sinon données de marché seules."""
     smf = figures_from_market_base(market_base, ticker)
     if wb is not None and ticker in wb.companies and figures is None:
         c = copy.deepcopy(wb.companies[ticker])
+        sig_overlay(c, sig, override=False)
         fill_company_gaps(c, smf)
         return c, None
     kf = merge_figures(copy.deepcopy(figures), smf) if figures is not None else smf
     if st.en_ligne and (kf is None or not kf.eps):
         online = fetch_sika_societe(ticker, config.TICKERS.get(ticker, {}).get("pays"), errors)
         kf = merge_figures(kf, online) if kf is not None else online
-    return build_company(ticker, kf), kf
+    c = build_company(ticker, kf)
+    if figures is None and sig is not None and sig.fields.get(ticker):
+        if sig_overlay(c, sig, override=True):
+            derive_and_check(c)
+            new_level = level_after_overlay(c)
+            if new_level != c.level:
+                c.notes = [n for n in c.notes if not n.startswith(("Analyse sur chiffres clés", "Analyse sur données de marché",
+                                                                   "Capitaux propres non renseignés"))]
+                c.level = new_level
+    return c, kf
 
 
 def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = None,
                  market_base: MarketBase | None = None, price_file=None, overrides: dict | None = None,
                  user_notes: str = "", major_event: bool = False, bceao: dict | None = None,
                  use_claude: bool = False, progress=None, figures: KeyFigures | None = None,
-                 custom: dict | None = None, report: InterimReport | None = None) -> Analysis:
+                 custom: dict | None = None, report: InterimReport | None = None,
+                 sig: SigData | None = None) -> Analysis:
     """Analyse d'un titre. ``wb`` peut être vide ou absent : le titre est alors traité au niveau 2 ou 3.
 
     ``figures`` : chiffres clés saisis (prioritaires sur ceux du classeur) ; ``custom`` : nom, pays et
@@ -74,7 +90,7 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
         config.register_ticker(ticker, custom.get("nom", ticker), custom.get("pays", "CI"),
                                custom.get("secteur", "Non classé"))
     pre_errors: list[str] = []
-    c, kf = resolve_company(wb, ticker, st, figures, pre_errors, market_base)
+    c, kf = resolve_company(wb, ticker, st, figures, pre_errors, market_base, sig)
 
     def step(msg):
         if progress:

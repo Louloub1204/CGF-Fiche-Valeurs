@@ -726,7 +726,8 @@ def build_pptx(a) -> bytes:
     _text(s, Inches(0.6), Inches(1.8), Inches(7.2), Inches(3.2), METHODO, size=10.5)
     src = dict(a.market.sources)
     if c.level in ("complet", "partiel"):
-        src["états financiers"] = f"Classeur, feuille {c.sheet} ({c.unit_label})"
+        src["états financiers"] = (f"Classeur, feuille {c.sheet} ({c.unit_label})" if c.sheet
+                                   else f"{c.data_source} ({c.unit_label})")
     else:
         src["chiffres clés"] = c.data_source
     src["macroéconomie"] = m.source

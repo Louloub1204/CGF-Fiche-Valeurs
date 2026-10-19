@@ -163,7 +163,31 @@ les exercices absents du classeur sont complétés sans jamais écraser une vale
 la fiche), et les comparables sectoriels couvrent toute la cote. Un dividende plus de 2,5 fois supérieur
 aux versements précédents est traité comme exceptionnel : le dividende ordinaire médian sert aux calculs.
 
-### 3. Historique d'un titre (facultatif)
+### 3. Soldes intermédiaires de gestion (facultatif, à charger après la base SMF)
+
+Fichier de suivi tenu par CGF Gestion : `Soldes_Intermediaires_CGF.xlsx`. Il apporte ce que ni le
+classeur ni la base SMF ne contiennent (valeur ajoutée, EBE, résultat d'exploitation, RAO, PNB, RBE,
+coût du risque, total du bilan, dettes financières, crédits et dépôts).
+
+* Deux feuilles de saisie, **Entreprises** (SYSCOHADA et IFRS) et **Banques**, une ligne par titre et
+  par exercice (2021 à 2025 fournis, lignes supplémentaires prévues), montants en **millions de FCFA**,
+  charges en négatif, impôts sur le résultat en positif.
+* Colonnes de suivi automatiques : complétude de la ligne et contrôle de cohérence (RAO = RE + RF,
+  RN = RAO + HAO - impôt, RBE = PNB + charges, EBE <= VA, capitaux propres <= total du bilan).
+* Feuille **Suivi** : avancement par titre et par exercice ; feuille **Titres** : référentiel (types de comptes) ;
+  feuille **Lisez-moi** : mode d'emploi, signes, statuts, définitions.
+* Statut de chaque ligne : Publié, Provisoire, Estimé (signalé dans la fiche) ou À vérifier.
+* Le modèle se télécharge dans l'application (barre latérale, « Modèle du fichier des soldes
+  intermédiaires ») **pré-rempli avec le classeur des états financiers et la base SMF chargés**, ou en
+  ligne de commande : `python -m fiche_valeur.sig_file --ef EF.xlsx --smf SMF.xlsx --out Soldes.xlsx`.
+* Chargement : `python cli.py --sig Soldes.xlsx ...` ou le champ dédié de la barre latérale.
+
+Règles : pour un titre **du classeur**, le fichier ne comble que les exercices manquants et signale un
+écart de plus de 2% avec le classeur ; pour un titre **hors classeur**, il prime sur la base SMF et
+les sources en ligne. Avec capitaux propres et total du bilan sur deux exercices et deux soldes
+intermédiaires, le titre passe au niveau 1 (bilan seul : niveau 1b).
+
+### 4. Historique d'un titre (facultatif)
 
 CSV ou Excel avec les colonnes `Date`, `Ouverture`, `Plus haut`, `Plus bas`, `Clôture`, `Volume`
 (libellés français ou anglais acceptés), par exemple un export sikafinance.
@@ -193,12 +217,13 @@ manque ou ce qui est plus récent.
 
 | Donnée | Ordre de priorité |
 |---|---|
-| États financiers | classeur > base SMF (Tableau de bord, exercices manquants seulement) > fiche société sikafinance > états financiers publiés (richbourse) |
+| États financiers | classeur > fichier des soldes intermédiaires (exercices manquants) > base SMF (Tableau de bord, exercices manquants seulement) > fiche société sikafinance > états financiers publiés (richbourse) |
 | Historique de cours | fichier d'historique > base SMF > sikafinance pour les seules séances postérieures au fichier |
 | Cours retenu | saisie manuelle > dernier cours de l'historique > cours du jour brvm.org s'il est plus récent |
 | Nombre de titres, flottant | saisie manuelle > base SMF > brvm.org |
 | Dividendes | saisie manuelle > base SMF > brvm.org et sikafinance > classeur |
 | Soldes de l'exercice en cours | PDF ou adresse fournis > recherche automatique sur richbourse |
+| Soldes intermédiaires, total du bilan (titre hors classeur) | saisie manuelle > fichier des soldes intermédiaires > base SMF > fiche société sikafinance |
 | Secteur | référentiel de l'application (classification CGF Gestion) > feuille SYNTHÈSE pour un titre hors référentiel |
 
 Un fractionnement d'action postérieur à la base (écart d'un facteur entier entre le dernier cours du
@@ -338,6 +363,7 @@ fiche-valeur-brvm/
 │   ├── config.py              référentiel des valeurs, paramètres, BCEAO, pondérations
 │   ├── parser.py              lecture et contrôle du classeur des états financiers
 │   ├── market.py              cours, titres, dividendes (fichiers et sources en ligne)
+│   ├── sig_file.py            fichier des soldes intermédiaires : modèle Excel, lecture, fusion
 │   ├── partial.py             titres à données partielles : chiffres clés, saisie, base SMF, couverture
 │   ├── publications.py        publications officielles : liste richbourse, lecture des PDF
 │   ├── autoparams.py          paramètres proposés automatiquement selon le titre

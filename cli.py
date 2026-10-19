@@ -25,6 +25,7 @@ from fiche_valeur.report_pptx import build_pptx
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Fiches de valeur BRVM (PDF, PowerPoint, Excel)")
     ap.add_argument("--ef", help="Classeur des états financiers (facultatif : sans lui, niveaux 2 et 3)")
+    ap.add_argument("--sig", help="Fichier des soldes intermédiaires de gestion (modèle renseigné)")
     ap.add_argument("--smf", help="Base de marché (Cours, Nb_titres, Moyenne_cours, Dividendes)")
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--ticker", nargs="+", help="Ticker(s) à analyser")
@@ -48,6 +49,8 @@ def main(argv=None) -> int:
     in_wb = set(wb.companies) if wb is not None else set()
     known = set(config.TICKERS) | in_wb
     mb = load_market_base(args.smf) if args.smf else None
+    from fiche_valeur.sig_file import parse_sig_file
+    sig = parse_sig_file(args.sig) if args.sig else None
     st = Settings(taux_sans_risque=args.rf, prime_risque_marche=args.prime, croissance_long_terme=args.g,
                   en_ligne=not args.hors_ligne, maison=args.maison)
     if args.all:
@@ -63,7 +66,7 @@ def main(argv=None) -> int:
             print(f"{t} : titre inconnu (absent du référentiel et du classeur)", file=sys.stderr)
             continue
         try:
-            a = run_analysis(wb, t, st, market_base=mb)
+            a = run_analysis(wb, t, st, market_base=mb, sig=sig)
         except Exception as exc:
             print(f"{t} : échec de l'analyse ({type(exc).__name__}: {exc})", file=sys.stderr)
             continue

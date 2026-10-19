@@ -22,6 +22,7 @@ from fiche_valeur.parser import parse_workbook
 from fiche_valeur.partial import MANUAL_COLUMNS, empty_manual_table, figures_from_market_base, figures_from_table
 from fiche_valeur.pipeline import run_analysis
 from fiche_valeur.report_pdf import build_pdf
+from fiche_valeur.sig_file import build_template as build_sig_template, parse_sig_file
 from fiche_valeur.report_pptx import build_pptx
 from fiche_valeur.utils import (clean_text, fmt_fcfa, fmt_num, fmt_pct, fmt_price, fmt_pts, fmt_x, is_num)
 
@@ -67,6 +68,18 @@ VER = _code_version()
 @st.cache_data(show_spinner=False)
 def _parse(data: bytes, name: str, ver: str = ""):
     return parse_workbook(data, filename=name)
+
+
+@st.cache_data(show_spinner=False)
+def _sig(data: bytes, ver: str = ""):
+    return parse_sig_file(data)
+
+
+@st.cache_data(show_spinner="Préparation du modèle...")
+def _sig_template(ef_bytes, ef_name: str, mkt_bytes, ver: str = ""):
+    wb_ = _parse(ef_bytes, ef_name, VER) if ef_bytes else None
+    mb_ = _market(mkt_bytes, VER) if mkt_bytes else None
+    return build_sig_template(wb_, mb_)
 
 
 @st.cache_data(show_spinner=False)
@@ -171,6 +184,14 @@ with st.sidebar:
     st.caption("À charger après le classeur des états financiers. Apporte cours, volumes, dividendes, nombre de "
                "titres et chiffres clés de toute la cote : les titres hors classeur passent au niveau 2 avec "
                "capitaux propres (ROE, P/B), et les exercices manquants du classeur sont complétés.")
+    sig_file = st.file_uploader(
+        "Soldes intermédiaires de gestion (classeur Excel)", type=["xlsx", "xlsm"],
+        help="Fichier de suivi tenu par CGF Gestion : une ligne par titre et par exercice (feuilles Entreprises et "
+             "Banques), montants en millions de FCFA. Il apporte les soldes intermédiaires (valeur ajoutée, EBE, "
+             "résultat d'exploitation, RAO, PNB, RBE...) et le total du bilan que les autres fichiers ne contiennent pas. "
+             "Titre hors classeur : ce fichier prime sur la base SMF. Titre du classeur : il comble les exercices manquants.")
+    st.caption("À charger après la base SMF. Fait passer les titres hors classeur au niveau 1 lorsque le bilan et au "
+               "moins deux soldes sont renseignés.")
     px_file = st.file_uploader(
         "Historique du titre analysé (CSV ou Excel)", type=["csv", "xlsx", "txt"],
         help="Colonnes Date, Ouverture, Plus haut, Plus bas, Clôture, Volume (français ou anglais). Remplace "
@@ -197,7 +218,22 @@ with st.sidebar:
 
     wb = _parse(ef_bytes, ef_name, VER) if ef_bytes else None
     mb = _market(mkt_bytes, VER) if mkt_bytes else None
+    sig_bytes = sig_file.getvalue() if sig_file is not None else None
+    sig = _sig(sig_bytes, VER) if sig_bytes else None
     in_wb = set(wb.companies) if wb is not None else set()
+    if sig is not None:
+        if sig.fields:
+            st.success(f"Soldes intermédiaires : {len(sig.tickers)} titres, {sig.n_rows} lignes exercice renseignées.")
+        for n_ in sig.notes:
+            st.warning(n_)
+        if sig.unknown:
+            st.warning("Tickers non reconnus dans le fichier des soldes intermédiaires : " + ", ".join(sig.unknown[:10]))
+    with st.expander("Modèle du fichier des soldes intermédiaires"):
+        st.caption("Classeur à compléter et à tenir à jour (feuilles Entreprises, Banques, Suivi, Lisez-moi). Il est "
+                   "pré-rempli avec le classeur des états financiers et la base SMF chargés ci-dessus.")
+        st.download_button("Télécharger le modèle (Excel)", _sig_template(ef_bytes, ef_name, mkt_bytes, VER),
+                           file_name="Soldes_Intermediaires_CGF.xlsx",
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     if wb is not None and getattr(wb, "sheet_report", None):
         read_ok = [r for r in wb.sheet_report if r[2].startswith("lue")]
         with st.expander(f"Lecture du classeur : {len(read_ok)} feuille(s) rattachée(s) à un titre"):
@@ -433,9 +469,11 @@ with tab_batch:
         "États financiers": "Oui" if t_ in in_wb else "Non",
         "Base de marché": "Oui" if t_ in mkt_tickers else "Non",
         "Chiffres clés SMF": "Oui" if figures_from_market_base(mb, t_) is not None else "Non",
+        "Soldes intermédiaires": ("Oui" if sig is not None and sig.fields.get(t_) else "Non"),
         "Niveau attendu": ("Niveau 1" if t_ in in_wb else
-                           ("Niveau 2" if figures_from_market_base(mb, t_) is not None else
-                            ("Niveau 2 ou 3" if online else "Niveau 3"))),
+                           ("Niveau 1 ou 1b" if sig is not None and sig.count(t_, "total_actif") >= 2 else
+                            ("Niveau 2" if figures_from_market_base(mb, t_) is not None else
+                             ("Niveau 2 ou 3" if online else "Niveau 3")))),
     } for t_ in all_tickers])
     n1 = int((cover["États financiers"] == "Oui").sum())
     st.caption(f"{len(cover)} titres : {n1} avec états financiers (niveau 1), {len(cover) - n1} hors classeur.")
@@ -451,7 +489,7 @@ with tab_batch:
         for i, t_ in enumerate(chosen):
             bar.progress(i / max(1, len(chosen)), text=f"{t_} ({i + 1}/{len(chosen)})")
             try:
-                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b))
+                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b, sig=sig))
             except Exception as exc:  # une valeur en erreur n'arrête pas le lot
                 errors.append(f"{t_} : {type(exc).__name__} {exc}")
         # Archive construite avant tout enregistrement : un lot interrompu ne laisse pas d'état incomplet
@@ -528,6 +566,9 @@ with tab_one:
             figures = figures_from_table(edited)
             st.caption("Aucune saisie : lecture en ligne (si activée), sinon analyse sur données de marché seules."
                        if figures is None else "Saisie détectée : elle sera utilisée à la prochaine analyse.")
+        if sig is not None and sig.fields.get(ticker):
+            st.info(f"Le fichier des soldes intermédiaires renseigne {ticker} : exercices "
+                    f"{', '.join(str(y_) for y_ in sig.years(ticker))}. Il est pris en compte à l'analyse.")
     report = None
     with st.expander("Dernière publication de la société (soldes de l'exercice en cours)", expanded=False):
         st.markdown(
@@ -563,7 +604,7 @@ with tab_one:
                                                "Variation"]), hide_index=True, width="stretch")
     run_key = (ticker, ef_name, len(ef_bytes or b""), online, tuple(sorted(overrides.items())), rf, erp, g, beta,
                tuple(sorted(w.items())), s_buy, s_sell, major, notes, use_ai, tuple(sorted(b.items())), house, analyst,
-               px_file.name if px_file else None, use_def, len(mkt_bytes or b""),
+               px_file.name if px_file else None, use_def, len(mkt_bytes or b""), len(sig_bytes or b""),
                (report.title, report.period, len(report.lines)) if report is not None else None)
     c1, c2 = st.columns([1, 3])
     go = c1.button("Lancer l'analyse", type="primary", width="stretch")
@@ -576,7 +617,7 @@ with tab_one:
         with st.status("Analyse en cours...", expanded=False) as status:
             a = run_analysis(wb, ticker, settings, market_base=mb, price_file=price_df, overrides=overrides,
                              user_notes=notes, major_event=major, bceao=b, use_claude=use_ai,
-                             progress=lambda msg: status.update(label=msg), figures=figs_used, report=report)
+                             progress=lambda msg: status.update(label=msg), figures=figs_used, report=report, sig=sig)
             status.update(label="Analyse terminée", state="complete")
         st.session_state["analysis"] = a
         st.session_state["run_key"] = run_key
@@ -800,7 +841,8 @@ with tab_one:
         st.subheader("Provenance des données")
         src = dict(a.market.sources)
         if c.level in ("complet", "partiel"):
-            src["états financiers"] = f"{ef_name}, feuille {c.sheet} ({c.unit_label})"
+            src["états financiers"] = (f"{ef_name}, feuille {c.sheet} ({c.unit_label})" if c.sheet
+                                   else f"{c.data_source} ({c.unit_label})")
         else:
             src["chiffres clés"] = c.data_source
         st.table(pd.DataFrame(list(src.items()), columns=["Donnée", "Source"]))
