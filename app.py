@@ -396,6 +396,87 @@ if not ticker:
 tab_one, tab_batch = st.tabs(["Analyse d'une valeur", "Tableau de bord multi-valeurs"])
 
 # ---------------------------------------------------------------------------
+# Tableau de bord multi-valeurs
+# Rendu avant l'onglet d'analyse, qui s'interrompt (st.stop) tant qu'aucune analyse n'est lancée.
+# ---------------------------------------------------------------------------
+with tab_batch:
+    st.write("Analyse en série de tous les titres de la cote : tableau des signaux, export Excel et archive des "
+             "fiches PDF. Les titres hors classeur sont analysés aux niveaux 2 ou 3 (chiffres clés en ligne, "
+             "sinon données de marché).")
+    mkt_tickers = set(mb.tickers) if mb is not None else set()
+    cover = pd.DataFrame([{
+        "Ticker": t_, "Société": config.TICKERS.get(t_, {}).get("nom", t_),
+        "Secteur": config.TICKERS.get(t_, {}).get("secteur", "n.d."),
+        "Pays": config.COUNTRIES.get(config.TICKERS.get(t_, {}).get("pays", ""), {}).get("nom", "n.d."),
+        "États financiers": "Oui" if t_ in in_wb else "Non",
+        "Base de marché": "Oui" if t_ in mkt_tickers else "Non",
+        "Chiffres clés SMF": "Oui" if figures_from_market_base(mb, t_) is not None else "Non",
+        "Niveau attendu": ("Niveau 1" if t_ in in_wb else
+                           ("Niveau 2" if figures_from_market_base(mb, t_) is not None else
+                            ("Niveau 2 ou 3" if online else "Niveau 3"))),
+    } for t_ in all_tickers])
+    n1 = int((cover["États financiers"] == "Oui").sum())
+    st.caption(f"{len(cover)} titres : {n1} avec états financiers (niveau 1), {len(cover) - n1} hors classeur.")
+    with st.expander("Liste des titres et données disponibles"):
+        st.dataframe(cover, hide_index=True, width="stretch")
+    chosen = st.multiselect("Valeurs à analyser", all_tickers, default=all_tickers,
+                            format_func=lambda t_: f"{t_} - {config.TICKERS.get(t_, {}).get('nom', t_)}")
+    with_pdf = st.checkbox("Inclure les fiches PDF dans l'archive", value=True)
+    if st.button("Analyser la sélection", type="primary", disabled=not chosen):
+        results, errors = [], []
+        bar = st.progress(0.0, text="Démarrage...")
+        batch_settings = replace(settings, claude_api_key="")
+        for i, t_ in enumerate(chosen):
+            bar.progress(i / max(1, len(chosen)), text=f"{t_} ({i + 1}/{len(chosen)})")
+            try:
+                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b))
+            except Exception as exc:  # une valeur en erreur n'arrête pas le lot
+                errors.append(f"{t_} : {type(exc).__name__} {exc}")
+        # Archive construite avant tout enregistrement : un lot interrompu ne laisse pas d'état incomplet
+        zbuf = io.BytesIO()
+        with zipfile.ZipFile(zbuf, "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("Tableau_des_signaux.xlsx", build_screening_excel(screening_frame(results)))
+            if with_pdf:
+                for i, r_ in enumerate(results):
+                    bar.progress(i / max(1, len(results)), text=f"Fiche PDF {r_.company.ticker} ({i + 1}/{len(results)})")
+                    try:
+                        z.writestr(f"Fiche_{r_.company.ticker}.pdf", build_pdf(r_))
+                    except Exception as exc:
+                        errors.append(f"{r_.company.ticker} (fiche PDF) : {type(exc).__name__} {exc}")
+        bar.progress(1.0, text="Terminé")
+        st.session_state["batch"] = results
+        st.session_state["batch_errors"] = errors
+        st.session_state["batch_zip"] = zbuf.getvalue()
+    results = st.session_state.get("batch")
+    if results:
+        df = screening_frame(results)
+        show = df.copy()
+        for col in ("Potentiel", "Rendement", "ROE", "Couverture"):
+            show[col] = show[col].map(lambda x: fmt_pct(x, 0 if col == "Couverture" else 1) if is_num(x) else "n.d.")
+        for col in ("Note globale", "Vue fondamentale", "Technique", "Cours", "Juste valeur"):
+            show[col] = show[col].map(lambda x: fmt_num(x) if is_num(x) else "n.d.")
+        for col in ("PER", "P/B"):
+            show[col] = show[col].map(lambda x: fmt_x(x, 1) if is_num(x) else "n.d.")
+        st.dataframe(show, hide_index=True, width="stretch")
+        counts = df["Signal"].value_counts()
+        st.caption(" | ".join(f"{k_} : {v_}" for k_, v_ in counts.items())
+                   + " | N1 : états financiers, N2 : chiffres clés, N3 : marché seul (conviction plafonnée).")
+        zip_bytes = st.session_state.get("batch_zip")
+        if zip_bytes:
+            st.download_button("Télécharger l'archive (tableau Excel + fiches)", zip_bytes,
+                               f"Fiches_BRVM_{date.today():%Y%m%d}.zip", "application/zip", type="primary",
+                               on_click="ignore")
+        else:
+            st.download_button("Télécharger le tableau des signaux (Excel)", build_screening_excel(df),
+                               f"Tableau_des_signaux_{date.today():%Y%m%d}.xlsx",
+                               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                               type="primary", on_click="ignore")
+            st.caption("Archive des fiches indisponible (lot interrompu) : relancez l'analyse de la sélection.")
+        for e_ in st.session_state.get("batch_errors", []):
+            st.error(e_)
+
+
+# ---------------------------------------------------------------------------
 # Analyse d'une valeur
 # ---------------------------------------------------------------------------
 with tab_one:
@@ -478,8 +559,8 @@ with tab_one:
         st.session_state["analysis"] = a
         st.session_state["run_key"] = run_key
         st.session_state["auto"] = True
-        st.session_state.pop("pdf", None)
-        st.session_state.pop("pptx", None)
+        for k_ in ("pdf", "pdf1", "pptx", "xlsx"):
+            st.session_state.pop(k_, None)
     a = st.session_state.get("analysis")
     if a is None or a.company.ticker != ticker:
         c2.info("Cliquez sur « Lancer l'analyse » pour produire la fiche de cette valeur.")
@@ -520,11 +601,11 @@ with tab_one:
 
     # Téléchargements ----------------------------------------------------------
     dl = st.columns(4)
-    if "pdf" not in st.session_state:
-        st.session_state["pdf"] = build_pdf(a)
-        st.session_state["pdf1"] = build_pdf(a, compact=True)
-        st.session_state["pptx"] = build_pptx(a)
-        st.session_state["xlsx"] = build_excel(a)
+    if not all(k_ in st.session_state for k_ in ("pdf", "pdf1", "pptx", "xlsx")):
+        with st.spinner("Préparation des documents..."):
+            docs = {"pdf": build_pdf(a), "pdf1": build_pdf(a, compact=True), "pptx": build_pptx(a),
+                    "xlsx": build_excel(a)}
+        st.session_state.update(docs)       # enregistrement en une fois : pas d'état partiel si interruption
     stamp = date.today().strftime("%Y%m%d")
     dl[0].download_button("Fiche PDF complète", st.session_state["pdf"], f"Fiche_{c.ticker}_{stamp}.pdf",
                           "application/pdf", width="stretch", on_click="ignore", type="primary")
@@ -712,69 +793,3 @@ with tab_one:
                                       columns=["Champ", "Libellé source"]))
         st.caption(config.DISCLAIMER)
 
-# ---------------------------------------------------------------------------
-# Tableau de bord multi-valeurs
-# ---------------------------------------------------------------------------
-with tab_batch:
-    st.write("Analyse en série de tous les titres de la cote : tableau des signaux, export Excel et archive des "
-             "fiches PDF. Les titres hors classeur sont analysés aux niveaux 2 ou 3 (chiffres clés en ligne, "
-             "sinon données de marché).")
-    mkt_tickers = set(mb.tickers) if mb is not None else set()
-    cover = pd.DataFrame([{
-        "Ticker": t_, "Société": config.TICKERS.get(t_, {}).get("nom", t_),
-        "Secteur": config.TICKERS.get(t_, {}).get("secteur", "n.d."),
-        "Pays": config.COUNTRIES.get(config.TICKERS.get(t_, {}).get("pays", ""), {}).get("nom", "n.d."),
-        "États financiers": "Oui" if t_ in in_wb else "Non",
-        "Base de marché": "Oui" if t_ in mkt_tickers else "Non",
-        "Chiffres clés SMF": "Oui" if figures_from_market_base(mb, t_) is not None else "Non",
-        "Niveau attendu": ("Niveau 1" if t_ in in_wb else
-                           ("Niveau 2" if figures_from_market_base(mb, t_) is not None else
-                            ("Niveau 2 ou 3" if online else "Niveau 3"))),
-    } for t_ in all_tickers])
-    n1 = int((cover["États financiers"] == "Oui").sum())
-    st.caption(f"{len(cover)} titres : {n1} avec états financiers (niveau 1), {len(cover) - n1} hors classeur.")
-    with st.expander("Liste des titres et données disponibles"):
-        st.dataframe(cover, hide_index=True, width="stretch")
-    chosen = st.multiselect("Valeurs à analyser", all_tickers, default=all_tickers,
-                            format_func=lambda t_: f"{t_} - {config.TICKERS.get(t_, {}).get('nom', t_)}")
-    with_pdf = st.checkbox("Inclure les fiches PDF dans l'archive", value=True)
-    if st.button("Analyser la sélection", type="primary", disabled=not chosen):
-        results, errors = [], []
-        bar = st.progress(0.0, text="Démarrage...")
-        batch_settings = replace(settings, claude_api_key="")
-        for i, t_ in enumerate(chosen):
-            bar.progress(i / max(1, len(chosen)), text=f"{t_} ({i + 1}/{len(chosen)})")
-            try:
-                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b))
-            except Exception as exc:  # une valeur en erreur n'arrête pas le lot
-                errors.append(f"{t_} : {type(exc).__name__} {exc}")
-        bar.progress(1.0, text="Terminé")
-        st.session_state["batch"] = results
-        st.session_state["batch_errors"] = errors
-        zbuf = io.BytesIO()
-        with zipfile.ZipFile(zbuf, "w", zipfile.ZIP_DEFLATED) as z:
-            df = screening_frame(results)
-            z.writestr("Tableau_des_signaux.xlsx", build_screening_excel(df))
-            if with_pdf:
-                for r_ in results:
-                    z.writestr(f"Fiche_{r_.company.ticker}.pdf", build_pdf(r_))
-        st.session_state["batch_zip"] = zbuf.getvalue()
-    results = st.session_state.get("batch")
-    if results:
-        df = screening_frame(results)
-        show = df.copy()
-        for col in ("Potentiel", "Rendement", "ROE", "Couverture"):
-            show[col] = show[col].map(lambda x: fmt_pct(x, 0 if col == "Couverture" else 1) if is_num(x) else "n.d.")
-        for col in ("Note globale", "Vue fondamentale", "Technique", "Cours", "Juste valeur"):
-            show[col] = show[col].map(lambda x: fmt_num(x) if is_num(x) else "n.d.")
-        for col in ("PER", "P/B"):
-            show[col] = show[col].map(lambda x: fmt_x(x, 1) if is_num(x) else "n.d.")
-        st.dataframe(show, hide_index=True, width="stretch")
-        counts = df["Signal"].value_counts()
-        st.caption(" | ".join(f"{k_} : {v_}" for k_, v_ in counts.items())
-                   + " | N1 : états financiers, N2 : chiffres clés, N3 : marché seul (conviction plafonnée).")
-        st.download_button("Télécharger l'archive (tableau Excel + fiches)", st.session_state["batch_zip"],
-                           f"Fiches_BRVM_{date.today():%Y%m%d}.zip", "application/zip", type="primary",
-                           on_click="ignore")
-        for e_ in st.session_state.get("batch_errors", []):
-            st.error(e_)
