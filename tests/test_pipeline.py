@@ -632,3 +632,18 @@ def test_charia_in_reports(partial_env, offline):
     assert "Charia" in xl.sheetnames
     a2 = run_analysis(None, "SNTS", offline)
     assert a2.charia.statut == "non_evaluable"
+
+
+def test_no_dividend_last_year_gives_zero_yield(wb, mb, offline):
+    from datetime import date as _d
+    from fiche_valeur.market import Dividend
+    t = wb.tickers[0]
+    a0 = run_analysis(wb, t, offline, market_base=mb)
+    mb2 = load_market_base(SMF)
+    mb2.dividends[t] = [Dividend(2023, 190.0, _d(2024, 7, 1), "test"), Dividend(2024, 190.0, _d(2025, 7, 1), "test"),
+                        Dividend(2025, 0.0, _d(2026, 7, 1), "test")]
+    a = run_analysis(wb, t, offline, market_base=mb2)
+    assert a.valuation.dps == 0 and a.valuation.dps_exercice == 2025
+    assert not a.valuation.div_yield
+    assert not any(m.name == "Actualisation des dividendes" for m in a.valuation.methods)
+    assert "rendement net" not in a.texts["valorisation"]

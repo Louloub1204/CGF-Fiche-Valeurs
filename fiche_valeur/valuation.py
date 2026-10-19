@@ -96,6 +96,13 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
         if "exceptionnel" in (last_div.source or ""):
             v.notes.append("Dernier dividende jugé exceptionnel (plus de 2,5 fois les versements précédents) : "
                            "le dividende ordinaire médian est retenu pour le rendement et l'actualisation.")
+    elif md.dividends and any(is_num(d_.montant_net) for d_ in md.dividends):
+        # dividendes renseignés mais aucun versement au dernier exercice : rendement nul, pas de repli sur un exercice ancien
+        latest = max((d_ for d_ in md.dividends if is_num(d_.montant_net)),
+                     key=lambda d_: (d_.exercice or 0, d_.date_paiement or date(1900, 1, 1)))
+        v.dps, v.dps_exercice = 0.0, latest.exercice
+        v.notes.append(f"Aucun dividende versé au titre de l'exercice {latest.exercice} : rendement nul, "
+                       "actualisation des dividendes écartée.")
     elif c.fields.get("dps"):
         yy = max(c.fields["dps"])
         v.dps, v.dps_exercice = c.fields["dps"][yy], yy

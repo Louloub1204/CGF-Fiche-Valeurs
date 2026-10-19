@@ -148,7 +148,8 @@ def build_commentary(a) -> dict:
                  + ("le titre se traite sur " + ", ".join(mult) if mult else
                     "les multiples de résultat ne sont pas calculables faute de résultat net ou de nombre de titres")
                  + (f" (références {fd.peer_label} : {', '.join(medtxt)})" if medtxt else "")
-                 + (f" et offre un rendement net de {fmt_pct(val.div_yield)}" if is_num(val.div_yield) else "")
+                 + (f" et offre un rendement net de {fmt_pct(val.div_yield)}" if is_num(val.div_yield) and val.div_yield > 0
+                    else (f" et ne verse pas de dividende au titre de {val.dps_exercice}" if val.dps == 0 and val.dps_exercice else ""))
                  + ".")
     if is_num(val.eps_ltm) and is_num(val.pe_ltm):
         v.append(f"Sur {val.ltm_label}, le BPA ressort à {fmt_num(val.eps_ltm)} FCFA (PER glissant de {fmt_x(val.pe_ltm)}), "
