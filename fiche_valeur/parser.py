@@ -659,7 +659,8 @@ def parse_workbook(source, filename: str = "", fx_usd_xof: float | None = None) 
         if comp is not None:
             companies[ticker] = comp
     for t, comp in companies.items():
-        if t in synth_sectors:
+        # le référentiel de l'application prime ; la feuille SYNTHÈSE classe les titres qui n'y figurent pas
+        if t in synth_sectors and t not in config.TICKERS:
             comp.sector = normalise_sector(synth_sectors[t], t)
     if not companies:
         notes.append("Aucune feuille société reconnue : la ligne d'en-tête « Poste | 2021 | 2022... » est introuvable.")

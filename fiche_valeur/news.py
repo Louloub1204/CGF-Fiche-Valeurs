@@ -91,7 +91,9 @@ def _short_name(name: str) -> str:
 def fetch_news(ticker: str, name: str, country: str = "CI", days: int = 365, limit: int = 25) -> News:
     gl = config.COUNTRIES.get(country, {}).get("gl", "CI")
     short = _short_name(name)
-    q = f'("{name}" OR "{short}" OR {ticker}) when:{days}d'
+    others = [a for a in config.TICKERS.get(ticker, {}).get("autres_noms", [])[:2] if a.upper() not in (name.upper(), short.upper())]
+    terms = " OR ".join(f'"{x}"' for x in [name, short] + others)
+    q = f'({terms} OR {ticker}) when:{days}d'
     try:
         url = RSS.format(q=urllib.parse.quote(q), gl=gl)
         r = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0 FicheValeurBRVM/1.0"})

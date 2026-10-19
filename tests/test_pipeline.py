@@ -454,3 +454,22 @@ def test_interim_in_reports(partial_env, offline):
     assert "Dernière publication" in a.texts["activite"]
     assert any(i.name.startswith("Publication") and i.status == "ok" for i in a.coverage.items)
     assert build_pdf(a)[:4] == b"%PDF" and build_pptx(a)[:2] == b"PK"
+
+
+def test_file_first_and_split_detection():
+    from fiche_valeur.market import _extend_history
+    idx = pd.bdate_range("2026-06-01", periods=60)
+    f = pd.DataFrame({"open": None, "high": None, "low": None, "close": 40000.0, "volume": 100.0}, index=idx[:40])
+    w = pd.DataFrame({"open": None, "high": None, "low": None, "close": 4000.0, "volume": 1000.0}, index=idx[35:])
+    out, split = _extend_history(f, w)          # web ajusté : 10 pour 1
+    assert split == 10 and out["close"].iloc[0] == 4000 and out.index.max() == idx[-1]
+    w2 = pd.DataFrame({"open": None, "high": None, "low": None, "close": 41000.0, "volume": 5.0}, index=idx[35:])
+    out2, split2 = _extend_history(f, w2)       # pas de fractionnement : le fichier prime sur les dates communes
+    assert split2 == 1 and out2.loc[idx[36], "close"] == 40000 and out2.loc[idx[50], "close"] == 41000
+
+
+def test_referential_sectors():
+    assert config.TICKERS["SDSC"]["secteur"] == config.IND and config.TICKERS["LNBB"]["secteur"] == config.CDI
+    assert "CROWN SIEM CI" in config.TICKERS["SEMC"]["autres_noms"]
+    from fiche_valeur.publications import ticker_of_company
+    assert ticker_of_company("BANK OF AFRICA NG") == "BOAN" and ticker_of_company("ECOBANK ETI") == "ETIT"

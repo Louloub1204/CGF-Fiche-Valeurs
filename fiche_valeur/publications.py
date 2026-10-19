@@ -134,19 +134,19 @@ ALIASES = {
     "UNLC": ["UNILEVER CI"],
     "UNXC": ["UNIWAX CI"],
 }
-_ALIAS_INDEX = {norm_label(a): t for t, al in ALIASES.items() for a in al}
+def _alias_index() -> dict[str, str]:
+    """Dénominations connues -> ticker : table ci-dessus, noms et autres noms du référentiel."""
+    idx = {norm_label(a): t for t, al in ALIASES.items() for a in al}
+    for t, ref in config.TICKERS.items():
+        for a in [ref.get("nom", "")] + list(ref.get("autres_noms", [])):
+            if a:
+                idx.setdefault(norm_label(a), t)
+    return idx
 
 
 def ticker_of_company(prefix: str) -> str | None:
     """Préfixe d'intitulé (« ORANGE CI ») -> ticker."""
-    n = norm_label(prefix)
-    if n in _ALIAS_INDEX:
-        return _ALIAS_INDEX[n]
-    # repli : nom du référentiel
-    for t, ref in config.TICKERS.items():
-        if norm_label(ref.get("nom", "")) == n:
-            return t
-    return None
+    return _alias_index().get(norm_label(prefix))
 
 
 _ORD = {"1ER": 1, "PREMIER": 1, "1": 1, "2E": 2, "2EME": 2, "DEUXIEME": 2, "2": 2, "3E": 3, "3EME": 3,
@@ -215,7 +215,7 @@ def _ticker_of_pub(pub: Publication) -> str | None:
         if t:
             return t
     n = norm_label(pub.title)
-    for alias, t in sorted(_ALIAS_INDEX.items(), key=lambda kv: -len(kv[0])):
+    for alias, t in sorted(_alias_index().items(), key=lambda kv: -len(kv[0])):
         if n.startswith(alias + " "):
             return t
     return None

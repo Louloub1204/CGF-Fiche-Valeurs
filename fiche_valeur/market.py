@@ -581,6 +581,12 @@ def _name_tokens(name: str) -> set[str]:
 
 
 def _name_match(target: str, candidate: str, ticker: str = "") -> bool:
+    """Rapproche une raison sociale publiée du titre, par le nom puis les autres noms du référentiel."""
+    others = config.TICKERS.get(ticker, {}).get("autres_noms", []) if ticker else []
+    return any(_name_match_one(n, candidate, ticker) for n in [target] + list(others))
+
+
+def _name_match_one(target: str, candidate: str, ticker: str = "") -> bool:
     c = norm_label(candidate)
     if ticker and re.search(rf"\b{re.escape(ticker)}\b", c):
         return True
@@ -676,6 +682,37 @@ def fetch_usd_xof(errors: list[str] | None = None) -> float | None:
 # Assemblage
 # ---------------------------------------------------------------------------
 
+def _extend_history(file_h: pd.DataFrame, web_h: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """Ajoute à l'historique du fichier les séances postérieures du web. Un écart d'un facteur entier
+    (au moins 2) entre les deux sources trahit un fractionnement : l'historique du fichier est ajusté
+    (la variation quotidienne de la BRVM est plafonnée, un tel saut ne peut venir du marché)."""
+    last = file_h.index.max()
+    common = file_h.index.intersection(web_h.index)
+    ratio = None
+    if len(common) >= 3:
+        ratio = float((file_h.loc[common, "close"] / web_h.loc[common, "close"]).median())
+        if abs(ratio - 1) < 0.08:
+            ratio = None
+    if ratio is None:
+        after = web_h[web_h.index > last]
+        if not after.empty and file_h["close"].iloc[-1] > 0:
+            ratio = float(file_h["close"].iloc[-1] / after["close"].iloc[0])
+    split = 1
+    if ratio and ratio >= 1.8:
+        n = round(ratio)
+        if abs(ratio - n) < 0.12 * n:
+            split = n
+    base = file_h.copy()
+    if split > 1:
+        for col in ("open", "high", "low", "close"):
+            if col in base:
+                base[col] = base[col] / split
+        if "volume" in base:
+            base["volume"] = base["volume"] * split
+    out = pd.concat([base, web_h[web_h.index > last]])
+    return out[~out.index.duplicated(keep="first")].sort_index(), split
+
+
 def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
                       price_file: pd.DataFrame | None = None, online: bool = True,
                       years: int = 3, overrides: dict | None = None) -> MarketData:
@@ -684,7 +721,8 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
     country = getattr(company, "country", None) or config.TICKERS.get(ticker, {}).get("pays")
     name = getattr(company, "name", None) or config.TICKERS.get(ticker, {}).get("nom", ticker)
 
-    # Historique de cours ---------------------------------------------------
+    # Historique de cours : fichiers d'abord, le web ne complète que les séances postérieures ----------
+    split = 1
     if price_file is not None and not price_file.empty:
         md.history = price_file
         md.sources["historique"] = "Fichier d'historique chargé"
@@ -700,62 +738,83 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
             md.history = h[["open", "high", "low", "close", "volume"]]
             md.sources["historique"] = "Base de marché (feuille Cours)"
     if online:
-        need_hist = md.history is None or md.history.index.max() < pd.Timestamp(date.today() - timedelta(days=10))
-        if need_hist:
+        stale = md.history is None or md.history.index.max() < pd.Timestamp(date.today() - timedelta(days=4))
+        if stale:
             h = fetch_sikafinance_history(ticker, country, years, md.errors)
             if h is not None and not h.empty:
-                if md.history is not None:
-                    h = pd.concat([md.history[md.history.index < h.index.min()], h])
-                md.history = h
-                md.sources["historique"] = "sikafinance.com (API d'historique)"
+                if md.history is None:
+                    md.history = h
+                    md.sources["historique"] = "sikafinance.com (API d'historique)"
+                else:
+                    md.history, split = _extend_history(md.history, h)
+                    if len(md.history) and md.history.index.max() > h.index.min():
+                        md.sources["historique"] = (md.sources["historique"] + ", complété par sikafinance.com "
+                                                    "pour les séances postérieures")
+                    if split > 1:
+                        md.errors.append(f"Fractionnement de l'action détecté (1 ancienne pour {split} nouvelles) : "
+                                         f"cours, volumes, dividendes et nombre de titres de la base ajustés.")
     # Indice BRVM Composite
     if base is not None and base.closes is not None and INDEX_TICKER in base.closes:
         ih = base.closes[[INDEX_TICKER]].rename(columns={INDEX_TICKER: "close"}).dropna()
         if not ih.empty:
             md.index_history = ih
             md.sources["indice"] = "Base de marché"
-    if online and (md.index_history is None or md.index_history.index.max() < pd.Timestamp(date.today() - timedelta(days=10))):
+    if online and (md.index_history is None or md.index_history.index.max() < pd.Timestamp(date.today() - timedelta(days=4))):
         ih = fetch_sikafinance_history(INDEX_TICKER, None, years, md.errors)
         if ih is not None and not ih.empty:
-            md.index_history = ih[["close"]]
-            md.sources["indice"] = "sikafinance.com (BRVM Composite)"
+            if md.index_history is None:
+                md.index_history = ih[["close"]]
+                md.sources["indice"] = "sikafinance.com (BRVM Composite)"
+            else:
+                last = md.index_history.index.max()
+                md.index_history = pd.concat([md.index_history, ih.loc[ih.index > last, ["close"]]])
+                md.sources["indice"] += ", complété par sikafinance.com"
 
     if md.history is not None and not md.history.empty:
         md.price = float(md.history["close"].iloc[-1])
         md.price_date = md.history.index[-1].date()
         md.sources["cours"] = md.sources.get("historique", "")
 
-    # Nombre de titres, cours de tous les titres (pairs) ---------------------
-    capi = fetch_brvm_capitalisations(md.errors) if online else None
-    if capi is not None:
-        md.peer_prices = {t: v for t, v in capi["cours"].items() if is_num(v)}
-        md.peer_shares = {t: v for t, v in capi["nb_titres"].items() if is_num(v)}
-        if ticker in capi.index:
-            row = capi.loc[ticker]
-            if is_num(row["nb_titres"]):
-                md.shares = float(row["nb_titres"])
-                md.sources["nombre de titres"] = "brvm.org (capitalisations)"
-            if is_num(row["cap_flottante"]) and is_num(row["cours"]) and row["cours"]:
-                md.float_shares = float(row["cap_flottante"]) / float(row["cours"])
-                md.sources["flottant"] = "brvm.org (capitalisation flottante / cours)"
-            if is_num(row["cours"]) and (md.price is None or (md.price_date and md.price_date < date.today() - timedelta(days=5))):
-                md.price = float(row["cours"])
-                md.price_date = date.today()
-                md.sources["cours"] = "brvm.org (cours du jour)"
+    # Nombre de titres : base de marché d'abord, brvm.org ensuite ---------------------------------
     if base is not None:
-        if md.shares is None and ticker in base.shares_total:
-            md.shares = base.shares_total[ticker]
-            md.sources["nombre de titres"] = "Base de marché (Nb_titres)"
-        if md.float_shares is None and ticker in base.shares_float:
-            md.float_shares = base.shares_float[ticker]
+        if ticker in base.shares_total:
+            md.shares = base.shares_total[ticker] * split
+            md.sources["nombre de titres"] = "Base de marché (Nb_titres)" + (" ajusté du fractionnement" if split > 1 else "")
+        if ticker in base.shares_float:
+            md.float_shares = base.shares_float[ticker] * split
             md.sources["flottant"] = "Base de marché (Nb_titres)"
         if ticker in base.avg_prices:
             md.avg_prices = dict(base.avg_prices[ticker])
-        if base.closes is not None and not md.peer_prices:
+        if base.closes is not None:
             last = base.closes.ffill().iloc[-1]
             md.peer_prices = {t: float(v) for t, v in last.items() if is_num(v)}
-        if not md.peer_shares:
-            md.peer_shares = dict(base.shares_total)
+        md.peer_shares = dict(base.shares_total)
+    capi = fetch_brvm_capitalisations(md.errors) if online else None
+    if capi is not None:
+        # pairs : couple cours / titres de la base s'il est complet, sinon celui de brvm.org (même source)
+        for t, row_ in capi.iterrows():
+            if not (is_num(md.peer_prices.get(t)) and is_num(md.peer_shares.get(t))):
+                if is_num(row_["cours"]) and is_num(row_["nb_titres"]):
+                    md.peer_prices[t], md.peer_shares[t] = float(row_["cours"]), float(row_["nb_titres"])
+        if ticker in capi.index:
+            row = capi.loc[ticker]
+            web_n = float(row["nb_titres"]) if is_num(row["nb_titres"]) else None
+            if web_n and md.shares is None:
+                md.shares = web_n
+                md.sources["nombre de titres"] = "brvm.org (capitalisations)"
+            elif web_n and md.shares:
+                ratio = web_n / md.shares
+                n = round(ratio)
+                if n >= 2 and abs(ratio - n) < 0.05 * n:
+                    md.shares, md.float_shares = web_n, (md.float_shares * n if md.float_shares else None)
+                    md.sources["nombre de titres"] = "brvm.org (capitalisations), fractionnement postérieur à la base"
+            if md.float_shares is None and is_num(row["cap_flottante"]) and is_num(row["cours"]) and row["cours"]:
+                md.float_shares = float(row["cap_flottante"]) / float(row["cours"])
+                md.sources["flottant"] = "brvm.org (capitalisation flottante / cours)"
+            if is_num(row["cours"]) and (md.price is None or (md.price_date and md.price_date < date.today() - timedelta(days=4))):
+                md.price = float(row["cours"])
+                md.price_date = date.today()
+                md.sources["cours"] = "brvm.org (cours du jour, plus récent que l'historique)"
     if company is not None and md.shares is None:
         nb = company.fields.get("nb_actions", {})
         if nb:
@@ -764,8 +823,9 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
 
     # Dividendes ------------------------------------------------------------
     if base is not None and base.dividends.get(ticker):
-        md.dividends = list(base.dividends[ticker])
-        md.sources["dividendes"] = "Base de marché (Dividendes)"
+        md.dividends = [Dividend(d.exercice, d.montant_net / split, d.date_paiement, d.source)
+                        for d in base.dividends[ticker]]
+        md.sources["dividendes"] = "Base de marché (Dividendes)" + (" ajustés du fractionnement" if split > 1 else "")
     if not md.dividends and online:
         divs = fetch_dividends_online(ticker, name, md.errors)
         if divs:

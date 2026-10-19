@@ -139,9 +139,11 @@ autres (harmonisation par ordre de grandeur), unité de feuille incohérente, bi
 résultat net supérieur au chiffre d'affaires, EBE reconstitué (résultat d'exploitation + dotations),
 capitaux propres reconstitués.
 
-Une feuille `SYNTHÈSE` facultative (colonnes ticker et secteur) permet d'imposer le secteur de
-chaque société. Le référentiel interne (`fiche_valeur/config.py`) couvre les 48 valeurs de la cote
-(nom, pays, secteur).
+Le référentiel (`fiche_valeur/config.py`, dictionnaire `TICKERS`) fixe pour les 48 valeurs de la cote
+le nom, le pays, le secteur selon la classification retenue par CGF Gestion et les autres noms usuels
+(« BANK OF AFRICA NG », « CROWN SIEM CI »...) qui servent à reconnaître la société dans les
+publications, les dividendes et la presse. Une feuille `SYNTHÈSE` du classeur ne classe que les titres
+absents de ce référentiel.
 
 ### 2. Base de données SMF (facultative, à charger après le classeur)
 
@@ -166,11 +168,25 @@ aux versements précédents est traité comme exceptionnel : le dividende ordina
 CSV ou Excel avec les colonnes `Date`, `Ouverture`, `Plus haut`, `Plus bas`, `Clôture`, `Volume`
 (libellés français ou anglais acceptés), par exemple un export sikafinance.
 
-### Ordre de priorité des données de marché
+### Ordre de priorité des données
 
-Saisie manuelle dans l'application > base de marché ou fichier d'historique > sources en ligne >
-états financiers (nombre d'actions, dividende). La provenance de chaque donnée figure dans la
-section « Sources » de la fiche.
+Les fichiers que vous chargez sont toujours la source première ; le web ne fait que compléter ce qui
+manque ou ce qui est plus récent.
+
+| Donnée | Ordre de priorité |
+|---|---|
+| États financiers | classeur > base SMF (Tableau de bord, exercices manquants seulement) > fiche société sikafinance > états financiers publiés (richbourse) |
+| Historique de cours | fichier d'historique > base SMF > sikafinance pour les seules séances postérieures au fichier |
+| Cours retenu | saisie manuelle > dernier cours de l'historique > cours du jour brvm.org s'il est plus récent |
+| Nombre de titres, flottant | saisie manuelle > base SMF > brvm.org |
+| Dividendes | saisie manuelle > base SMF > brvm.org et sikafinance > classeur |
+| Soldes de l'exercice en cours | PDF ou adresse fournis > recherche automatique sur richbourse |
+| Secteur | référentiel de l'application (classification CGF Gestion) > feuille SYNTHÈSE pour un titre hors référentiel |
+
+Un fractionnement d'action postérieur à la base (écart d'un facteur entier entre le dernier cours du
+fichier et le cours en ligne) est détecté : cours, volumes, dividendes et nombre de titres de la base
+sont alors ajustés, et la fiche le signale. La provenance de chaque donnée figure dans la section
+« Sources » de la fiche.
 
 ---
 
