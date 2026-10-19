@@ -21,6 +21,7 @@ from fiche_valeur.market import load_market_base, load_price_file
 from fiche_valeur.parser import parse_workbook
 from fiche_valeur.partial import MANUAL_COLUMNS, empty_manual_table, figures_from_market_base, figures_from_table
 from fiche_valeur.pipeline import run_analysis
+from fiche_valeur.charia import rows_for_table
 from fiche_valeur.interim_file import build_template as build_interim_template, parse_interim_file
 from fiche_valeur.report_pdf import build_pdf
 from fiche_valeur.report_pptx import build_pptx
@@ -73,6 +74,12 @@ def _parse(data: bytes, name: str, ver: str = ""):
 @st.cache_data(show_spinner=False)
 def _interim(data: bytes, ver: str = ""):
     return parse_interim_file(data)
+
+
+@st.cache_data(show_spinner=False)
+def _charia(data: bytes, ver: str = ""):
+    from fiche_valeur.charia import parse_charia_file
+    return parse_charia_file(data)
 
 
 @st.cache_data(show_spinner=False)
@@ -199,6 +206,13 @@ with st.sidebar:
         st.download_button("Télécharger le modèle (Excel)", _interim_template(VER),
                            file_name="Publications_Intermediaires_CGF.xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    ch_file = st.file_uploader(
+        "Screening Charia (classeur Excel)", type=["xlsx", "xlsm"],
+        help="Fichier « CHARIA SCREENING MODEL » (feuille TEST SCREENING UMOA, symbole en colonne AA). Quatre standards "
+             "(FTSE, DJIM, S&P, Malaysia) et filtre préalable sur les revenus portant intérêt : un titre est compatible "
+             "s'il valide au moins 3 standards sur 4. Banques, tabac, jeux et alcool sont exclus d'office.")
+    st.caption("Facultatif. Sans ce fichier, la conformité est recalculée à partir des états financiers du classeur "
+               "lorsqu'ils sont disponibles.")
     px_file = st.file_uploader(
         "Historique du titre analysé (CSV ou Excel)", type=["csv", "xlsx", "txt"],
         help="Colonnes Date, Ouverture, Plus haut, Plus bas, Clôture, Volume (français ou anglais). Remplace "
@@ -227,6 +241,14 @@ with st.sidebar:
     mb = _market(mkt_bytes, VER) if mkt_bytes else None
     int_bytes = int_file.getvalue() if int_file is not None else None
     idata = _interim(int_bytes, VER) if int_bytes else None
+    ch_bytes = ch_file.getvalue() if ch_file is not None else None
+    chdata = _charia(ch_bytes, VER) if ch_bytes else None
+    if chdata is not None:
+        nc_ = sum(1 for r_ in chdata.results.values() if r_.statut == "compatible")
+        if chdata.results:
+            st.success(f"Screening Charia : {len(chdata.results)} titres lus, {nc_} compatibles.")
+        for n_ in chdata.notes:
+            st.warning(n_)
     in_wb = set(wb.companies) if wb is not None else set()
     if idata is not None:
         if idata.rows:
@@ -472,6 +494,7 @@ with tab_batch:
         "Chiffres clés SMF": "Oui" if figures_from_market_base(mb, t_) is not None else "Non",
         "Publications intermédiaires": ("%s %d" % (idata.latest(t_)[1], idata.latest(t_)[0])
                                         if idata is not None and idata.latest(t_) else "Non"),
+        "Charia": (chdata.results[t_].label if chdata is not None and t_ in chdata.results else "n.d."),
         "Niveau attendu": ("Niveau 1" if t_ in in_wb else
                            ("Niveau 2" if figures_from_market_base(mb, t_) is not None else
                             ("Niveau 2 ou 3" if online else "Niveau 3"))),
@@ -490,7 +513,8 @@ with tab_batch:
         for i, t_ in enumerate(chosen):
             bar.progress(i / max(1, len(chosen)), text=f"{t_} ({i + 1}/{len(chosen)})")
             try:
-                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b, interim_data=idata))
+                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b, interim_data=idata,
+                                        charia_data=chdata))
             except Exception as exc:  # une valeur en erreur n'arrête pas le lot
                 errors.append(f"{t_} : {type(exc).__name__} {exc}")
         # Archive construite avant tout enregistrement : un lot interrompu ne laisse pas d'état incomplet
@@ -602,7 +626,7 @@ with tab_one:
                                                "Variation"]), hide_index=True, width="stretch")
     run_key = (ticker, ef_name, len(ef_bytes or b""), online, tuple(sorted(overrides.items())), rf, erp, g, beta,
                tuple(sorted(w.items())), s_buy, s_sell, major, notes, use_ai, tuple(sorted(b.items())), house, analyst,
-               px_file.name if px_file else None, use_def, len(mkt_bytes or b""), len(int_bytes or b""),
+               px_file.name if px_file else None, use_def, len(mkt_bytes or b""), len(int_bytes or b""), len(ch_bytes or b""),
                (report.title, report.period, len(report.lines)) if report is not None else None)
     c1, c2 = st.columns([1, 3])
     go = c1.button("Lancer l'analyse", type="primary", width="stretch")
@@ -615,7 +639,8 @@ with tab_one:
         with st.status("Analyse en cours...", expanded=False) as status:
             a = run_analysis(wb, ticker, settings, market_base=mb, price_file=price_df, overrides=overrides,
                              user_notes=notes, major_event=major, bceao=b, use_claude=use_ai,
-                             progress=lambda msg: status.update(label=msg), figures=figs_used, report=report, interim_data=idata)
+                             progress=lambda msg: status.update(label=msg), figures=figs_used, report=report, interim_data=idata,
+                             charia_data=chdata)
             status.update(label="Analyse terminée", state="complete")
         st.session_state["analysis"] = a
         st.session_state["run_key"] = run_key
@@ -715,6 +740,16 @@ with tab_one:
         f2.subheader("Points de vigilance")
         for s_ in tx.get("vigilances") or ["Aucun point saillant détecté."]:
             f2.markdown(f"- {s_}")
+        ch_ = getattr(a, "charia", None)
+        if ch_ is not None:
+            st.subheader("Conformité Charia")
+            st.write(tx.get("charia", ch_.label))
+            if ch_.standards:
+                st.dataframe(pd.DataFrame(rows_for_table(ch_), columns=["Standard", "Ratio", "Valeur", "Seuil", "Respecté"]),
+                             hide_index=True, width="stretch")
+                st.caption(f"Filtre préalable : revenus portant intérêt / CA <= 5%. Source : {ch_.source}.")
+            for n_ in ch_.notes:
+                st.caption(n_)
 
     with t2:
         dyn_ = a.dynamics

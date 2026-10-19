@@ -581,3 +581,54 @@ def test_ltm_per_in_valuation(partial_env, offline):
     from fiche_valeur.report_pdf import build_pdf
     from fiche_valeur.report_pptx import build_pptx
     assert build_pdf(a)[:4] == b"%PDF" and build_pptx(a)[:2] == b"PK"
+
+
+# ---------------------------------------------------------------------------
+# Conformité Charia
+# ---------------------------------------------------------------------------
+def _charia_book(rows):
+    book = openpyxl.Workbook()
+    ws = book.active
+    ws.title = "TEST SCREENING UMOA"
+    for r, (sym, j, k, l, y) in enumerate(rows, start=6):
+        ws.cell(r, 27, sym)
+        for col, v in zip((10, 11, 12, 14, 15, 16, 18, 19, 20, 22, 23), (j, k, l, j, k, l, j, k, l, j, l)):
+            ws.cell(r, col, v)
+        ws.cell(r, 25, y)
+    buf = io.BytesIO()
+    book.save(buf)
+    return buf.getvalue()
+
+
+def test_charia_file_rules():
+    from fiche_valeur.charia import parse_charia_file
+    data = parse_charia_file(_charia_book([
+        ("PALC", 0.004, 0.393, 0.048, 0), ("SMBC", 0.40, 0.61, 0.13, 0), ("NTLC", 0.05, 0.2, 0.05, 0.08),
+        ("UNXC", 0, 0, 0, 0), ("SOGB", 0.0, 0.089, 0.058, 0), ("BICC", 0.0, 0.1, 0.1, 0), ("LNBB", 0.0, 0.1, 0.1, 0)]))
+    r = data.results
+    assert r["PALC"].statut == "compatible" and r["PALC"].n_pass == 3          # DJIM : créances > 33%
+    assert r["SMBC"].statut == "non_compatible" and r["SMBC"].n_pass == 0
+    assert r["NTLC"].statut == "non_compatible" and r["NTLC"].filtre_ok is False   # revenus d'intérêt > 5%
+    assert r["UNXC"].statut == "non_evaluable"
+    assert r["SOGC"].statut == "compatible"                                    # symbole SOGB du fichier
+    assert r["BICC"].statut == "exclu" and r["LNBB"].statut == "exclu"
+    bad = parse_charia_file(_charia_book([]))
+    assert not bad.results
+
+
+def test_charia_in_reports(partial_env, offline):
+    from fiche_valeur.charia import parse_charia_file
+    from fiche_valeur.export import build_excel
+    from fiche_valeur.report_pdf import build_pdf
+    from fiche_valeur.report_pptx import build_pptx
+    data = parse_charia_file(_charia_book([("SNTS", 0.1, 0.1, 0.1, 0)]))
+    a = run_analysis(None, "SNTS", offline, charia_data=data)
+    assert a.charia.statut == "compatible"
+    assert any("Charia" in x for x in a.texts["forces"])
+    pdf = build_pdf(a)
+    assert pdf[:4] == b"%PDF"
+    assert build_pptx(a)[:2] == b"PK"
+    xl = openpyxl.load_workbook(io.BytesIO(build_excel(a)))
+    assert "Charia" in xl.sheetnames
+    a2 = run_analysis(None, "SNTS", offline)
+    assert a2.charia.statut == "non_evaluable"

@@ -228,6 +228,16 @@ def build_commentary(a) -> dict:
 
     # ---- Forces et vigilances ---------------------------------------------------------
     out["forces"], out["vigilances"] = _strengths_risks(a)
+    ch = getattr(a, "charia", None)
+    if ch is not None:
+        from .charia import summary_line
+        out["charia"] = clean_text(summary_line(ch))
+        if ch.statut == "compatible":
+            out["forces"].append(f"Compatible Charia : {ch.n_pass} standards sur 4 validés.")
+        elif ch.statut in ("non_compatible", "exclu"):
+            out["vigilances"].append("Hors périmètre Charia : " + (ch.raison.lower() if ch.raison else
+                                                                  f"{ch.n_pass} standard{'s' if ch.n_pass > 1 else ''} sur 4 validé{'s' if ch.n_pass > 1 else ''}, "
+                                                                  "3 requis") + ".")
 
     # ---- Thèse en deux paragraphes ----------------------------------------------------
     p1 = out["activite"]

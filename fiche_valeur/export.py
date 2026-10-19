@@ -33,6 +33,21 @@ def dynamics_frame(a) -> pd.DataFrame:
                                        "Variation", "Statut", "Origine", "Publication", "Source"])
 
 
+def charia_frame(a) -> pd.DataFrame:
+    from .charia import rows_for_table, summary_line
+    ch = getattr(a, "charia", None)
+    if ch is None:
+        return pd.DataFrame()
+    rows = [["Verdict", ch.label, "", "", ""], ["Synthèse", clean_text(summary_line(ch)), "", "", ""],
+            ["Source", ch.source or "n.d.", "", "", ""]]
+    if ch.illicit_ratio is not None:
+        rows.append(["Filtre préalable", "Revenus portant intérêt / CA", f"{ch.illicit_ratio * 100:.1f}%".replace(".", ","),
+                     "<= 5%", "Oui" if ch.filtre_ok else "Non"])
+    rows += rows_for_table(ch)
+    rows += [["Note", n, "", "", ""] for n in ch.notes]
+    return pd.DataFrame(rows, columns=["Standard", "Ratio", "Valeur", "Seuil", "Respecté"])
+
+
 def analysis_frames(a) -> dict[str, pd.DataFrame]:
     c, v, fd, t, d = a.company, a.valuation, a.fundamentals, a.technical, a.decision
     years = c.years[-5:]
@@ -75,7 +90,7 @@ def analysis_frames(a) -> dict[str, pd.DataFrame]:
                        columns=["Donnée", "Statut", "Détail", "Effet sur l'analyse", "Pour compléter"]) if a.coverage else pd.DataFrame()
     pub = dynamics_frame(a)
     return {"Synthèse": synth, "Dynamique": pub, "SIG": sig, "Ratios": ratios, "Valorisation": val, "Technique": tech,
-            "Pairs": peers, "Historique": hist, "Couverture": cov, "Contrôles": notes}
+            "Charia": charia_frame(a), "Pairs": peers, "Historique": hist, "Couverture": cov, "Contrôles": notes}
 
 
 def build_excel(a) -> bytes:
@@ -105,6 +120,7 @@ def screening_frame(analyses: list) -> pd.DataFrame:
             "Juste valeur": v.fair_value, "Potentiel": v.upside, "Rendement": v.div_yield, "PER": v.pe,
             "P/B": v.pb, "ROE": a.fundamentals.ratios.get("roe", {}).get(a.fundamentals.year),
             "Tendance": a.technical.trend if a.technical.available else "n.d.",
+            "Charia": a.charia.label if getattr(a, "charia", None) is not None else "n.d.",
         })
     df = pd.DataFrame(rows)
     order = {"ACHAT": 0, "ATTENDRE": 1, "CONSERVER": 2, "ALLÉGER": 3, "VENDRE": 4}

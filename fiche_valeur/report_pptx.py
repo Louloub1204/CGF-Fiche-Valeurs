@@ -730,6 +730,26 @@ def build_pptx(a) -> bytes:
         _bullets(s, Inches(7.9), Inches(5.5), Inches(4.9), Inches(1.5),
                  others or [f"Source : {clean_text(rep.source or 'document chargé par l analyste')}"], size=9.5)
 
+    ch = getattr(a, "charia", None)
+    if ch is not None and ch.statut != "non_evaluable":
+        from .charia import rows_for_table, summary_line
+        s = d.slide("Conformité Charia", ch.label, notes=summary_line(ch))
+        if ch.standards:
+            rows = [["Standard", "Ratio", "Valeur", "Seuil", "Respecté"]] + rows_for_table(ch)
+            _table(s, Inches(0.6), Inches(1.45), Inches(7.6), rows, [1.2, 3.0, 1.1, 1.1, 1.2], font=10,
+                   row_h=min(0.36, 5.0 / len(rows)))
+        _rect(s, Inches(8.6), Inches(1.45), Inches(4.2), Inches(2.0), PAPER, name="Verdict Charia")
+        _text(s, Inches(8.8), Inches(1.55), Inches(3.8), Inches(0.4), "Verdict", size=13, bold=True, color=NAVY)
+        _text(s, Inches(8.8), Inches(1.95), Inches(3.8), Inches(1.5), clean_text(summary_line(ch)), size=11)
+        pts = ["Filtre préalable : revenus portant intérêt / chiffre d'affaires <= 5%"
+               + ("" if ch.illicit_ratio is None else f" (titre : {fmt_pct(ch.illicit_ratio)})") + ".",
+               "Compatible si au moins 3 standards sur 4 sont validés (FTSE, DJIM, S&P, Malaysia).",
+               "Exclusions de principe : banques conventionnelles, tabac, jeux de hasard, alcool."] + list(ch.notes)
+        _bullets(s, Inches(8.6), Inches(3.7), Inches(4.2), Inches(2.9), pts, size=10)
+        _text(s, Inches(0.6), Inches(6.75), Inches(12.2), Inches(0.3),
+              f"Source : {clean_text(ch.source)}" + (f", exercice {ch.annee}" if ch.annee else "") + ". Information de "
+              "screening, sans effet sur le signal ni sur la valorisation.", size=8.5, color=MUTED)
+
     s = d.slide("Actualités et informations communiquées", "Veille de presse sur douze mois et communication de la société",
                 notes=tx.get("actualites"))
     items = a.news.items[:9]
@@ -779,6 +799,8 @@ def build_pptx(a) -> bytes:
                                    else f"{c.data_source} ({c.unit_label})")
     else:
         src["chiffres clés"] = c.data_source
+    if getattr(a, "charia", None) is not None and a.charia.statut != "non_evaluable":
+        src["screening Charia"] = a.charia.source
     if a.dynamics is not None:
         src["dynamique de l'exercice"] = f"{a.dynamics.latest.label} : {a.dynamics.source}"
     src["macroéconomie"] = m.source

@@ -26,6 +26,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Fiches de valeur BRVM (PDF, PowerPoint, Excel)")
     ap.add_argument("--ef", help="Classeur des états financiers (facultatif : sans lui, niveaux 2 et 3)")
     ap.add_argument("--pub", help="Fichier des publications intermédiaires (T1, S1, T3)")
+    ap.add_argument("--charia", help="Fichier de screening Charia (feuille TEST SCREENING UMOA)")
     ap.add_argument("--smf", help="Base de marché (Cours, Nb_titres, Moyenne_cours, Dividendes)")
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--ticker", nargs="+", help="Ticker(s) à analyser")
@@ -51,6 +52,11 @@ def main(argv=None) -> int:
     mb = load_market_base(args.smf) if args.smf else None
     from fiche_valeur.interim_file import parse_interim_file
     idata = parse_interim_file(args.pub) if args.pub else None
+    from fiche_valeur.charia import parse_charia_file
+    chdata = parse_charia_file(args.charia) if args.charia else None
+    if chdata is not None:
+        for n_ in chdata.notes:
+            print(n_, file=sys.stderr)
     st = Settings(taux_sans_risque=args.rf, prime_risque_marche=args.prime, croissance_long_terme=args.g,
                   en_ligne=not args.hors_ligne, maison=args.maison)
     if args.all:
@@ -66,7 +72,7 @@ def main(argv=None) -> int:
             print(f"{t} : titre inconnu (absent du référentiel et du classeur)", file=sys.stderr)
             continue
         try:
-            a = run_analysis(wb, t, st, market_base=mb, interim_data=idata)
+            a = run_analysis(wb, t, st, market_base=mb, interim_data=idata, charia_data=chdata)
         except Exception as exc:
             print(f"{t} : échec de l'analyse ({type(exc).__name__}: {exc})", file=sys.stderr)
             continue

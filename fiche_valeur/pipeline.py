@@ -12,6 +12,7 @@ from .fundamentals import Fundamentals, analyse_fundamentals
 from .macro import Macro, analyse_macro
 from .market import MarketBase, MarketData, build_market_data
 from .news import News, add_user_notes, fetch_news
+from .charia import CharData, CharResult, resolve as charia_resolve
 from .dynamics import Dynamics, InterimData, build_dynamics, momentum_from
 from .parser import CompanyData, Workbook
 from .partial import (Coverage, KeyFigures, assess, build_company, fetch_sika_societe, figures_from_market_base,
@@ -42,6 +43,7 @@ class Analysis:
     key_figures: KeyFigures | None = None
     interim: InterimReport | None = None
     dynamics: Dynamics | None = None
+    charia: CharResult | None = None
     publications: list[Publication] = field(default_factory=list)
 
 
@@ -67,7 +69,7 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
                  user_notes: str = "", major_event: bool = False, bceao: dict | None = None,
                  use_claude: bool = False, progress=None, figures: KeyFigures | None = None,
                  custom: dict | None = None, report: InterimReport | None = None,
-                 interim_data: InterimData | None = None) -> Analysis:
+                 interim_data: InterimData | None = None, charia_data: CharData | None = None) -> Analysis:
     """Analyse d'un titre. ``wb`` peut être vide ou absent : le titre est alors traité au niveau 2 ou 3.
 
     ``figures`` : chiffres clés saisis (prioritaires sur ceux du classeur) ; ``custom`` : nom, pays et
@@ -127,7 +129,7 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
                  level=c.level)
     a = Analysis(company=c, market=md, fundamentals=fd, technical=tech, valuation=val, macro=mac, news=news,
                  decision=dec, settings=st, errors=errors, coverage=cov, key_figures=kf, interim=interim,
-                 dynamics=dyn, publications=pubs)
+                 dynamics=dyn, publications=pubs, charia=charia_resolve(ticker, c, charia_data))
     a.texts = build_commentary(a)
     if use_claude and st.claude_api_key:
         step("Rédaction assistée")

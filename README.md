@@ -419,3 +419,11 @@ Logos, modèles et pictogrammes de `assets/brand/` et `assets/templates/` : prop
 - Priorité : fichier utilisateur, puis publications en ligne pour les trous.
 - Analyse : tant que l'exercice N n'est pas clos dans les états financiers annuels, la dynamique de N (variation sur un an, accélération ou ralentissement, 12 mois glissants, BPA et PER glissants) complète l'analyse de N-1.
 - Régénérer le fichier : `python -m fiche_valeur.interim_file --data data/publications_collectees.json --out data/Publications_Intermediaires_CGF.xlsx`.
+
+## Conformité Charia
+
+- Fichier : « CHARIA SCREENING MODEL » (feuille `TEST SCREENING UMOA`, symbole en colonne AA), chargé dans l'application ("Screening Charia") ou via `python cli.py --charia fichier.xlsx --ticker XXXX`.
+- Méthode du projet SMF : quatre standards (FTSE colonnes J-L, DJIM N-P, S&P R-T, Malaysia V-W), filtre préalable revenus portant intérêt / CA <= 5% (colonne Y), compatible si au moins 3 standards sur 4. Seuils appliqués : ceux du formatage conditionnel du fichier (trésorerie 48% pour FTSE et Malaysia, créances 49% pour S&P).
+- Exclusions de principe : banques et établissements financiers, tabac (STBC), jeux (LNBB), alcool (SLBC). Le symbole SOGB du fichier est rattaché à SOGC.
+- Sans fichier, recalcul depuis les états financiers du classeur (dette financière, créances, trésorerie, total actif, moyennes des capitaux propres).
+- Information de screening : aucun effet sur le signal ni la valorisation. Présente dans la fiche PDF, le PowerPoint, l'onglet Charia de l'Excel, l'onglet Synthèse de l'application et le tableau multi-valeurs.

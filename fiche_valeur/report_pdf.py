@@ -557,6 +557,31 @@ def _interim_block(a, st):
     return [KeepTogether(out[:3])] + out[3:]
 
 
+def _charia_block(a, st) -> list:
+    """Conformité Charia : verdict, filtre préalable et détail des quatre standards."""
+    from .charia import summary_line
+    ch = getattr(a, "charia", None)
+    if ch is None:
+        return []
+    blk = [P("Conformité Charia", st["h1"]), P(summary_line(ch), st["body"]), Spacer(1, 3)]
+    if ch.standards:
+        rows = [["Standard", "Base de calcul", "Ratios (valeur, seuil)", "Validé"]]
+        for s_ in ch.standards:
+            det = " ; ".join(
+                f"{lab.split(' / ')[0].lower()} " + ("n.d." if x is None else f"{x * 100:.1f}%".replace(".", ","))
+                + f" (<= {seuil * 100:.0f}%)" for lab, x, seuil, _ in s_.ratios)
+            rows.append([s_.name, s_.base, P(det, st["cell"]), "Oui" if s_.ok else "Non"])
+        blk.append(_table(rows, [CONTENT_W * 0.12, CONTENT_W * 0.25, CONTENT_W * 0.53, CONTENT_W * 0.10], st,
+                          num_cols_from=3))
+        flt = ("non vérifié" if ch.illicit_ratio is None else f"{ch.illicit_ratio * 100:.1f}%".replace(".", ","))
+        blk.append(P(f"Filtre préalable : revenus portant intérêt / chiffre d'affaires {flt} (seuil 5%). Titre compatible "
+                     f"s'il valide au moins 3 standards sur 4. Source : {ch.source}"
+                     + (f", exercice {ch.annee}" if ch.annee else "") + ".", st["muted"]))
+    for n in ch.notes:
+        blk.append(P(n, st["muted"]))
+    return blk
+
+
 def _coverage_table(a, st):
     cov = a.coverage
     label = {"ok": "Disponible", "partiel": "Partiel", "absent": "Absent"}
@@ -608,6 +633,8 @@ def build_pdf(a, compact: bool = False) -> bytes:
     pil = _img(charts.pillars_chart(d.pillars, size=(3.7, 1.9)), CONTENT_W * 0.48, 40 * mm)
     just = [P("Fondement du signal", st["h2"])] + _bullets(tx.get("justification", [])[:4], st)
     story.append(KeepTogether(_two_cols([P("Notation par pilier (/100)", st["h2"]), pil] if pil else [], just)))
+    if getattr(a, "charia", None) is not None and a.charia.statut != "non_evaluable":
+        story += [Spacer(1, 2), P(f"Conformité Charia : {a.charia.label}.", st["small"])]
 
     if not compact:
         partial = c.level in ("chiffres_cles", "marche")
@@ -704,6 +731,9 @@ def build_pdf(a, compact: bool = False) -> bytes:
         if d.warnings:
             just_all += [P("Réserves", st["h2"])] + _bullets(d.warnings, st)
         story += [P("Matrice de décision", st["h1"]), _two_cols([mat] if mat else [], just_all, ratio=0.48)]
+        ch_blk = _charia_block(a, st)
+        if ch_blk:
+            story += [Spacer(1, 4), KeepTogether(ch_blk)]
         story += [CondPageBreak(40 * mm), P("Sources et qualité des données", st["h1"]), _sources(a, st)]
         if c.level in ("complet", "partiel") and a.coverage is not None:
             miss = ", ".join(i.name.lower() for i in a.coverage.missing)
