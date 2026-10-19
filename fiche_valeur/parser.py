@@ -107,6 +107,7 @@ class Workbook:
     synthese_sectors: dict[str, str]
     notes: list[str]
     filename: str = ""
+    sheet_report: list[tuple[str, str | None, str]] = field(default_factory=list)   # feuille, ticker, statut
 
     @property
     def tickers(self) -> list[str]:
@@ -451,8 +452,8 @@ def _read_sheet(ws_values, ws_formulas) -> tuple[list[Line], list[int], list[str
     rows = list(ws_values.iter_rows(min_row=1, max_row=min(ws_values.max_row, 400)))
     head_texts: list[str] = []
     candidates: list[tuple[int, dict[int, int], bool]] = []
-    for i, row in enumerate(rows[:15]):
-        first = row[0].value if row else None
+    for i, row in enumerate(rows[:30]):
+        first = next((c.value for c in row[:3] if isinstance(c.value, str) and c.value.strip()), None) if row else None
         if isinstance(first, str):
             head_texts.append(first)
         cand: dict[int, int] = {}
@@ -471,6 +472,14 @@ def _read_sheet(ws_values, ws_formulas) -> tuple[list[Line], list[int], list[str
         return [], [], head_texts
     header_idx, year_cols, _ = chosen
     fsheet = _FormulaSheet(ws_values, ws_formulas)
+    # colonne des libellés : celle, à gauche des exercices, qui porte le plus de textes (A ou B le plus souvent)
+    first_year_col = min(year_cols.values())
+    best_col, best_n = 0, -1
+    for j in range(max(1, first_year_col - 1)):
+        n = sum(1 for r in rows[header_idx + 1:header_idx + 120]
+                if len(r) > j and isinstance(r[j].value, str) and len(r[j].value.strip()) > 3)
+        if n > best_n:
+            best_col, best_n = j, n
     # textes de l'en-tête (unité parfois indiquée en tête de colonne)
     for cell in rows[header_idx]:
         if isinstance(cell.value, str):
@@ -479,9 +488,9 @@ def _read_sheet(ws_values, ws_formulas) -> tuple[list[Line], list[int], list[str
     lines: list[Line] = []
     section = "pnl"
     for row in rows[header_idx + 1:]:
-        if not row:
+        if not row or len(row) <= best_col:
             continue
-        label = row[0].value
+        label = row[best_col].value
         if label is None or (isinstance(label, str) and not label.strip()):
             continue
         if not isinstance(label, str):
@@ -581,6 +590,67 @@ def _guess_ticker(sheet_name: str) -> str:
     return t
 
 
+def _name_index() -> dict[str, str]:
+    """Dénominations connues (référentiel, autres noms, intitulés de publications) -> ticker."""
+    idx: dict[str, str] = {}
+    try:
+        from .publications import ALIASES
+        for t, al in ALIASES.items():
+            for a in al:
+                idx[norm_label(a)] = t
+    except Exception:
+        pass
+    for t, ref in config.TICKERS.items():
+        for a in [ref.get("nom", "")] + list(ref.get("autres_noms", [])):
+            if a:
+                idx.setdefault(norm_label(a), t)
+    return idx
+
+
+GENERIC_WORDS = {"COTE", "D", "IVOIRE", "CI", "SA", "SN", "BF", "BN", "ML", "NG", "TG", "SENEGAL", "BENIN", "MALI",
+                 "NIGER", "TOGO", "BURKINA", "FASO", "DE", "DU", "LA", "LE", "ET", "BANK", "OF", "AFRICA", "BANQUE",
+                 "SOCIETE", "GROUPE", "GROUP", "INTERNATIONAL", "ETATS", "FINANCIERS", "COMPTES"}
+
+
+def resolve_ticker(sheet_name: str, head_texts: list[str] | None = None) -> str:
+    """Nom de feuille (et titre) -> ticker du référentiel : « FTSC », « FTSC CI », « Filtisac »,
+    « FILTISAC COTE D'IVOIRE »... Repli : nom de feuille nettoyé."""
+    raw = _guess_ticker(sheet_name)
+    if raw in config.TICKERS:
+        return raw
+    for suf in ("BRVMCI", "BRVM", "CI", "SN", "BF", "BJ", "ML", "NE", "TG"):    # « FTSCCI », « SGBCCI »
+        if raw.endswith(suf) and raw[:-len(suf)] in config.TICKERS:
+            return raw[:-len(suf)]
+    words = norm_label(sheet_name).split()
+    for w in words:                                   # ticker inclus dans le nom : « FTSC CI », « FTSC - Filtisac »
+        if w in config.TICKERS:
+            return w
+    idx = _name_index()
+    texts = [sheet_name] + [t for t in (head_texts or [])[:3] if isinstance(t, str)]
+    for txt in texts:
+        n = norm_label(txt)
+        if n in idx:
+            return idx[n]
+    # nom distinctif contenu dans le nom de feuille ou le titre (« Filtisac », « Etats financiers SONATEL »)
+    best = None
+    for txt in texts:
+        n = " " + norm_label(txt) + " "
+        for alias, t in idx.items():
+            key = [w for w in alias.split() if w not in GENERIC_WORDS]
+            if not key:
+                continue
+            if all(f" {w} " in n for w in key):
+                if t.startswith("BOA"):            # les BOA se distinguent par le pays
+                    pays = norm_label(config.COUNTRIES.get(config.TICKERS[t]["pays"], {}).get("nom", ""))
+                    if pays.split()[0] not in n and not any(f" {c} " in n for c in (t[3:],)):
+                        continue
+                if best is None or len(key) > best[1]:
+                    best = (t, len(key))
+        if best:
+            return best[0]
+    return raw
+
+
 def _read_synthese(ws) -> tuple[dict[str, str], dict[str, str]]:
     sectors, names = {}, {}
     for row in ws.iter_rows(min_row=1, max_row=min(ws.max_row, 200), values_only=True):
@@ -644,6 +714,7 @@ def parse_workbook(source, filename: str = "", fx_usd_xof: float | None = None) 
     notes: list[str] = []
     synth_sectors: dict[str, str] = {}
     companies: dict[str, CompanyData] = {}
+    report: list[tuple[str, str | None, str]] = []
     for name in wb_v.sheetnames:
         ws = wb_v[name]
         if norm_label(name).startswith("SYNTHESE") or norm_label(name) in {"LISEZ MOI", "README", "SOMMAIRE"}:
@@ -653,18 +724,27 @@ def parse_workbook(source, filename: str = "", fx_usd_xof: float | None = None) 
         wsf = wb_f[name] if wb_f is not None and name in wb_f.sheetnames else None
         lines, years, head_texts = _read_sheet(ws, wsf)
         if not lines or not years:
+            report.append((name, None, "ignorée : ligne d'en-tête des exercices (2021, 2022...) introuvable"))
             continue
-        ticker = _guess_ticker(name)
+        ticker = resolve_ticker(name, head_texts)
+        if ticker in companies:
+            report.append((name, ticker, f"ignorée : {ticker} déjà lu dans la feuille {companies[ticker].sheet}"))
+            continue
         comp = _build_company(ticker, name, lines, years, head_texts, fx_usd_xof)
         if comp is not None:
             companies[ticker] = comp
+            known = "" if ticker in config.TICKERS else " (ticker absent du référentiel)"
+            report.append((name, ticker, f"lue : {len(comp.years)} exercices, {len(comp.fields)} postes reconnus{known}"))
+        else:
+            report.append((name, ticker, "ignorée : aucun poste reconnu"))
     for t, comp in companies.items():
         # le référentiel de l'application prime ; la feuille SYNTHÈSE classe les titres qui n'y figurent pas
         if t in synth_sectors and t not in config.TICKERS:
             comp.sector = normalise_sector(synth_sectors[t], t)
     if not companies:
         notes.append("Aucune feuille société reconnue : la ligne d'en-tête « Poste | 2021 | 2022... » est introuvable.")
-    return Workbook(companies=companies, synthese_sectors=synth_sectors, notes=notes, filename=filename)
+    return Workbook(companies=companies, synthese_sectors=synth_sectors, notes=notes, filename=filename,
+                    sheet_report=report)
 
 
 def _build_company(ticker: str, sheet: str, lines: list[Line], years: list[int],

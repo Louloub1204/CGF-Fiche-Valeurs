@@ -164,9 +164,6 @@ def _apply_level(d: Decision) -> None:
     elif d.level in ("chiffres_cles", "partiel"):
         if d.conviction == "Forte":
             d.conviction = "Moyenne"
-        if d.level == "chiffres_cles":
-            d.warnings.append("Analyse sur chiffres clés : bilan et solidité financière non évalués, conviction "
-                              "plafonnée.")
 
 
 def _finalise(d: Decision, valuation, technical, liquidity, available, news, major_event) -> Decision:

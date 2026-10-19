@@ -490,3 +490,24 @@ def test_auto_params(tmp_path):
         Publication("SOCIETE A CI : Paiement de dividendes - Exercice 2025", date(2026, 9, 1), "u"),
         Publication("SOCIETE A CI : Fractionnement de l'action", date(2026, 9, 2), "u")])
     assert len(major) == 1 and "Offre publique" in major[0] and len(info) == 2
+
+
+def test_sheet_name_resolution(tmp_path):
+    from fiche_valeur.parser import resolve_ticker
+    assert resolve_ticker("Filtisac") == "FTSC" and resolve_ticker("FTSC CI") == "FTSC"
+    assert resolve_ticker("BOA Niger") == "BOAN" and resolve_ticker("Total Sénégal") == "TTLS"
+    # libellés en colonne B, feuille nommée par la raison sociale
+    book = openpyxl.Workbook()
+    ws = book.active
+    ws.title = "FILTISAC COTE D'IVOIRE"
+    ws.append(["", "Filtisac - états financiers (en millions FCFA)"])
+    ws.append(["Code", "Poste", 2023, 2024, 2025])
+    ws.append(["XB", "Chiffre d'affaires", 38214, 30694, 32108])
+    ws.append(["XI", "Résultat net", 3075, 18595, 465])
+    ws.append(["", "Capitaux propres", 26903, 43454, 15703])
+    ws.append(["", "Total actif", 60000, 70000, 50000])
+    path = tmp_path / "ef.xlsx"
+    book.save(path)
+    wb_ = parse_workbook(path)
+    assert "FTSC" in wb_.companies and wb_.companies["FTSC"].get("ca", 2025) == pytest.approx(32108e6)
+    assert wb_.sheet_report[0][1] == "FTSC" and wb_.sheet_report[0][2].startswith("lue")

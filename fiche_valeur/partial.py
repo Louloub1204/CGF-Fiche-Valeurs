@@ -372,14 +372,19 @@ def assess(c: CompanyData, md, fd, interim=None) -> Coverage:
             f"{n_rev} exercices de revenus, {n_rn} de résultat net ({c.data_source})",
             "Croissance et PER sur une période plus courte.",
             "Charger l'onglet du titre dans le classeur ou compléter le tableau de saisie.")
-        add("Bilan (capitaux propres, total actif)",
-            "ok" if min(n_cp, n_ta) >= 2 else ("partiel" if n_cp >= 2 else "absent"),
-            f"{n_cp} exercices de fonds propres, {n_ta} de total bilan",
-            "Autonomie financière et solidité non évaluées." if n_cp >= 2 else
-            "ROE, P/B, P/B justifié, autonomie financière et solidité non évalués.",
-            "Saisir capitaux propres et total du bilan (états financiers publiés sur brvm.org).")
-        add("Soldes intermédiaires de gestion", "absent", "Non disponibles",
-            "Pas de tableau des SIG ni de marge d'exploitation.", "Charger les états financiers détaillés.")
+        if n_cp >= 2:
+            add("Total du bilan", "ok" if n_ta >= 2 else "absent", f"{n_cp} exercices de fonds propres, {n_ta} de total bilan",
+                "Autonomie financière, ROA et score de solidité non évalués.",
+                "Saisir le total du bilan ou charger la feuille du titre dans le classeur des états financiers.")
+        else:
+            add("Bilan (capitaux propres, total actif)", "absent", f"{n_cp} exercices de fonds propres, {n_ta} de total bilan",
+                "ROE, P/B, P/B justifié, autonomie financière et solidité non évalués.",
+                "Saisir capitaux propres et total du bilan (états financiers publiés sur brvm.org).")
+        n_re = _n_years(c, "re")
+        add("Soldes intermédiaires de gestion", "partiel" if n_re else "absent",
+            "chiffre d'affaires, résultat d'exploitation et résultat net seulement" if n_re else "Non disponibles",
+            "Pas de valeur ajoutée, d'EBE ni de détail des charges.",
+            "Charger la feuille du titre dans le classeur des états financiers.")
     else:
         add("États financiers", "absent", "Aucun chiffre financier disponible",
             "Qualité et croissance non évaluées ; vue fondamentale neutre par construction.",
@@ -420,6 +425,7 @@ def assess(c: CompanyData, md, fd, interim=None) -> Coverage:
     core = {"États financiers": 3, "Chiffres clés (CA, résultat net)": 2, "Bilan (capitaux propres, total actif)": 1,
             "Soldes intermédiaires de gestion": 1, "Historique de cours": 2, "Cours actuel": 2,
             "Nombre de titres": 1.5, "Dividendes": 1, "Sociétés comparables": 1, "Indice BRVM Composite": 0.5,
+            "Total du bilan": 0.5,
             "Publication de l'exercice en cours": 0.5}
     num = sum(weights[i.status] * core.get(i.name, 1) for i in items)
     den = sum(core.get(i.name, 1) for i in items)

@@ -184,6 +184,14 @@ with st.sidebar:
     wb = _parse(ef_bytes, ef_name) if ef_bytes else None
     mb = _market(mkt_bytes) if mkt_bytes else None
     in_wb = set(wb.companies) if wb is not None else set()
+    if wb is not None and wb.sheet_report:
+        read_ok = [r for r in wb.sheet_report if r[2].startswith("lue")]
+        with st.expander(f"Lecture du classeur : {len(read_ok)} feuille(s) rattachée(s) à un titre"):
+            st.caption("Chaque feuille est rattachée à un titre par son nom (ticker, raison sociale ou autre nom "
+                       "usuel). Une feuille ignorée ou mal rattachée laisse le titre aux niveaux 2 ou 3 : "
+                       "renommez-la avec le ticker (ex. FTSC).")
+            st.dataframe(pd.DataFrame([(sh, t or "", stt) for sh, t, stt in wb.sheet_report],
+                                      columns=["Feuille", "Titre", "Statut"]), hide_index=True, width="stretch")
     if mb is not None and mb.closes is not None and not mb.closes.empty:
         st.success(f"Base SMF : {len([t_ for t_ in mb.tickers if t_ in config.TICKERS])} titres cotés, cours "
                    f"jusqu'au {mb.closes.index.max():%d/%m/%Y}, chiffres clés pour {len(mb.fundamentals)} titres.")
@@ -580,7 +588,17 @@ with tab_one:
                 f'</span><div class="fv-small">Conviction {d.conviction.lower()} | note '
                 f'{(fmt_num(d.composite) + "/100") if is_num(d.composite) else "n.d."}</div></div>', unsafe_allow_html=True)
 
-    if a.coverage is not None and c.level != "complet":
+    if wb is not None and c.level in ("chiffres_cles", "marche"):
+        ign = [sh for sh, t, stt in wb.sheet_report if not stt.startswith("lue")]
+        st.error(f"Aucune feuille du classeur « {ef_name} » n'est rattachée à {c.ticker} : l'analyse se fait sans "
+                 f"ses états financiers détaillés. Vérifiez le nom de la feuille (ticker {c.ticker} conseillé)"
+                 + (f" ; feuilles non lues : {', '.join(ign[:6])}." if ign else ".")
+                 + " Détail dans « Lecture du classeur » (barre latérale).")
+    if wb is None and c.level in ("chiffres_cles", "marche"):
+        st.info("Aucun classeur d'états financiers n'est chargé dans cette session (les fichiers ne sont pas "
+                "conservés après un redémarrage de l'application). Chargez-le dans la barre latérale puis relancez "
+                "l'analyse : les états financiers détaillés de ce titre seront alors utilisés.")
+    elif a.coverage is not None and c.level != "complet":
         miss = ", ".join(i.name.lower() for i in a.coverage.missing[:4])
         st.warning(f"**{config.LEVELS[c.level][0]}** | couverture des données {fmt_num(a.coverage.score, 0)}%. "
                    f"{config.LEVELS[c.level][1]} Conviction plafonnée."

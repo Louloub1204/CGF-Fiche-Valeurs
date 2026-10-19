@@ -311,7 +311,7 @@ def _strengths_risks(a) -> tuple[list[str], list[str]]:
                 S.append(f"{ln.label} {rep.period} en hausse de {fmt_pct(ln.variation)} sur un an.")
             elif ln.variation <= -0.08:
                 R.append(f"{ln.label} {rep.period} en recul de {fmt_pct(abs(ln.variation))} sur un an.")
-    if c.level in ("chiffres_cles", "marche"):
+    if c.level == "marche":
         R.insert(0, f"Données limitées ({config.LEVELS[c.level][0].split(' - ')[1].lower()}) : conviction plafonnée, "
                     f"signal à confirmer avec les états financiers.")
     elif c.notes:

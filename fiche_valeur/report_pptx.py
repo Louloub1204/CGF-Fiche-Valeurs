@@ -465,8 +465,6 @@ def build_pptx(a) -> bytes:
     msg = (f"Signal {dec.signal}, conviction {dec.conviction.lower()}"
            + (f", note globale {fmt_num(dec.composite)}/100" if is_num(dec.composite) else "")
            + ". " + clean_text(config.SIGNAL_DEFINITIONS.get(dec.signal, "")))
-    if c.level != "complet" and a.coverage is not None:
-        msg += f" {config.LEVELS[c.level][0]}, couverture des données {fmt_num(a.coverage.score, 0)}%."
     _band(s, Inches(0.36), Inches(6.05), Inches(12.61), Inches(0.85), msg, size=11.5)
 
     d.divider(1, "Analyse boursière et financière", "Profil boursier, soldes intermédiaires de gestion, ratios et pairs",
@@ -575,7 +573,7 @@ def build_pptx(a) -> bytes:
             _text(s, Inches(8.25), Inches(5.15), Inches(4.6), Inches(1.8), tx.get("activite", ""), size=10, color=INK)
         cov = a.coverage
         s = d.slide("Données disponibles et compléments",
-                    f"{config.LEVELS[c.level][0]} | couverture des données {fmt_num(cov.score, 0)}%")
+                    f"Couverture des données : {fmt_num(cov.score, 0)}%")
         lab = {"ok": "Disponible", "partiel": "Partiel", "absent": "Absent"}
         rows = [["Donnée", "Statut", "Détail"]] + [[i.name, lab[i.status], clean_text(i.detail)[:70]] for i in cov.items]
         _table(s, Inches(0.6), Inches(1.5), Inches(7.6), rows, [2.3, 1.0, 3.6], font=9.5, row_h=0.42,

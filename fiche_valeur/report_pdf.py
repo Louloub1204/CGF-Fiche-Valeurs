@@ -449,22 +449,6 @@ def _sources(a, st):
 
 
 
-def _level_banner(a, st):
-    """Bandeau signalant un niveau de données inférieur à l'analyse complète."""
-    c, cov = a.company, a.coverage
-    if c.level == "complet" or cov is None:
-        return None
-    title, desc = config.LEVELS[c.level]
-    miss = [i.name for i in cov.missing][:4]
-    txt = (f"<b>{escape(clean_text(title))}</b> | couverture des données {fmt_num(cov.score, 0)}%. "
-           f"{escape(clean_text(desc))}" + (f" À compléter : {escape(clean_text(', '.join(miss).lower()))}." if miss else ""))
-    t = Table([[Paragraph(txt, st["small"])]], colWidths=[CONTENT_W])
-    t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), INFO), ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor(config.GOLD_LIGHT)),
-                           ("LINEBEFORE", (0, 0), (0, -1), 2.5, GOLD), ("LEFTPADDING", (0, 0), (-1, -1), 7),
-                           ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
-    return t
-
-
 def _keyfig_table(a, st):
     """Chiffres clés annuels (niveau 2) : revenus, résultat, par action, dividende."""
     c = a.company
@@ -559,9 +543,6 @@ def build_pdf(a, compact: bool = False) -> bytes:
                              ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0),
                              ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
     story += [top, Spacer(1, 5)]
-    banner = _level_banner(a, st)
-    if banner is not None:
-        story += [banner, Spacer(1, 4)]
     story.append(P("Thèse d'investissement" + (" (rédaction assistée)" if a.ai_used else ""), st["h2"]))
     for para in tx.get("these", []):
         story.append(P(para, st["body"]))
