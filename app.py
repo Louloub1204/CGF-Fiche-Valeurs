@@ -50,26 +50,40 @@ h1, h2, h3 {{color: {config.NAVY}; font-family: Cambria, Caladea, Georgia, serif
 # ---------------------------------------------------------------------------
 # Chargements mis en cache
 # ---------------------------------------------------------------------------
+def _code_version() -> str:
+    """Empreinte du code de l'application : un changement de version invalide les données en cache
+    (un classeur lu avec une ancienne version n'a pas les mêmes champs)."""
+    import hashlib
+    from pathlib import Path
+    h = hashlib.md5()
+    for f in sorted(Path(__file__).parent.joinpath("fiche_valeur").glob("*.py")):
+        h.update(f.read_bytes())
+    return h.hexdigest()[:10]
+
+
+VER = _code_version()
+
+
 @st.cache_data(show_spinner=False)
-def _parse(data: bytes, name: str):
+def _parse(data: bytes, name: str, ver: str = ""):
     return parse_workbook(data, filename=name)
 
 
 @st.cache_data(show_spinner=False)
-def _market(data: bytes):
+def _market(data: bytes, ver: str = ""):
     return load_market_base(io.BytesIO(data))
 
 
 @st.cache_data(show_spinner=False)
-def _prices(data: bytes, name: str):
+def _prices(data: bytes, name: str, ver: str = ""):
     return load_price_file(io.BytesIO(data), name)
 
 
 @st.cache_data(show_spinner="Préparation des paramètres du titre...", ttl=3600)
-def _auto_params(ticker: str, ef_bytes, ef_name: str, mkt_bytes, online: bool):
+def _auto_params(ticker: str, ef_bytes, ef_name: str, mkt_bytes, online: bool, ver: str = ""):
     from fiche_valeur.autoparams import suggest
-    wb_ = _parse(ef_bytes, ef_name) if ef_bytes else None
-    mb_ = _market(mkt_bytes) if mkt_bytes else None
+    wb_ = _parse(ef_bytes, ef_name, VER) if ef_bytes else None
+    mb_ = _market(mkt_bytes, VER) if mkt_bytes else None
     try:
         return suggest(ticker, wb_, mb_, online)
     except Exception:
@@ -181,10 +195,10 @@ with st.sidebar:
     else:
         mkt_bytes = None
 
-    wb = _parse(ef_bytes, ef_name) if ef_bytes else None
-    mb = _market(mkt_bytes) if mkt_bytes else None
+    wb = _parse(ef_bytes, ef_name, VER) if ef_bytes else None
+    mb = _market(mkt_bytes, VER) if mkt_bytes else None
     in_wb = set(wb.companies) if wb is not None else set()
-    if wb is not None and wb.sheet_report:
+    if wb is not None and getattr(wb, "sheet_report", None):
         read_ok = [r for r in wb.sheet_report if r[2].startswith("lue")]
         with st.expander(f"Lecture du classeur : {len(read_ok)} feuille(s) rattachée(s) à un titre"):
             st.caption("Chaque feuille est rattachée à un titre par son nom (ticker, raison sociale ou autre nom "
@@ -249,7 +263,7 @@ with st.sidebar:
                           "marché utilisées, taux souverain du pays, bêta médian du secteur, seuils proportionnés à "
                           "la volatilité, pondération adaptée à la liquidité, annonces officielles récentes. "
                           "Modifiez seulement ce que vous voulez corriger.")
-    ap = _auto_params(ticker, ef_bytes, ef_name, mkt_bytes, online) if (auto and ticker) else None
+    ap = _auto_params(ticker, ef_bytes, ef_name, mkt_bytes, online, VER) if (auto and ticker) else None
     sfx = f"{ticker}_{int(auto)}_{int(online)}_{len(mkt_bytes or b'')}"
 
     def _src(txt):
@@ -558,7 +572,7 @@ with tab_one:
             st.session_state["figs_used"] = (ticker, figures)
         used = st.session_state.get("figs_used")
         figs_used = used[1] if used and used[0] == ticker else None
-        price_df = _prices(px_file.getvalue(), px_file.name) if px_file is not None else None
+        price_df = _prices(px_file.getvalue(), px_file.name, VER) if px_file is not None else None
         with st.status("Analyse en cours...", expanded=False) as status:
             a = run_analysis(wb, ticker, settings, market_base=mb, price_file=price_df, overrides=overrides,
                              user_notes=notes, major_event=major, bceao=b, use_claude=use_ai,
@@ -589,7 +603,7 @@ with tab_one:
                 f'{(fmt_num(d.composite) + "/100") if is_num(d.composite) else "n.d."}</div></div>', unsafe_allow_html=True)
 
     if wb is not None and c.level in ("chiffres_cles", "marche"):
-        ign = [sh for sh, t, stt in wb.sheet_report if not stt.startswith("lue")]
+        ign = [sh for sh, t, stt in getattr(wb, "sheet_report", []) if not stt.startswith("lue")]
         st.error(f"Aucune feuille du classeur « {ef_name} » n'est rattachée à {c.ticker} : l'analyse se fait sans "
                  f"ses états financiers détaillés. Vérifiez le nom de la feuille (ticker {c.ticker} conseillé)"
                  + (f" ; feuilles non lues : {', '.join(ign[:6])}." if ign else ".")
