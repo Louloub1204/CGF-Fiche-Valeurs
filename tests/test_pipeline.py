@@ -7,6 +7,7 @@ from __future__ import annotations
 import io
 import json
 import re
+from datetime import date
 from pathlib import Path
 
 import openpyxl
@@ -473,3 +474,19 @@ def test_referential_sectors():
     assert "CROWN SIEM CI" in config.TICKERS["SEMC"]["autres_noms"]
     from fiche_valeur.publications import ticker_of_company
     assert ticker_of_company("BANK OF AFRICA NG") == "BOAN" and ticker_of_company("ECOBANK ETI") == "ETIT"
+
+
+def test_auto_params(tmp_path):
+    from fiche_valeur.autoparams import classify_announcements, suggest
+    from fiche_valeur.publications import Publication
+    mb = load_market_base(_smf_like(tmp_path / "smf.xlsx"))
+    config.register_ticker("AAAC", "Société A", "CI", "Industriels")
+    ap = suggest("AAAC", None, mb, online=False)
+    assert ap.price == mb.closes["AAAC"].dropna().iloc[-1] and ap.shares == 20_000_000
+    assert ap.float_pct == pytest.approx(0.2) and ap.dps == 50 and ap.dps_exercice == 2024
+    assert ap.rf == config.TAUX_SOUVERAINS["CI"] and 12 <= ap.seuil_achat <= 30
+    major, info = classify_announcements([
+        Publication("SOCIETE A CI : Offre publique d'achat", date(2026, 10, 1), "u"),
+        Publication("SOCIETE A CI : Paiement de dividendes - Exercice 2025", date(2026, 9, 1), "u"),
+        Publication("SOCIETE A CI : Fractionnement de l'action", date(2026, 9, 2), "u")])
+    assert len(major) == 1 and "Offre publique" in major[0] and len(info) == 2

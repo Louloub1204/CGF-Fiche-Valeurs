@@ -65,6 +65,17 @@ def _prices(data: bytes, name: str):
     return load_price_file(io.BytesIO(data), name)
 
 
+@st.cache_data(show_spinner="Préparation des paramètres du titre...", ttl=3600)
+def _auto_params(ticker: str, ef_bytes, ef_name: str, mkt_bytes, online: bool):
+    from fiche_valeur.autoparams import suggest
+    wb_ = _parse(ef_bytes, ef_name) if ef_bytes else None
+    mb_ = _market(mkt_bytes) if mkt_bytes else None
+    try:
+        return suggest(ticker, wb_, mb_, online)
+    except Exception:
+        return None
+
+
 @st.cache_data(show_spinner=False)
 def _report_from_pdf(data: bytes, title: str):
     from fiche_valeur.publications import parse_report_pdf
@@ -222,56 +233,91 @@ with st.sidebar:
     st.markdown("### 3. Paramètres")
     online = st.toggle("Compléter avec les données en ligne", value=not demo,
                        help="Active la consultation de sikafinance (cours, volumes, chiffres clés, dividendes), "
-                            "brvm.org (nombre de titres, capitalisation, dividendes), FMI (croissance, inflation) et "
-                            "Google Actualités. Désactivez pour travailler uniquement sur vos fichiers.")
-    with st.expander("Saisies manuelles (prioritaires)"):
-        st.caption("Chaque valeur saisie remplace toutes les sources automatiques. Laissez à 0 pour utiliser les "
+                            "brvm.org (nombre de titres, capitalisation, dividendes), richbourse (publications et "
+                            "annonces), FMI (croissance, inflation) et Google Actualités. Désactivez pour travailler "
+                            "uniquement sur vos fichiers.")
+    auto = st.toggle("Paramètres automatiques selon le titre", value=True,
+                     help="Préremplit chaque champ ci-dessous pour le titre choisi, avec sa source : données de "
+                          "marché utilisées, taux souverain du pays, bêta médian du secteur, seuils proportionnés à "
+                          "la volatilité, pondération adaptée à la liquidité, annonces officielles récentes. "
+                          "Modifiez seulement ce que vous voulez corriger.")
+    ap = _auto_params(ticker, ef_bytes, ef_name, mkt_bytes, online) if (auto and ticker) else None
+    sfx = f"{ticker}_{int(auto)}_{int(online)}_{len(mkt_bytes or b'')}"
+
+    def _src(txt):
+        if ap is not None and txt:
+            st.caption(f"Auto : {txt}")
+
+    defaults = Settings()
+    with st.expander("Données de marché et événements" + (" (préremplis)" if ap else ""), expanded=False):
+        st.caption("Valeurs utilisées pour l'analyse. Une valeur modifiée remplace toutes les sources automatiques "
+                   "pour ce titre." if ap else
+                   "Chaque valeur saisie remplace toutes les sources automatiques. Laissez à 0 pour utiliser les "
                    "données du classeur, de la base de marché ou en ligne.")
-        m_price = st.number_input("Cours (FCFA)", min_value=0.0, value=0.0, step=5.0,
+        p_price = float(ap.price) if ap and is_num(ap.price) else 0.0
+        p_shares = float(ap.shares) if ap and is_num(ap.shares) else 0.0
+        p_float = round(float(ap.float_pct) * 100, 2) if ap and is_num(ap.float_pct) else 0.0
+        p_dps = float(ap.dps) if ap and is_num(ap.dps) else 0.0
+        p_dps_y = int(ap.dps_exercice) if ap and ap.dps_exercice else date.today().year - 1
+        m_price = st.number_input("Cours (FCFA)", min_value=0.0, value=p_price, step=5.0, key=f"px_{sfx}", format="%.0f",
                                   help="Dernier cours de clôture du titre. Sert au potentiel, au PER, au rendement.")
-        m_shares = st.number_input("Nombre de titres", min_value=0.0, value=0.0, step=1000.0,
+        _src(ap.price_src if ap else "")
+        m_shares = st.number_input("Nombre de titres", min_value=0.0, value=p_shares, step=1000.0, key=f"nb_{sfx}", format="%.0f",
                                    help="Nombre total d'actions du capital (ex. 100 000 000). Source : brvm.org, "
                                         "rubrique Capitalisations, ou rapport annuel. Nécessaire au BPA, PER, P/B.")
-        m_float = st.number_input("Flottant (%)", min_value=0.0, max_value=100.0, value=0.0, step=1.0,
-                                  help="Part du capital librement négociable, en %. Sert à mesurer la liquidité "
-                                       "(rotation du flottant).")
-        m_dps = st.number_input("Dividende net par action (FCFA)", min_value=0.0, value=0.0, step=5.0,
-                                help="Dividende net d'impôt versé par action au titre du dernier exercice. Remplace "
-                                     "les dividendes de la base de marché ou en ligne.")
-        m_dps_y = st.number_input("Exercice du dividende", min_value=2015, max_value=2035,
-                                  value=date.today().year - 1, help="Exercice auquel se rapporte le dividende saisi.")
+        _src(ap.shares_src if ap else "")
+        m_float = st.number_input("Flottant (%)", min_value=0.0, max_value=100.0, value=min(100.0, p_float), step=1.0,
+                                  key=f"fl_{sfx}", help="Part du capital librement négociable, en %. Sert à mesurer "
+                                                        "la liquidité (rotation du flottant).")
+        _src(ap.float_src if ap else "")
+        m_dps = st.number_input("Dividende net par action (FCFA)", min_value=0.0, value=p_dps, step=5.0,
+                                key=f"dps_{sfx}", help="Dividende net d'impôt versé par action au titre du dernier "
+                                                       "exercice. Remplace les dividendes de la base ou en ligne.")
+        m_dps_y = st.number_input("Exercice du dividende", min_value=2015, max_value=2035, value=p_dps_y,
+                                  key=f"dpsy_{sfx}", help="Exercice auquel se rapporte le dividende saisi.")
+        _src(ap.dps_src if ap else "")
         major = st.checkbox("Événement majeur en cours (OPA, augmentation de capital, litige...)",
+                            value=bool(ap.major_event) if ap else False, key=f"maj_{sfx}",
                             help="Place le titre en position d'attente jusqu'à clarification, sauf s'il est déjà à "
-                                 "vendre. À cocher quand un événement peut bouleverser la valorisation.")
-        notes = st.text_area("Informations communiquées par la société",
+                                 "vendre. Coché automatiquement si une annonce récente le justifie.")
+        _src(ap.major_src if ap else "")
+        notes = st.text_area("Informations communiquées par la société", value=ap.notes if ap else "",
+                             key=f"notes_{sfx}",
                              placeholder="Faits marquants, guidance, communiqué de résultats, projet de dividende...",
                              help="Texte libre (communiqué, résultats, assemblée générale). Il figure dans la fiche et sa "
                                   "tonalité est intégrée à la note actualités.")
-    with st.expander("Hypothèses de valorisation"):
+        _src(ap.notes_src if ap else "")
+    with st.expander("Hypothèses de valorisation" + (" (préremplies)" if ap else "")):
         st.caption("Ces paramètres fixent le coût des fonds propres k = taux sans risque + bêta x prime de risque.")
-        rf = st.number_input("Taux sans risque (%)", value=6.50, step=0.05,
+        rf = st.number_input("Taux sans risque (%)", value=float(ap.rf) if ap else 6.50, step=0.05, key=f"rf_{sfx}",
                              help="Rendement des titres souverains UMOA de maturité longue (5 à 10 ans).")
+        _src(ap.rf_src if ap else "")
         erp = st.number_input("Prime de risque actions (%)", value=5.50, step=0.25,
                               help="Rendement supplémentaire exigé pour détenir des actions plutôt que le "
                                    "sans-risque. Usuel : 5 à 7% sur la BRVM.")
         g = st.number_input("Croissance perpétuelle (%)", value=3.00, step=0.25,
                             help="Croissance des dividendes à très long terme. Ne doit pas dépasser la "
                                  "croissance nominale de l'économie (3 à 4%).")
-        beta = st.number_input("Bêta par défaut", value=1.00, step=0.05,
-                               help="Utilisé si la régression sur le BRVM Composite n'est pas significative.")
-        s_buy = st.number_input("Potentiel minimal pour ACHAT (%)", value=15.0, step=1.0,
+        beta = st.number_input("Bêta par défaut", value=float(ap.beta) if ap else 1.00, step=0.05, key=f"beta_{sfx}",
+                               help="Utilisé si la régression du titre sur le BRVM Composite n'est pas significative.")
+        _src(ap.beta_src if ap else "")
+        s_buy = st.number_input("Potentiel minimal pour ACHAT (%)", value=float(ap.seuil_achat) if ap else 15.0,
+                                step=1.0, key=f"sb_{sfx}",
                                 help="Potentiel de hausse vers la juste valeur à partir duquel un titre est "
                                      "considéré en décote.")
-        s_sell = st.number_input("Potentiel maximal pour VENDRE (%)", value=-15.0, step=1.0,
+        s_sell = st.number_input("Potentiel maximal pour VENDRE (%)", value=float(ap.seuil_vente) if ap else -15.0,
+                                 step=1.0, key=f"ss_{sfx}",
                                  help="Potentiel en dessous duquel un titre est considéré en surcote.")
+        _src(ap.seuil_src if ap else "")
         use_def = st.toggle("Multiples de référence si pairs insuffisants", value=True,
                             help="Quand le classeur compte moins de deux comparables, utilise des multiples "
                                  "sectoriels de référence (config.SECTOR_MULTIPLES), signalés dans la fiche.")
-    with st.expander("Pondération des piliers"):
+    with st.expander("Pondération des piliers" + (" (adaptée au titre)" if ap else "")):
         st.caption("Poids relatifs des six piliers dans la note globale (renormalisés automatiquement). "
                    "Un pilier non évalué faute de données est ignoré.")
+        _src(ap.poids_src if ap else "")
         w = {}
-        defaults = Settings().poids
+        base_w = ap.poids if ap else defaults.poids
         helps = {"valorisation": "Potentiel vers la juste valeur, PER relatif, rendement.",
                  "qualite": "ROE, marges, structure financière, solidité (niveau 1 uniquement).",
                  "croissance": "Croissance du chiffre d'affaires et du résultat.",
@@ -279,7 +325,8 @@ with st.sidebar:
                  "macro": "Croissance, inflation, politique monétaire, sensibilité du secteur.",
                  "sentiment": "Tonalité des actualités récentes."}
         for k, lab in config.PILLAR_LABELS.items():
-            w[k] = st.slider(lab, 0, 50, int(defaults[k]), step=5, help=helps.get(k))
+            w[k] = st.slider(lab, 0, 50, int(base_w.get(k, defaults.poids[k])), step=5, help=helps.get(k),
+                             key=f"w_{k}_{sfx}")
     with st.expander("Politique monétaire BCEAO"):
         st.caption("Dernière décision du Comité de Politique Monétaire. À vérifier avant diffusion.")
         b = dict(config.BCEAO)
@@ -306,13 +353,22 @@ settings = Settings(taux_sans_risque=rf, prime_risque_marche=erp, croissance_lon
                     multiples_defaut=use_def, claude_api_key=api_key or "", claude_model=model,
                     maison=house or config.DEFAULT_HOUSE, analyste=analyst)
 overrides = {}
-if m_price > 0:
+
+
+def _changed(val, auto_val) -> bool:
+    """Une saisie n'est une surcharge que si elle diffère de la valeur proposée automatiquement."""
+    if val <= 0:
+        return False
+    return not (is_num(auto_val) and abs(val - float(auto_val)) <= 1e-6 * max(1.0, abs(float(auto_val))))
+
+
+if _changed(m_price, ap.price if ap else None):
     overrides["price"] = m_price
-if m_shares > 0:
+if _changed(m_shares, ap.shares if ap else None):
     overrides["shares"] = m_shares
-if m_float > 0:
+if _changed(m_float, round(ap.float_pct * 100, 2) if ap and is_num(ap.float_pct) else None):
     overrides["float_pct"] = m_float / 100
-if m_dps > 0:
+if _changed(m_dps, ap.dps if ap else None) or (ap and m_dps > 0 and ap.dps_exercice and int(m_dps_y) != ap.dps_exercice):
     overrides["dps"] = m_dps
     overrides["dps_exercice"] = int(m_dps_y)
 

@@ -168,6 +168,24 @@ aux versements précédents est traité comme exceptionnel : le dividende ordina
 CSV ou Excel avec les colonnes `Date`, `Ouverture`, `Plus haut`, `Plus bas`, `Clôture`, `Volume`
 (libellés français ou anglais acceptés), par exemple un export sikafinance.
 
+### Paramètres automatiques selon le titre
+
+Avec l'option « Paramètres automatiques selon le titre » (activée par défaut), chaque champ de la
+barre latérale est prérempli pour le titre choisi, avec sa source affichée sous le champ :
+
+| Champ | Valeur proposée |
+|---|---|
+| Cours, nombre de titres, flottant, dernier dividende | ceux que l'analyse utilisera (fichiers d'abord, web ensuite) |
+| Événement majeur | coché si une annonce des six derniers mois porte sur une offre publique, une augmentation de capital, une suspension, une radiation, une fusion ou une cession de bloc |
+| Informations communiquées | intitulés des annonces officielles récentes (dividendes, AG, rapports, notation...) |
+| Taux sans risque | taux souverain de référence du pays de l'émetteur (`TAUX_SOUVERAINS`, indicatif) |
+| Bêta par défaut | bêta médian des titres du même secteur dans la base de marché |
+| Seuils ACHAT / VENDRE | moitié de la volatilité annualisée du titre, entre 12% et 30% |
+| Pondération des piliers | technique ramenée à 10% pour un titre peu liquide, neutralisée sans historique |
+
+Seules les valeurs que vous modifiez sont traitées comme des saisies manuelles. Les suggestions sont
+mises en cache une heure.
+
 ### Ordre de priorité des données
 
 Les fichiers que vous chargez sont toujours la source première ; le web ne fait que compléter ce qui
@@ -322,6 +340,7 @@ fiche-valeur-brvm/
 │   ├── market.py              cours, titres, dividendes (fichiers et sources en ligne)
 │   ├── partial.py             titres à données partielles : chiffres clés, saisie, base SMF, couverture
 │   ├── publications.py        publications officielles : liste richbourse, lecture des PDF
+│   ├── autoparams.py          paramètres proposés automatiquement selon le titre
 │   ├── fundamentals.py        SIG, ratios, solidité, pairs
 │   ├── valuation.py           juste valeur multi-méthodes
 │   ├── technical.py           indicateurs techniques et niveaux

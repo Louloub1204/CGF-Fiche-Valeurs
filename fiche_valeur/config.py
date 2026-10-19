@@ -218,6 +218,10 @@ def register_ticker(ticker: str, nom: str, pays: str = "CI", secteur: str = "Non
     TICKERS[ticker.upper()] = {"nom": nom or ticker.upper(), "pays": pays, "secteur": secteur}
 
 
+# Taux sans risque de référence par pays (%, rendement souverain long UMOA-Titres). Valeurs indicatives
+# servant de valeur par défaut au coût des fonds propres : à mettre à jour d'après les dernières adjudications.
+TAUX_SOUVERAINS = {"CI": 6.25, "SN": 6.50, "BJ": 6.25, "TG": 6.50, "BF": 7.25, "ML": 7.50, "NE": 7.75, "GW": 7.75}
+
 # Multiples de référence par secteur, utilisés quand le classeur ne contient pas assez de
 # sociétés comparables (moins de deux). Valeurs indicatives de la cote régionale, à ajuster.
 SECTOR_MULTIPLES = {
