@@ -248,3 +248,8 @@ License: Apache-2.0
  .
  On Debian systems, the complete text of the Apache version 2.0 license
  can be found in "/usr/share/common-licenses/Apache-2.0".
+
+
+Inter
+Copyright 2016-2023 The Inter Project Authors (https://github.com/rsms/inter)
+Licensed under the SIL Open Font License, Version 1.1 (texte ci-dessus).

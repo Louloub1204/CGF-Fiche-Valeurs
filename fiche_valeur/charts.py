@@ -23,13 +23,13 @@ from . import config  # noqa: E402
 from .utils import fmt_num, is_num  # noqa: E402
 
 # Palette des séries (vérifiée : bande de luminosité, chroma, séparation daltonisme)
-S1, S2, S3, S4 = "#3A4AA3", "#A97A1F", "#1F8BBE", "#C2556A"
+S1, S2, S3, S4 = "#1A5F96", "#C2702A", "#2A9FD6", "#8C5A9E"   # palette validée (charte CGF)
 GRAY = "#B8BDC9"
 INK = "#1F2430"
 MUTED = "#6B7280"
 GRID = "#E6E8EF"
 SURFACE = "#FFFFFF"
-WASH = "#3A4AA3"
+WASH = "#1A5F96"
 
 _FONT_READY = False
 
@@ -39,10 +39,10 @@ def _setup_fonts() -> None:
     if _FONT_READY:
         return
     family = "DejaVu Sans"
-    for f in Path(config.FONTS_DIR).glob("Carlito-*.ttf"):
+    for f in Path(config.FONTS_DIR).glob("Inter-*.ttf"):
         try:
             font_manager.fontManager.addfont(str(f))
-            family = "Carlito"
+            family = "Inter"
         except Exception:
             pass
     plt.rcParams.update({

@@ -17,21 +17,34 @@ APP_VERSION = "1.0.0"
 DEFAULT_HOUSE = "CGF Gestion"
 
 # ---------------------------------------------------------------------------
-# Charte graphique (navy / or, Cambria-Calibri ; Caladea-Carlito à l'écran)
+# Charte graphique CGF Gestion (modèles « Modèle de sortie CGF GESTION » et présentations maison) :
+# bleu institutionnel, cyan d'accent, cartes gris-bleu clair ; police Inter (Aptos dans PowerPoint)
 # ---------------------------------------------------------------------------
-NAVY = "#1E2761"
-NAVY_DARK = "#141A45"
-GOLD = "#C9A34E"
-GOLD_LIGHT = "#E8D6A8"
-INK = "#1F2430"
-MUTED = "#6B7280"
-GRID = "#E3E6EE"
-PAPER = "#F6F7FB"
+NAVY = "#004B77"          # titres, en-têtes de tableaux
+NAVY_DARK = "#0B2239"     # fond sombre (dégradé des couvertures)
+GOLD = "#00B0F0"          # accent (filets, puces) - nom historique conservé
+GOLD_LIGHT = "#C9E2F0"
+SKY = "#59BCE9"           # sous-titres sur fond sombre
+INK = "#1A1A1A"
+MUTED = "#595959"
+GRID = "#DCE4EA"
+PAPER = "#F3F6F8"         # fond des cartes
+INFO = "#EAF4FA"          # encadré d'information
 WHITE = "#FFFFFF"
 POS = "#1B7F5A"      # vert hausse
 NEG = "#B4372F"      # rouge baisse
 NEUTRAL = "#8A8F9C"
 SERIES = [NAVY, GOLD, "#4F7CAC", "#8C6D3F", "#7A8FB8", "#B9A06A"]
+BRAND_DIR = ROOT / "assets" / "brand"
+TEMPLATES_DIR = ROOT / "assets" / "templates"
+PPTX_TEMPLATE = TEMPLATES_DIR / "modele_cgf_gestion.pptx"
+LETTERHEAD = BRAND_DIR / "entete_cgf_gestion.jpg"
+LEGAL_MENTION = ("Société de gestion collective au capital de 500 000 000 FCFA - N° agrément CREPMF SG-003/2001")
+CONTACTS = [
+    ("web", "www.cgfgestion.com", "Site de la société de gestion"),
+    ("courriel", "cgfgestion@cgfgestion.com", "Société de gestion - CGF Gestion"),
+    ("telephone", "+221 33 864 97 97", "Km 6 avenue Cheikh Anta Diop, Dakar"),
+]
 
 SIGNAL_COLORS = {
     "ACHAT": "#1B7F5A",

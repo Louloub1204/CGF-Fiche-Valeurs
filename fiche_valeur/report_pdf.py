@@ -13,7 +13,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import (BaseDocTemplate, CondPageBreak, Frame, Image, KeepTogether, NextPageTemplate,
+from reportlab.platypus import (BaseDocTemplate, CondPageBreak, Frame, Image, KeepInFrame, KeepTogether, NextPageTemplate,
                                 PageBreak, PageTemplate, Paragraph, Spacer, Table, TableStyle)
 
 from . import charts, config
@@ -29,26 +29,34 @@ GOLD = colors.HexColor(config.GOLD)
 INK = colors.HexColor(config.INK)
 MUTED = colors.HexColor(config.MUTED)
 PAPER = colors.HexColor(config.PAPER)
-GRID = colors.HexColor("#DDE1EA")
+GRID = colors.HexColor(config.GRID)
+SKY = colors.HexColor(config.SKY)
+INFO = colors.HexColor(config.INFO)
 
-_FONTS = {"body": "Helvetica", "bold": "Helvetica-Bold", "italic": "Helvetica-Oblique", "title": "Times-Bold"}
+_FONTS = {"body": "Helvetica", "bold": "Helvetica-Bold", "italic": "Helvetica-Oblique", "title": "Helvetica-Bold",
+          "semi": "Helvetica-Bold"}
 
 
 def _register_fonts() -> None:
+    """Inter (police de la charte CGF Gestion), repli sur Carlito puis Helvetica."""
     d = config.FONTS_DIR
+    try:
+        for name, f in (("Inter", "Inter-Regular.ttf"), ("Inter-Bold", "Inter-Bold.ttf"),
+                        ("Inter-Italic", "Inter-Italic.ttf"), ("Inter-SemiBold", "Inter-SemiBold.ttf")):
+            pdfmetrics.registerFont(TTFont(name, str(d / f)))
+        pdfmetrics.registerFontFamily("Inter", normal="Inter", bold="Inter-Bold", italic="Inter-Italic",
+                                      boldItalic="Inter-Bold")
+        _FONTS.update(body="Inter", bold="Inter-Bold", italic="Inter-Italic", title="Inter-Bold",
+                      semi="Inter-SemiBold")
+        return
+    except Exception:
+        pass
     try:
         pdfmetrics.registerFont(TTFont("Carlito", str(d / "Carlito-Regular.ttf")))
         pdfmetrics.registerFont(TTFont("Carlito-Bold", str(d / "Carlito-Bold.ttf")))
         pdfmetrics.registerFont(TTFont("Carlito-Italic", str(d / "Carlito-Italic.ttf")))
-        pdfmetrics.registerFont(TTFont("Carlito-BoldItalic", str(d / "Carlito-BoldItalic.ttf")))
-        pdfmetrics.registerFontFamily("Carlito", normal="Carlito", bold="Carlito-Bold",
-                                      italic="Carlito-Italic", boldItalic="Carlito-BoldItalic")
-        _FONTS.update(body="Carlito", bold="Carlito-Bold", italic="Carlito-Italic")
-    except Exception:
-        pass
-    try:
-        pdfmetrics.registerFont(TTFont("Caladea-Bold", str(d / "Caladea-Bold.ttf")))
-        _FONTS["title"] = "Caladea-Bold"
+        _FONTS.update(body="Carlito", bold="Carlito-Bold", italic="Carlito-Italic", title="Carlito-Bold",
+                      semi="Carlito-Bold")
     except Exception:
         pass
 
@@ -56,25 +64,25 @@ def _register_fonts() -> None:
 def _styles() -> dict:
     b, bo, it, ti = _FONTS["body"], _FONTS["bold"], _FONTS["italic"], _FONTS["title"]
     return {
-        "body": ParagraphStyle("body", fontName=b, fontSize=8.6, leading=11.4, textColor=INK, alignment=TA_LEFT),
-        "small": ParagraphStyle("small", fontName=b, fontSize=7.3, leading=9.2, textColor=INK),
-        "muted": ParagraphStyle("muted", fontName=it, fontSize=7, leading=8.8, textColor=MUTED),
-        "h1": ParagraphStyle("h1", fontName=ti, fontSize=12.5, leading=15, textColor=NAVY, spaceBefore=3, spaceAfter=4),
-        "h2": ParagraphStyle("h2", fontName=bo, fontSize=9.4, leading=12, textColor=NAVY, spaceBefore=4, spaceAfter=3),
-        "cell": ParagraphStyle("cell", fontName=b, fontSize=7.4, leading=9, textColor=INK),
-        "cellb": ParagraphStyle("cellb", fontName=bo, fontSize=7.4, leading=9, textColor=INK),
-        "cellr": ParagraphStyle("cellr", fontName=b, fontSize=7.4, leading=9, textColor=INK, alignment=TA_RIGHT),
-        "head": ParagraphStyle("head", fontName=bo, fontSize=7.4, leading=9, textColor=colors.white),
-        "headr": ParagraphStyle("headr", fontName=bo, fontSize=7.4, leading=9, textColor=colors.white, alignment=TA_RIGHT),
-        "bullet": ParagraphStyle("bullet", fontName=b, fontSize=8.2, leading=10.6, textColor=INK, leftIndent=9,
-                                 bulletIndent=0, spaceAfter=1.5, bulletFontName=b, bulletFontSize=8.2,
+        "body": ParagraphStyle("body", fontName=b, fontSize=8.0, leading=11.2, textColor=INK, alignment=TA_LEFT),
+        "small": ParagraphStyle("small", fontName=b, fontSize=6.9, leading=9.0, textColor=INK),
+        "muted": ParagraphStyle("muted", fontName=it, fontSize=6.5, leading=8.6, textColor=MUTED),
+        "h1": ParagraphStyle("h1", fontName=ti, fontSize=12, leading=15, textColor=NAVY, spaceBefore=3, spaceAfter=4),
+        "h2": ParagraphStyle("h2", fontName=bo, fontSize=8.8, leading=11.5, textColor=NAVY, spaceBefore=4, spaceAfter=3),
+        "cell": ParagraphStyle("cell", fontName=b, fontSize=6.9, leading=9, textColor=INK),
+        "cellb": ParagraphStyle("cellb", fontName=bo, fontSize=6.9, leading=9, textColor=INK),
+        "cellr": ParagraphStyle("cellr", fontName=b, fontSize=6.9, leading=9, textColor=INK, alignment=TA_RIGHT),
+        "head": ParagraphStyle("head", fontName=bo, fontSize=6.9, leading=9, textColor=colors.white),
+        "headr": ParagraphStyle("headr", fontName=bo, fontSize=6.9, leading=9, textColor=colors.white, alignment=TA_RIGHT),
+        "bullet": ParagraphStyle("bullet", fontName=b, fontSize=7.7, leading=10.4, textColor=INK, leftIndent=9,
+                                 bulletIndent=0, spaceAfter=1.5, bulletFontName=b, bulletFontSize=7.7,
                                  bulletColor=GOLD),
-        "cellbr": ParagraphStyle("cellbr", fontName=bo, fontSize=7.4, leading=9, textColor=INK, alignment=TA_RIGHT),
+        "cellbr": ParagraphStyle("cellbr", fontName=bo, fontSize=6.9, leading=9, textColor=INK, alignment=TA_RIGHT),
         "sig_label": ParagraphStyle("sig_label", fontName=bo, fontSize=7.5, leading=9, textColor=colors.white),
-        "sig": ParagraphStyle("sig", fontName=ti, fontSize=22, leading=25, textColor=colors.white),
+        "sig": ParagraphStyle("sig", fontName=ti, fontSize=20, leading=24, textColor=colors.white),
         "sig_conv": ParagraphStyle("sig_conv", fontName=b, fontSize=8, leading=10, textColor=colors.white),
-        "kpi_v": ParagraphStyle("kpi_v", fontName=bo, fontSize=11, leading=13, textColor=INK, alignment=TA_CENTER),
-        "kpi_l": ParagraphStyle("kpi_l", fontName=b, fontSize=6.8, leading=8.4, textColor=MUTED, alignment=TA_CENTER),
+        "kpi_v": ParagraphStyle("kpi_v", fontName=bo, fontSize=10.5, leading=13, textColor=NAVY, alignment=TA_CENTER),
+        "kpi_l": ParagraphStyle("kpi_l", fontName=b, fontSize=6.3, leading=8.4, textColor=MUTED, alignment=TA_CENTER),
     }
 
 
@@ -128,48 +136,65 @@ def _table(rows, col_widths, st, header=True, num_cols_from=1, zebra=True, left_
 # En-tête et pied de page
 # ---------------------------------------------------------------------------
 
+HEADER_H = 24 * mm        # papier à en-tête CGF Gestion (logo + mention légale)
+TITLE_H = 15 * mm         # bloc titre de la première page
+
+
+def _letterhead(canvas):
+    """En-tête du « Modèle de sortie CGF GESTION » : logo centré et mention légale, sur chaque page."""
+    logo = config.LETTERHEAD
+    w = CONTENT_W * 0.84
+    h = w * 69 / 1000
+    top = PAGE_H - 7 * mm
+    if logo.exists():
+        canvas.drawImage(str(logo), (PAGE_W - w) / 2, top - h, width=w, height=h, mask="auto")
+    canvas.setFont(_FONTS["body"], 6.6)
+    canvas.setFillColor(INK)
+    canvas.drawCentredString(PAGE_W / 2, top - h - 3.6 * mm, clean_text(config.LEGAL_MENTION))
+    canvas.setStrokeColor(GRID)
+    canvas.setLineWidth(0.6)
+    canvas.line(MARGIN, PAGE_H - HEADER_H, PAGE_W - MARGIN, PAGE_H - HEADER_H)
+
+
 def _decorations(a, total_pages_holder):
     c = a.company
     country = config.COUNTRIES.get(c.country, {}).get("nom", c.country)
 
     def first(canvas, doc):
         canvas.saveState()
-        band = 27 * mm
+        _letterhead(canvas)
+        y0 = PAGE_H - HEADER_H - 7.5 * mm
         canvas.setFillColor(NAVY)
-        canvas.rect(0, PAGE_H - band, PAGE_W, band, stroke=0, fill=1)
-        canvas.setFillColor(GOLD)
-        canvas.rect(0, PAGE_H - band - 1.2 * mm, PAGE_W, 1.2 * mm, stroke=0, fill=1)
-        canvas.setFillColor(colors.white)
-        canvas.setFont(_FONTS["title"], 19)
+        canvas.setFont(_FONTS["title"], 16)
         name = clean_text(c.name)
-        while canvas.stringWidth(name, _FONTS["title"], 19) > CONTENT_W - 58 * mm and len(name) > 10:
+        while canvas.stringWidth(name, _FONTS["title"], 16) > CONTENT_W - 55 * mm and len(name) > 10:
             name = name[:-2]
-        canvas.drawString(MARGIN, PAGE_H - 12.5 * mm, name)
-        canvas.setFont(_FONTS["body"], 9)
-        canvas.drawString(MARGIN, PAGE_H - 19 * mm,
-                          clean_text(f"{c.ticker}  |  {c.sector}  |  {country}  |  BRVM"))
+        canvas.drawString(MARGIN, y0, name)
+        canvas.setFillColor(MUTED)
+        canvas.setFont(_FONTS["body"], 8)
+        canvas.drawString(MARGIN, y0 - 5.2 * mm, clean_text(f"{c.ticker}  |  {c.sector}  |  {country}  |  BRVM"))
         canvas.setFillColor(GOLD)
-        canvas.setFont(_FONTS["bold"], 8.5)
-        canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 11 * mm, "FICHE DE VALEUR")
-        canvas.setFillColor(colors.white)
-        canvas.setFont(_FONTS["body"], 8.5)
-        canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 16.5 * mm, fmt_date_fr(a.as_of))
-        canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 21.5 * mm, clean_text(a.settings.maison))
+        canvas.setFont(_FONTS["bold"], 8)
+        canvas.drawRightString(PAGE_W - MARGIN, y0 + 0.5 * mm, "FICHE DE VALEUR")
+        canvas.setFillColor(MUTED)
+        canvas.setFont(_FONTS["body"], 7.5)
+        canvas.drawRightString(PAGE_W - MARGIN, y0 - 4.2 * mm, clean_text(f"{fmt_date_fr(a.as_of)}  |  {a.settings.maison}"))
+        canvas.setFillColor(GOLD)
+        canvas.rect(MARGIN, PAGE_H - HEADER_H - TITLE_H + 1 * mm, 22 * mm, 0.9 * mm, stroke=0, fill=1)
         _footer(canvas, doc)
         canvas.restoreState()
 
     def later(canvas, doc):
         canvas.saveState()
+        _letterhead(canvas)
+        y0 = PAGE_H - HEADER_H - 5 * mm
         canvas.setFillColor(NAVY)
-        canvas.rect(0, PAGE_H - 11 * mm, PAGE_W, 11 * mm, stroke=0, fill=1)
-        canvas.setFillColor(GOLD)
-        canvas.rect(0, PAGE_H - 11.6 * mm, PAGE_W, 0.6 * mm, stroke=0, fill=1)
-        canvas.setFillColor(colors.white)
-        canvas.setFont(_FONTS["bold"], 9.5)
-        canvas.drawString(MARGIN, PAGE_H - 7.2 * mm, clean_text(f"{c.name} ({c.ticker})"))
-        canvas.setFont(_FONTS["body"], 8.5)
-        canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 7.2 * mm,
-                               clean_text(f"Signal : {a.decision.signal}  |  {fmt_date_fr(a.as_of)}"))
+        canvas.setFont(_FONTS["bold"], 8.5)
+        canvas.drawString(MARGIN, y0, clean_text(f"{c.name} ({c.ticker})"))
+        canvas.setFillColor(MUTED)
+        canvas.setFont(_FONTS["body"], 7.5)
+        canvas.drawRightString(PAGE_W - MARGIN, y0,
+                               clean_text(f"Fiche de valeur  |  Signal : {a.decision.signal}  |  {fmt_date_fr(a.as_of)}"))
         _footer(canvas, doc)
         canvas.restoreState()
 
@@ -177,11 +202,12 @@ def _decorations(a, total_pages_holder):
         canvas.setStrokeColor(GRID)
         canvas.setLineWidth(0.5)
         canvas.line(MARGIN, 11 * mm, PAGE_W - MARGIN, 11 * mm)
-        canvas.setFont(_FONTS["body"], 6.8)
-        canvas.setFillColor(MUTED)
+        canvas.setFont(_FONTS["body"], 6.3)
+        canvas.setFillColor(colors.HexColor("#A6A6A6"))
         canvas.drawString(MARGIN, 7 * mm, clean_text(
-            f"{a.settings.maison}  |  Document interne d'aide à la décision, ne constitue pas un conseil en investissement"))
-        canvas.drawRightString(PAGE_W - MARGIN, 7 * mm, f"Page {doc.page}")
+            f"{a.settings.maison}  |  Fiche de valeur {c.ticker}  |  Document interne d'aide à la décision, "
+            f"ne constitue pas un conseil en investissement"))
+        canvas.drawRightString(PAGE_W - MARGIN, 7 * mm, f"{doc.page}")
 
     return first, later
 
@@ -215,8 +241,10 @@ def _kpis(a, st) -> Table:
     row_v = [P(x, st["kpi_v"]) for x, _ in items]
     row_l = [P(y, st["kpi_l"]) for _, y in items]
     t = Table([row_v, row_l], colWidths=[(CONTENT_W - 60 * mm) / 4] * 4)
-    t.setStyle(TableStyle([("LINEAFTER", (0, 0), (-2, -1), 0.5, GRID), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                           ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
+    t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), PAPER), ("BOX", (0, 0), (-1, -1), 0.6, GRID),
+                           ("LINEAFTER", (0, 0), (-2, -1), 0.6, colors.white), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                           ("TOPPADDING", (0, 0), (-1, 0), 4), ("BOTTOMPADDING", (0, -1), (-1, -1), 4),
+                           ("TOPPADDING", (0, 1), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, 0), 1)]))
     return t
 
 
@@ -431,7 +459,7 @@ def _level_banner(a, st):
     txt = (f"<b>{escape(clean_text(title))}</b> | couverture des données {fmt_num(cov.score, 0)}%. "
            f"{escape(clean_text(desc))}" + (f" À compléter : {escape(clean_text(', '.join(miss).lower()))}." if miss else ""))
     t = Table([[Paragraph(txt, st["small"])]], colWidths=[CONTENT_W])
-    t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FBF3E0")),
+    t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), INFO), ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor(config.GOLD_LIGHT)),
                            ("LINEBEFORE", (0, 0), (0, -1), 2.5, GOLD), ("LEFTPADDING", (0, 0), (-1, -1), 7),
                            ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
     return t
@@ -515,10 +543,10 @@ def build_pdf(a, compact: bool = False) -> bytes:
     doc = BaseDocTemplate(buf, pagesize=A4, leftMargin=MARGIN, rightMargin=MARGIN, topMargin=MARGIN,
                           bottomMargin=15 * mm, title=f"Fiche de valeur {a.company.ticker}",
                           author=a.settings.maison, subject="Fiche de valeur BRVM")
-    f1 = Frame(MARGIN, 15 * mm, CONTENT_W, PAGE_H - 15 * mm - 31 * mm, id="f1", leftPadding=0, rightPadding=0,
-               topPadding=0, bottomPadding=0)
-    f2 = Frame(MARGIN, 15 * mm, CONTENT_W, PAGE_H - 15 * mm - 16 * mm, id="f2", leftPadding=0, rightPadding=0,
-               topPadding=0, bottomPadding=0)
+    f1 = Frame(MARGIN, 14 * mm, CONTENT_W, PAGE_H - 14 * mm - HEADER_H - TITLE_H - 3 * mm, id="f1", leftPadding=0,
+               rightPadding=0, topPadding=0, bottomPadding=0)
+    f2 = Frame(MARGIN, 14 * mm, CONTENT_W, PAGE_H - 14 * mm - HEADER_H - 9 * mm, id="f2", leftPadding=0,
+               rightPadding=0, topPadding=0, bottomPadding=0)
     doc.addPageTemplates([PageTemplate("first", [f1], onPage=first), PageTemplate("later", [f2], onPage=later)])
     story = [NextPageTemplate("later")]
     d, v, c = a.decision, a.valuation, a.company
@@ -538,13 +566,13 @@ def build_pdf(a, compact: bool = False) -> bytes:
     for para in tx.get("these", []):
         story.append(P(para, st["body"]))
         story.append(Spacer(1, 2.5))
-    img = _img(charts.price_chart(a.technical, months=18, size=(7.4, 2.9)), CONTENT_W, 64 * mm)
+    img = _img(charts.price_chart(a.technical, months=18, size=(7.4, 2.7)), CONTENT_W, 56 * mm)
     if img:
         story += [P("Évolution du cours (18 mois)", st["h2"]), img]
     left = [P("Points forts", st["h2"])] + _bullets(tx.get("forces") or ["Aucun point saillant détecté."], st)
     right = [P("Points de vigilance", st["h2"])] + _bullets(tx.get("vigilances") or ["Aucun point saillant détecté."], st)
     story.append(_two_cols(left, right))
-    pil = _img(charts.pillars_chart(d.pillars, size=(3.7, 2.0)), CONTENT_W * 0.48, 44 * mm)
+    pil = _img(charts.pillars_chart(d.pillars, size=(3.7, 1.9)), CONTENT_W * 0.48, 40 * mm)
     just = [P("Fondement du signal", st["h2"])] + _bullets(tx.get("justification", [])[:4], st)
     story.append(KeepTogether(_two_cols([P("Notation par pilier (/100)", st["h2"]), pil] if pil else [], just)))
 
@@ -555,7 +583,7 @@ def build_pdf(a, compact: bool = False) -> bytes:
             blk = [P("Valorisation", st["h1"]), P(tx.get("valorisation", ""), st["body"]), Spacer(1, 3)]
             if v.methods:
                 blk += [_valuation_table(a, st), Spacer(1, 2)]
-            vimg = _img(charts.valuation_chart(v, a.technical, size=(7.4, 2.2)), CONTENT_W, 52 * mm)
+            vimg = _img(charts.valuation_chart(v, a.technical, size=(7.4, 2.0)), CONTENT_W, 44 * mm)
             if vimg:
                 blk.append(vimg)
             blk += [KeepTogether([P("Hypothèses", st["h2"]), _hypotheses(a, st)])]
@@ -576,7 +604,7 @@ def build_pdf(a, compact: bool = False) -> bytes:
         if not partial:
             # ---------------- Page 2 : analyse financière ----------------
             story += [PageBreak(), P("Soldes intermédiaires de gestion", st["h1"]), _sig_table(a, st), Spacer(1, 3)]
-            fin = _img(charts.financials_chart(c, a.fundamentals.ratios, size=(7.4, 2.35)), CONTENT_W, 56 * mm)
+            fin = _img(charts.financials_chart(c, a.fundamentals.ratios, size=(7.4, 2.2)), CONTENT_W, 50 * mm)
             if fin:
                 story.append(fin)
             story += [P("Ratios financiers", st["h1"]), _ratio_table(a, st)]
@@ -592,7 +620,7 @@ def build_pdf(a, compact: bool = False) -> bytes:
                                   f"{sol.altman_zone}.", st["small"]))
             story += [PageBreak(), P("Solidité financière et positionnement sectoriel", st["h1"]),
                       _two_cols(sol_side, [P("Positionnement sectoriel", st["h2"]), positioning_block()], ratio=0.52)]
-            peers = _img(charts.peers_chart(a.fundamentals, c, v, size=(7.4, 2.1)), CONTENT_W, 52 * mm)
+            peers = _img(charts.peers_chart(a.fundamentals, c, v, size=(7.4, 1.9)), CONTENT_W, 44 * mm)
             if peers:
                 story += [Spacer(1, 2), peers]
             story += valuation_block()
@@ -612,7 +640,7 @@ def build_pdf(a, compact: bool = False) -> bytes:
 
         # ---------------- Page 4 : technique et environnement ----------------
         story += [PageBreak(), P("Analyse technique", st["h1"]), P(tx.get("technique", ""), st["body"]), Spacer(1, 2)]
-        timg = _img(charts.price_chart(a.technical, months=12, size=(7.4, 3.1), with_rsi=True), CONTENT_W, 70 * mm)
+        timg = _img(charts.price_chart(a.technical, months=12, size=(7.4, 2.9), with_rsi=True), CONTENT_W, 64 * mm)
         if timg:
             story.append(timg)
         story += [Spacer(1, 2), _tech_table(a, st)]
@@ -644,15 +672,22 @@ def build_pdf(a, compact: bool = False) -> bytes:
             just_all += [P("Réserves", st["h2"])] + _bullets(d.warnings, st)
         story += [P("Matrice de décision", st["h1"]), _two_cols([mat] if mat else [], just_all, ratio=0.48)]
         story += [CondPageBreak(40 * mm), P("Sources et qualité des données", st["h1"]), _sources(a, st)]
-        if c.level in ("complet", "partiel") and a.coverage is not None and a.coverage.missing:
-            story += [P("Couverture des données", st["h2"]), _coverage_table(a, st)]
+        if c.level in ("complet", "partiel") and a.coverage is not None:
+            miss = ", ".join(i.name.lower() for i in a.coverage.missing)
+            story += [P(f"Couverture des données : {fmt_num(a.coverage.score, 0)}%"
+                        + (f" ; non disponibles ou partielles : {miss}." if miss else "."), st["muted"])]
         if c.notes:
             story += [Spacer(1, 2)] + [P("Contrôle des données : " + n, st["muted"]) for n in c.notes]
         if a.errors:
             story += [P("Accès aux données : " + "; ".join(a.errors[:5]), st["muted"])]
         story += [P("Méthodologie", st["h2"]), P(METHODO, st["small"]), Spacer(1, 3), P(config.DISCLAIMER, st["muted"])]
     else:
+        # fiche d'une page : contenu ramené à la hauteur du cadre si nécessaire
         story += [Spacer(1, 3), P(config.DISCLAIMER, st["muted"])]
+        flat = []
+        for f in story[1:]:
+            flat += list(f._content) if isinstance(f, KeepTogether) else [f]
+        story = [story[0], KeepInFrame(CONTENT_W, f1._aH - 2, flat, mode="shrink")]
     doc.build(story)
     return buf.getvalue()
 

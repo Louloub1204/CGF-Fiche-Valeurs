@@ -1,4 +1,9 @@
-"""Rapport PowerPoint (16:9) : graphiques natifs modifiables, notes de l'orateur."""
+"""Rapport PowerPoint (16:9) au format des présentations CGF Gestion.
+
+Le rapport part du modèle maison (assets/templates/modele_cgf_gestion.pptx, issu des présentations CGF
+Gestion) : masques COVER, CONTENT, DIVIDER et CLOSE, police du thème, bleu institutionnel, cartes gris-bleu,
+bandeau dégradé pour les messages clés. Graphiques natifs modifiables, notes de l'orateur.
+"""
 from __future__ import annotations
 
 import io
@@ -19,8 +24,8 @@ from .utils import (clean_text, fmt_date_fr, fmt_fcfa, fmt_mds, fmt_num, fmt_pct
                     is_num)
 
 W, H = Inches(13.333), Inches(7.5)
-HEAD = "Cambria"
-BODY = "Calibri"
+HEAD = None          # police du thème du modèle (titres)
+BODY = None          # police du thème du modèle (texte)
 
 
 def rgb(hex_: str) -> RGBColor:
@@ -28,7 +33,10 @@ def rgb(hex_: str) -> RGBColor:
 
 
 NAVY, GOLD, INK, MUTED = rgb(config.NAVY), rgb(config.GOLD), rgb(config.INK), rgb(config.MUTED)
-PAPER, WHITE, GRIDC = rgb(config.PAPER), rgb("#FFFFFF"), rgb("#DDE1EA")
+PAPER, WHITE, GRIDC = rgb(config.PAPER), rgb("#FFFFFF"), rgb(config.GRID)
+SKY, INFO, LIGHTLINE, FOOT = rgb(config.SKY), rgb(config.INFO), rgb(config.GOLD_LIGHT), rgb("#A6A6A6")
+DARK, NUMBLUE = rgb(config.NAVY_DARK), rgb("#2A6E9E")
+ICONS = config.BRAND_DIR / "icons"
 S1, S2, S3, S4, GRAY = rgb(charts.S1), rgb(charts.S2), rgb(charts.S3), rgb(charts.S4), rgb(charts.GRAY)
 
 
@@ -69,7 +77,8 @@ def _text(slide, x, y, w, h, text, size=12, bold=False, color=INK, font=BODY, al
             r = p.add_run()
             r.text = clean_text(rtext)
             f = r.font
-            f.name = ropt.get("font", font)
+            if ropt.get("font", font):
+                f.name = ropt.get("font", font)
             f.size = Pt(ropt.get("size", size))
             f.bold = ropt.get("bold", bold)
             f.italic = ropt.get("italic", italic)
@@ -86,15 +95,13 @@ def _bullets(slide, x, y, w, h, items, size=11, color=INK, bullet_color=GOLD, sp
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.space_after = Pt(space_after)
         r1 = p.add_run()
-        r1.text = "■  "
+        r1.text = "●  "
         r1.font.size = Pt(size - 3)
         r1.font.color.rgb = bullet_color
-        r1.font.name = BODY
         r2 = p.add_run()
         r2.text = clean_text(it)
         r2.font.size = Pt(size)
         r2.font.color.rgb = color
-        r2.font.name = BODY
     return tb
 
 
@@ -129,7 +136,6 @@ def _table(slide, x, y, w, rows, col_w=None, font=10, header=True, row_h=0.26, b
             r = p.add_run()
             r.text = clean_text(str(val))
             r.font.size = Pt(font)
-            r.font.name = BODY
             r.font.bold = (header and i == 0) or (bold_first_col and j == 0)
             r.font.color.rgb = WHITE if (header and i == 0) else INK
     return shape
@@ -137,7 +143,6 @@ def _table(slide, x, y, w, rows, col_w=None, font=10, header=True, row_h=0.26, b
 
 def _style_chart(chart, legend=True, font=9):
     chart.font.size = Pt(font)
-    chart.font.name = BODY
     chart.font.color.rgb = MUTED
     chart.has_legend = legend
     if legend:
@@ -175,8 +180,7 @@ def _bar_chart(slide, x, y, w, h, categories, series, colors, fmt='#,##0.0', tit
         tp = ch.chart_title.text_frame.paragraphs[0]
         tp.runs[0].font.size = Pt(11)
         tp.runs[0].font.bold = True
-        tp.runs[0].font.color.rgb = INK
-        tp.runs[0].font.name = BODY
+        tp.runs[0].font.color.rgb = NAVY
     else:
         ch.has_title = False
     plot = ch.plots[0]
@@ -220,7 +224,7 @@ def _line_chart(slide, x, y, w, h, categories, series, colors, fmt='#,##0', titl
     if title:
         ch.chart_title.text_frame.text = clean_text(title)
         r = ch.chart_title.text_frame.paragraphs[0].runs[0]
-        r.font.size, r.font.bold, r.font.color.rgb, r.font.name = Pt(11), True, INK, BODY
+        r.font.size, r.font.bold, r.font.color.rgb = Pt(11), True, NAVY
     for i, s in enumerate(ch.plots[0].series):
         s.format.line.color.rgb = colors[i % len(colors)]
         s.format.line.width = Pt((widths or [2.0] * len(series))[i])
@@ -252,41 +256,170 @@ def _image(slide, png, x, y, w=None, h=None):
 # Cadre des diapositives
 # ---------------------------------------------------------------------------
 
+def _picture(slide, path, x, y, w=None, h=None):
+    try:
+        return slide.shapes.add_picture(str(path), x, y, width=w, height=h)
+    except Exception:
+        return None
+
+
+def _icon_circle(slide, icon, x, y, d, fill=None):
+    """Pastille ronde bleue et pictogramme blanc, comme dans les présentations CGF Gestion."""
+    c = _rect(slide, x, y, d, d, fill or NAVY, MSO_SHAPE.OVAL)
+    pad = int(d * 0.25)
+    _picture(slide, ICONS / f"{icon}.png", x + pad, y + pad, d - 2 * pad, d - 2 * pad)
+    return c
+
+
+def _card(slide, x, y, w, h, fill=PAPER, line=GRIDC, radius=0.04):
+    r = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h)
+    r.adjustments[0] = radius
+    r.fill.solid()
+    r.fill.fore_color.rgb = fill
+    r.line.color.rgb = line
+    r.line.width = Pt(0.75)
+    r.shadow.inherit = False
+    return r
+
+
+def _band(slide, x, y, w, h, text, size=12.5):
+    """Bandeau dégradé sombre portant le message clé (texte blanc)."""
+    _picture(slide, config.BRAND_DIR / "bandeau.jpg", x, y, w, h)
+    _text(slide, x + Inches(0.3), y, w - Inches(0.6), h, text, size=size, color=WHITE, anchor=MSO_ANCHOR.MIDDLE)
+
+
+def _info(slide, x, y, w, h, text, icon="idee", size=12):
+    """Encadré bleu clair avec pictogramme (repère pédagogique du modèle)."""
+    _card(slide, x, y, w, h, fill=INFO, line=LIGHTLINE)
+    d = min(h - Inches(0.3), Inches(0.62))
+    _icon_circle(slide, icon, x + Inches(0.3), y + (h - d) // 2, d, fill=GOLD)
+    _text(slide, x + Inches(0.3) + d + Inches(0.25), y, w - d - Inches(0.8), h, text, size=size, color=INK,
+          anchor=MSO_ANCHOR.MIDDLE)
+
+
 class Deck:
+    """Diapositives construites sur le modèle CGF Gestion."""
+
     def __init__(self, a):
         self.a = a
-        self.prs = Presentation()
+        self.prs = Presentation(str(config.PPTX_TEMPLATE)) if config.PPTX_TEMPLATE.exists() else Presentation()
         self.prs.slide_width, self.prs.slide_height = W, H
-        self.blank = self.prs.slide_layouts[6]
+        self.layouts = {l.name: l for l in self.prs.slide_layouts}
+        self.blank = self.layouts.get("Vide", self.prs.slide_layouts[6 if len(self.prs.slide_layouts) > 6 else 0])
         self.n = 0
+        foot = clean_text(f"FICHE DE VALEUR {a.company.ticker}  |  {a.settings.maison}  |  "
+                          f"{fmt_date_fr(a.as_of)}  |  Document interne")
+        for name in ("CONTENT", "CONTENT_PANEL"):
+            lay = self.layouts.get(name)
+            if lay is None:
+                continue
+            for sh in lay.shapes:
+                if sh.has_text_frame and "{PIED_DE_PAGE}" in sh.text_frame.text:
+                    sh.text_frame.paragraphs[0].runs[0].text = foot
+
+    def _add(self, layout_name):
+        lay = self.layouts.get(layout_name, self.blank)
+        s = self.prs.slides.add_slide(lay)
+        self.n += 1
+        return s
+
+    def _number(self, s):
+        _text(s, Inches(12.3), Inches(7.03), Inches(0.7), Inches(0.3), str(self.n), size=9, color=FOOT,
+              align=PP_ALIGN.RIGHT, name="Numéro")
 
     def slide(self, title, subtitle=None, notes=None):
-        s = self.prs.slides.add_slide(self.blank)
-        self.n += 1
         a = self.a
-        _rect(s, 0, 0, W, Inches(0.09), NAVY, name="Bandeau")
-        _text(s, Inches(0.55), Inches(0.28), Inches(9.6), Inches(0.6), title, size=24, font=HEAD, color=NAVY,
-              bold=True, name="Titre")
-        _rect(s, Inches(0.6), Inches(0.92), Inches(0.9), Inches(0.05), GOLD, name="Filet")
+        s = self._add("CONTENT")
+        if s.shapes.title is not None:
+            s.shapes.title.text = clean_text(title)
+            s.shapes.title.width = Inches(10.4)
+        else:
+            _text(s, Inches(0.36), Inches(0.22), Inches(10.4), Inches(0.52), title, size=26, bold=True, color=NAVY)
         if subtitle:
-            _text(s, Inches(0.55), Inches(1.0), Inches(10.5), Inches(0.4), subtitle, size=12, color=MUTED,
+            _text(s, Inches(0.36), Inches(0.82), Inches(10.4), Inches(0.32), subtitle, size=12, color=MUTED,
                   name="Sous-titre")
-        tag = f"{a.company.ticker}  |  {a.decision.signal}"
-        tg = _rect(s, Inches(10.9), Inches(0.33), Inches(1.9), Inches(0.42),
+        tg = _rect(s, Inches(11.1), Inches(0.27), Inches(1.87), Inches(0.42),
                    rgb(config.SIGNAL_COLORS.get(a.decision.signal, config.NAVY)), MSO_SHAPE.ROUNDED_RECTANGLE,
                    name="Etiquette signal")
         tf = tg.text_frame
-        tf.text = clean_text(tag)
+        tf.text = clean_text(f"{a.company.ticker}  |  {a.decision.signal}")
         p = tf.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
-        p.runs[0].font.size, p.runs[0].font.bold, p.runs[0].font.color.rgb, p.runs[0].font.name = Pt(11), True, WHITE, BODY
-        _text(s, Inches(0.55), Inches(7.08), Inches(9), Inches(0.3),
-              f"{a.settings.maison}  |  {a.company.name}  |  {fmt_date_fr(a.as_of)}  |  Document interne, "
-              "ne constitue pas un conseil en investissement", size=8.5, color=MUTED, name="Pied de page")
-        _text(s, Inches(12.0), Inches(7.08), Inches(0.8), Inches(0.3), str(self.n), size=9, color=MUTED,
-              align=PP_ALIGN.RIGHT, name="Numéro")
+        p.runs[0].font.size, p.runs[0].font.bold, p.runs[0].font.color.rgb = Pt(11), True, WHITE
+        for ph in list(s.placeholders):
+            if ph.placeholder_format.type is not None and "SLIDE_NUMBER" in str(ph.placeholder_format.type):
+                ph._element.getparent().remove(ph._element)
+        self._number(s)
         if notes:
             s.notes_slide.notes_text_frame.text = clean_text(notes)
+        return s
+
+    def cover(self):
+        a, c, dec, v = self.a, self.a.company, self.a.decision, self.a.valuation
+        country = config.COUNTRIES.get(c.country, {}).get("nom", c.country)
+        s = self._add("COVER")
+        _text(s, Inches(3.25), Inches(1.55), Inches(9.6), Inches(1.4), c.name, size=38, bold=True, color=WHITE,
+              anchor=MSO_ANCHOR.BOTTOM)
+        _text(s, Inches(3.25), Inches(3.05), Inches(9.3), Inches(0.45), "Fiche de valeur et recommandation", size=22,
+              color=SKY)
+        _text(s, Inches(3.25), Inches(3.65), Inches(9.3), Inches(0.9),
+              [f"{c.ticker}  |  {c.sector}  |  {country}  |  BRVM",
+               ((f"Données arrêtées au {fmt_date_fr(a.as_of)}", {"size": 13, "color": rgb("#C9D6E2")}),)],
+              size=15, color=WHITE)
+        pill = _rect(s, Inches(3.25), Inches(4.75), Inches(6.4), Inches(0.62),
+                     rgb(config.SIGNAL_COLORS.get(dec.signal, config.NAVY)), MSO_SHAPE.ROUNDED_RECTANGLE)
+        pill.adjustments[0] = 0.5
+        tf = pill.text_frame
+        tf.text = clean_text(f"{dec.signal}  |  conviction {dec.conviction.lower()}  |  potentiel "
+                             f"{fmt_pct(dec.upside, sign=True)}")
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        p.runs[0].font.size, p.runs[0].font.bold, p.runs[0].font.color.rgb = Pt(13), True, WHITE
+        _picture(s, config.BRAND_DIR / "logo_cgf.png", Inches(0.42), Inches(6.62), Inches(2.0), Inches(0.38))
+        _text(s, Inches(8.4), Inches(6.9), Inches(4.5), Inches(0.3),
+              f"{a.settings.maison}  |  Société de gestion agréée par l'AMF-UMOA", size=9, color=rgb("#C9D6E2"),
+              align=PP_ALIGN.RIGHT)
+        if a.settings.analyste:
+            _text(s, Inches(3.25), Inches(5.55), Inches(9), Inches(0.35), f"Analyste : {a.settings.analyste}", size=12,
+                  color=rgb("#C9D6E2"))
+        s.notes_slide.notes_text_frame.text = clean_text(" ".join(a.texts.get("these", [])))
+        return s
+
+    def divider(self, num, title, subtitle, icon="livre"):
+        s = self._add("DIVIDER")
+        _text(s, Inches(0.9), Inches(2.25), Inches(2.0), Inches(1.5), f"{num:02d}", size=80, bold=True, color=NUMBLUE,
+              align=PP_ALIGN.RIGHT, anchor=MSO_ANCHOR.MIDDLE)
+        ln = s.shapes.add_connector(1, Inches(3.05), Inches(2.5), Inches(3.05), Inches(3.5))
+        ln.line.color.rgb = GOLD
+        ln.line.width = Pt(2)
+        _text(s, Inches(3.3), Inches(2.4), Inches(8.6), Inches(0.72), title, size=30, bold=True, color=WHITE)
+        _text(s, Inches(3.33), Inches(3.12), Inches(8.6), Inches(0.45), subtitle, size=15, color=SKY)
+        _picture(s, ICONS / f"{icon}.png", Inches(11.55), Inches(0.55), Inches(0.72), Inches(0.72))
+        return s
+
+    def close(self):
+        a = self.a
+        s = self._add("CLOSE")
+        _text(s, Inches(1.0), Inches(1.7), Inches(7.0), Inches(0.9), "Merci de votre attention", size=40, bold=True,
+              color=WHITE)
+        _text(s, Inches(1.0), Inches(4.05), Inches(6.6), Inches(0.3), "POUR ALLER PLUS LOIN", size=11, bold=True,
+              color=SKY)
+        steps = [("calendrier", f"Fiche établie le {fmt_date_fr(a.as_of)} à partir des données disponibles à cette date"),
+                 ("loupe", "Détail des calculs dans l'export Excel joint à la fiche"),
+                 ("bouclier", "Signal à valider en comité d'investissement avant toute décision")]
+        for i, (ic, txt) in enumerate(steps):
+            yy = Inches(4.48 + 0.52 * i)
+            _icon_circle(s, ic, Inches(1.0), yy, Inches(0.36), fill=NUMBLUE)
+            _text(s, Inches(1.5), yy - Inches(0.04), Inches(6.4), Inches(0.44), txt, size=12, color=WHITE,
+                  anchor=MSO_ANCHOR.MIDDLE)
+        for i, (ic, main, sub) in enumerate(config.CONTACTS):
+            yy = Inches(1.72 + 1.08 * i)
+            _icon_circle(s, ic, Inches(8.3), yy, Inches(0.56), fill=NUMBLUE)
+            _text(s, Inches(9.02), yy - Inches(0.02), Inches(3.9), Inches(0.66),
+                  [((main, {"bold": True, "size": 13}),), ((sub, {"size": 10, "color": rgb("#C9D6E2")}),)], color=WHITE)
+        _text(s, Inches(1.0), Inches(6.1), Inches(11.3), Inches(0.56), config.DISCLAIMER, size=8.5, italic=True,
+              color=rgb("#C9D6E2"))
+        _picture(s, config.BRAND_DIR / "logo_cgf_blanc.png", Inches(1.0), Inches(6.72), Inches(1.75), Inches(0.33))
         return s
 
 
@@ -302,62 +435,42 @@ def build_pptx(a) -> bytes:
     country = config.COUNTRIES.get(c.country, {}).get("nom", c.country)
 
     # 1. Couverture ---------------------------------------------------------
-    s = d.prs.slides.add_slide(d.blank)
-    d.n += 1
-    _rect(s, 0, 0, W, H, NAVY, name="Fond")
-    _rect(s, 0, Inches(5.2), W, Inches(0.06), GOLD, name="Filet or")
-    _text(s, Inches(0.8), Inches(0.8), Inches(8), Inches(0.4), "FICHE DE VALEUR  |  RECOMMANDATION", size=13,
-          color=GOLD, bold=True)
-    _text(s, Inches(0.8), Inches(1.5), Inches(8.6), Inches(1.6), c.name, size=40, font=HEAD, color=WHITE, bold=True)
-    _text(s, Inches(0.8), Inches(3.3), Inches(8.6), Inches(0.5), f"{c.ticker}  |  {c.sector}  |  {country}  |  BRVM",
-          size=16, color=WHITE)
-    _text(s, Inches(0.8), Inches(5.5), Inches(8), Inches(0.9),
-          [f"{a.settings.maison}  |  {fmt_date_fr(a.as_of)}",
-           f"Analyste : {a.settings.analyste}" if a.settings.analyste else "Analyse fondamentale, technique et macroéconomique"],
-          size=13, color=WHITE)
-    card = _rect(s, Inches(9.6), Inches(1.4), Inches(3.1), Inches(3.3), sigcol, MSO_SHAPE.ROUNDED_RECTANGLE,
-                 name="Carte signal")
-    card.adjustments[0] = 0.06
-    _text(s, Inches(9.75), Inches(1.6), Inches(2.8), Inches(0.3), "SIGNAL", size=11, color=WHITE, bold=True,
-          align=PP_ALIGN.CENTER)
-    _text(s, Inches(9.75), Inches(1.95), Inches(2.8), Inches(0.8), dec.signal, size=32, font=HEAD, color=WHITE,
-          bold=True, align=PP_ALIGN.CENTER)
-    _text(s, Inches(9.75), Inches(2.85), Inches(2.8), Inches(1.7),
-          [f"Conviction {dec.conviction.lower()}",
-           f"Cours {fmt_price(v.price)}",
-           f"Cible 12 mois {fmt_price(dec.target)}",
-           f"Potentiel {fmt_pct(dec.upside, sign=True)}"], size=12.5, color=WHITE, align=PP_ALIGN.CENTER)
-    s.notes_slide.notes_text_frame.text = clean_text(" ".join(tx.get("these", [])))
+    d.cover()
 
     # 2. Synthèse -------------------------------------------------------------
-    s = d.slide("Synthèse et recommandation", notes=" ".join(tx.get("justification", [])))
-    kpis = [(fmt_price(v.price), "Cours"), (fmt_price(dec.target), "Juste valeur / cible"),
-            (fmt_pct(dec.upside, sign=True), "Potentiel"), (fmt_pct(v.div_yield), "Rendement net"),
-            (fmt_num(dec.composite) + "/100" if is_num(dec.composite) else "n.d.", "Note globale")]
-    kw = Inches(2.35)
-    for i, (val, lab) in enumerate(kpis):
-        x = Inches(0.6) + i * (kw + Inches(0.12))
-        _rect(s, x, Inches(1.25), kw, Inches(0.95), PAPER, name=f"Tuile {lab}")
-        _rect(s, x, Inches(1.25), Inches(0.06), Inches(0.95), sigcol if i == 0 else GOLD)
-        _text(s, x + Inches(0.15), Inches(1.3), kw - Inches(0.2), Inches(0.5), val, size=20, bold=True, color=INK)
-        _text(s, x + Inches(0.15), Inches(1.82), kw - Inches(0.2), Inches(0.3), lab, size=10.5, color=MUTED)
-    _text(s, Inches(0.6), Inches(2.45), Inches(7.6), Inches(0.35), "Thèse d'investissement", size=14, bold=True,
+    s = d.slide("Synthèse et recommandation", f"Données arrêtées au {fmt_date_fr(a.as_of)}",
+                notes=" ".join(tx.get("justification", [])))
+    kpis = [("tendance", fmt_price(v.price), f"Cours au {a.market.price_date:%d/%m/%Y}" if a.market.price_date else "Cours"),
+            ("cible", fmt_price(dec.target), "Juste valeur, cible à 12 mois"),
+            ("pourcentage", fmt_pct(dec.upside, sign=True), "Potentiel vers la juste valeur"),
+            ("pieces", fmt_pct(v.div_yield), "Rendement net du dividende")]
+    cw, gap = Inches(2.99), Inches(0.26)
+    for i, (ic, val, lab) in enumerate(kpis):
+        x = Inches(0.36) + i * (cw + gap)
+        _card(s, x, Inches(1.32), cw, Inches(2.05))
+        _icon_circle(s, ic, x + Inches(0.3), Inches(1.55), Inches(0.56))
+        _text(s, x + Inches(0.3), Inches(2.2), cw - Inches(0.5), Inches(0.55), val, size=24, bold=True, color=NAVY)
+        _text(s, x + Inches(0.3), Inches(2.78), cw - Inches(0.5), Inches(0.5), lab, size=11, color=MUTED)
+    these = tx.get("these", [])
+    _text(s, Inches(0.36), Inches(3.55), Inches(7.6), Inches(0.32), "THÈSE D'INVESTISSEMENT", size=11, bold=True,
           color=NAVY)
-    _text(s, Inches(0.6), Inches(2.85), Inches(7.6), Inches(3.0), tx.get("these", []), size=11.5, line_spacing=1.1)
-    _text(s, Inches(8.6), Inches(2.45), Inches(4.2), Inches(0.35), "Points forts", size=14, bold=True, color=NAVY)
-    _bullets(s, Inches(8.6), Inches(2.85), Inches(4.2), Inches(1.9), (tx.get("forces") or ["Aucun point saillant."])[:4],
-             size=10.5)
-    _text(s, Inches(8.6), Inches(4.75), Inches(4.2), Inches(0.35), "Points de vigilance", size=14, bold=True,
-          color=NAVY)
-    _bullets(s, Inches(8.6), Inches(5.15), Inches(4.2), Inches(1.8),
-             (tx.get("vigilances") or ["Aucun point saillant."])[:4], size=10.5, bullet_color=rgb(config.NEG))
-
+    _text(s, Inches(0.36), Inches(3.9), Inches(7.6), Inches(2.0), these[-1:] if these else [], size=11,
+          line_spacing=1.08)
+    _text(s, Inches(8.3), Inches(3.55), Inches(4.7), Inches(0.32), "POINTS FORTS", size=11, bold=True, color=NAVY)
+    _bullets(s, Inches(8.3), Inches(3.88), Inches(4.7), Inches(1.0), (tx.get("forces") or ["Aucun point saillant."])[:3],
+             size=10)
+    _text(s, Inches(8.3), Inches(4.9), Inches(4.7), Inches(0.32), "POINTS DE VIGILANCE", size=11, bold=True, color=NAVY)
+    _bullets(s, Inches(8.3), Inches(5.22), Inches(4.7), Inches(0.75),
+             (tx.get("vigilances") or ["Aucun point saillant."])[:2], size=10, bullet_color=rgb(config.NEG))
+    msg = (f"Signal {dec.signal}, conviction {dec.conviction.lower()}"
+           + (f", note globale {fmt_num(dec.composite)}/100" if is_num(dec.composite) else "")
+           + ". " + clean_text(config.SIGNAL_DEFINITIONS.get(dec.signal, "")))
     if c.level != "complet" and a.coverage is not None:
-        _rect(s, Inches(0.6), Inches(6.15), Inches(7.6), Inches(0.75), rgb("#FBF3E0"), name="Niveau de données")
-        _rect(s, Inches(0.6), Inches(6.15), Inches(0.06), Inches(0.75), GOLD)
-        _text(s, Inches(0.8), Inches(6.2), Inches(7.3), Inches(0.65),
-              f"{config.LEVELS[c.level][0]} | couverture {fmt_num(a.coverage.score, 0)}%. Conviction plafonnée : "
-              f"signal à confirmer avec les états financiers.", size=10.5, color=INK)
+        msg += f" {config.LEVELS[c.level][0]}, couverture des données {fmt_num(a.coverage.score, 0)}%."
+    _band(s, Inches(0.36), Inches(6.05), Inches(12.61), Inches(0.85), msg, size=11.5)
+
+    d.divider(1, "Analyse boursière et financière", "Profil boursier, soldes intermédiaires de gestion, ratios et pairs",
+              icon="institution")
 
     # 3. Profil boursier --------------------------------------------------------
     s = d.slide("Profil boursier", "Données de marché et évolution du cours", notes=tx.get("technique"))
@@ -473,6 +586,9 @@ def build_pptx(a) -> bytes:
         _bullets(s, Inches(8.5), Inches(1.95), Inches(4.3), Inches(4.9),
                  todo or ["Toutes les données principales sont disponibles."], size=10.5)
 
+    d.divider(2, "Valorisation et marché", "Juste valeur, analyse technique, environnement et actualités",
+              icon="balance")
+
     # 7. Valorisation ----------------------------------------------------------------
     s = d.slide("Valorisation", f"Juste valeur {fmt_price(v.fair_value)}, potentiel {fmt_pct(v.upside, sign=True)}",
                 notes=tx.get("valorisation"))
@@ -565,7 +681,7 @@ def build_pptx(a) -> bytes:
         _text(s, Inches(7.9), Inches(5.15), Inches(4.9), Inches(0.3), "Publications récentes", size=12, bold=True,
               color=NAVY)
         _bullets(s, Inches(7.9), Inches(5.5), Inches(4.9), Inches(1.5),
-                 others or [f"Source : {clean_text(rep.source)}"], size=9.5)
+                 others or [f"Source : {clean_text(rep.source or 'document chargé par l analyste')}"], size=9.5)
 
     s = d.slide("Actualités et informations communiquées", "Veille de presse sur douze mois et communication de la société",
                 notes=tx.get("actualites"))
@@ -591,6 +707,8 @@ def build_pptx(a) -> bytes:
     if extra:
         _bullets(s, Inches(0.6), ytxt, Inches(12.2), Inches(6.9) - ytxt, extra, size=11)
 
+    d.divider(3, "Décision", "Matrice de décision, méthodologie et sources", icon="cible")
+
     # 11. Décision ---------------------------------------------------------------------------
     s = d.slide("Matrice de décision", f"Signal {dec.signal}, conviction {dec.conviction.lower()}",
                 notes=" ".join(tx.get("justification", [])))
@@ -609,7 +727,10 @@ def build_pptx(a) -> bytes:
     _text(s, Inches(0.6), Inches(1.4), Inches(7.2), Inches(0.35), "Méthode", size=13, bold=True, color=NAVY)
     _text(s, Inches(0.6), Inches(1.8), Inches(7.2), Inches(3.2), METHODO, size=10.5)
     src = dict(a.market.sources)
-    src["états financiers"] = f"Classeur, feuille {c.sheet} ({c.unit_label})"
+    if c.level in ("complet", "partiel"):
+        src["états financiers"] = f"Classeur, feuille {c.sheet} ({c.unit_label})"
+    else:
+        src["chiffres clés"] = c.data_source
     src["macroéconomie"] = m.source
     _text(s, Inches(8.2), Inches(1.4), Inches(4.6), Inches(0.35), "Sources", size=13, bold=True, color=NAVY)
     _bullets(s, Inches(8.2), Inches(1.8), Inches(4.6), Inches(3.4), [f"{k.capitalize()} : {vv}" for k, vv in src.items()],
@@ -619,6 +740,8 @@ def build_pptx(a) -> bytes:
         _text(s, Inches(0.6), Inches(5.0), Inches(12.2), Inches(0.9), ["Contrôle des données : " + x for x in notes_dq],
               size=9.5, color=MUTED)
     _text(s, Inches(0.6), Inches(6.05), Inches(12.2), Inches(0.9), config.DISCLAIMER, size=9.5, italic=True, color=MUTED)
+
+    d.close()
 
     buf = io.BytesIO()
     d.prs.core_properties.title = clean_text(f"Fiche de valeur {c.name} ({c.ticker})")

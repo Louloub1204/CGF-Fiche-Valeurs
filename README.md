@@ -397,6 +397,17 @@ performances futures. Les signaux sont générés selon une méthode quantitativ
 validés par l'analyste avant toute décision d'investissement, dans le respect de la réglementation
 de l'AMF-UMOA.
 
+## Charte graphique CGF Gestion
+
+- **Fiche PDF** : papier à en-tête du « Modèle de sortie CGF GESTION » (logo et mention légale sur
+  chaque page), bleu institutionnel, cartes gris-bleu, police Inter.
+- **Rapport PowerPoint** : construit sur le modèle des présentations CGF Gestion
+  (`assets/templates/modele_cgf_gestion.pptx` : masques couverture, contenu, intercalaire et clôture,
+  police du thème), avec cartes à pictogrammes, encadrés et bandeau dégradé pour les messages clés.
+- Logos, pictogrammes et bandeau : `assets/brand/`. Pour changer de charte, remplacer ces fichiers et
+  le modèle PowerPoint ; les couleurs sont centralisées dans `fiche_valeur/config.py`.
+
 ## Licences
 
-Polices Carlito et Caladea : SIL Open Font License 1.1 (`assets/fonts/OFL-LICENSES.txt`).
+Polices Inter, Carlito et Caladea : SIL Open Font License 1.1 (`assets/fonts/OFL-LICENSES.txt`).
+Logos, modèles et pictogrammes de `assets/brand/` et `assets/templates/` : propriété de CGF Gestion.
