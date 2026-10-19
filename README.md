@@ -154,7 +154,7 @@ Classeur « Base de données - SMF » ; les feuilles sont reconnues par leur nom
 | `Cours` | `Date` puis une colonne par ticker ; `.BRVMCI` (ou `BRVMC`) pour le BRVM Composite | historique, technique, bêta |
 | `Volume moyen` ou `Volumes` | même structure ; montants en FCFA détectés et convertis en nombre de titres | liquidité |
 | `Tableau de bord` | blocs par agrégat (capitaux propres, résultat net, chiffre d'affaires, résultat d'exploitation, flux de trésorerie), années en lignes, montants en FCFA ; 0 = non renseigné | chiffres clés (niveau 2), comparables, exercices manquants du classeur |
-| `Historique_dividende` ou `Dividendes` | dividende net par action, **année de paiement** en lignes (exercice N-1) | rendement, actualisation des dividendes |
+| `Historique_dividende` ou `Dividendes` | dividende net par action, **exercice** en lignes (dividende de l'exercice N, versé en N+1 ; cellule vide = aucun versement) | rendement, actualisation des dividendes |
 | `Nb_titres` | lignes « Titres flottants » et « Nombre de titres » | capitalisation, flottant |
 | `Moyenne_cours` | cours moyen par année | historique |
 

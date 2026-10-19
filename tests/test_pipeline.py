@@ -371,7 +371,7 @@ def test_smf_format(tmp_path):
     assert mb.volumes_in_value and 90 <= mb.volumes["AAAC"].dropna().iloc[5] <= 110
     assert mb.fundamentals["AAAC"]["capitaux_propres"][2025] == 10e9
     assert 2024 not in mb.fundamentals["BBBC"]["rn"]           # 0 = non renseigné
-    assert [d.exercice for d in mb.dividends["AAAC"]] == [2022, 2023, 2024]   # année de paiement N -> exercice N-1
+    assert [d.exercice for d in mb.dividends["AAAC"]] == [2023, 2024, 2025]   # ligne N = dividende de l'exercice N
     assert mb.shares_total["BBBC"] == 10_000_000 and mb.shares_float["AAAC"] == 4_000_000
 
 
@@ -484,7 +484,7 @@ def test_auto_params(tmp_path):
     config.register_ticker("AAAC", "Société A", "CI", "Industriels")
     ap = suggest("AAAC", None, mb, online=False)
     assert ap.price == mb.closes["AAAC"].dropna().iloc[-1] and ap.shares == 20_000_000
-    assert ap.float_pct == pytest.approx(0.2) and ap.dps == 50 and ap.dps_exercice == 2024
+    assert ap.float_pct == pytest.approx(0.2) and ap.dps == 50 and ap.dps_exercice == 2025
     assert ap.rf == config.TAUX_SOUVERAINS["CI"] and 12 <= ap.seuil_achat <= 30
     major, info = classify_announcements([
         Publication("SOCIETE A CI : Offre publique d'achat", date(2026, 10, 1), "u"),

@@ -341,7 +341,7 @@ def _read_dividends_sheet(raw: pd.DataFrame, mb: MarketBase) -> None:
             mb.dividends.setdefault(t, []).append(
                 Dividend(int(y) if is_num(y) else (d.year - 1 if d else None), m, d, "Base de marché"))
         return
-    # format large : années de paiement en lignes, tickers en colonnes (dividende de l'exercice N-1 payé en N)
+    # format large : exercices en lignes, tickers en colonnes (dividende de l'exercice N, versé en N+1)
     header = raw.iloc[0].tolist()
     for i in range(1, len(raw)):
         y = next((int(v) for v in raw.iloc[i, :3].tolist() if is_num(v) and 1990 < float(v) < 2100), None)
@@ -356,11 +356,11 @@ def _read_dividends_sheet(raw: pd.DataFrame, mb: MarketBase) -> None:
         for t, v in cells:
             if is_num(v) and v >= 0:      # 0 = pas de dividende cette année-là
                 mb.dividends.setdefault(t, []).append(
-                    Dividend(y - 1, v, date(y, 7, 1), "Base de marché (Historique_dividende)"))
+                    Dividend(y, v, date(y + 1, 7, 1), "Base de marché (Historique_dividende)"))
             elif not is_num(v) and filled >= 3 and t in {c_[0] for c_ in cells if is_num(c_[1])} | set(mb.dividends):
                 # saison renseignée pour d'autres titres : une cellule vide vaut absence de versement
                 mb.dividends.setdefault(t, []).append(
-                    Dividend(y - 1, 0.0, date(y, 7, 1), "Base de marché (Historique_dividende, cellule vide = aucun versement)"))
+                    Dividend(y, 0.0, date(y + 1, 7, 1), "Base de marché (Historique_dividende, cellule vide = aucun versement)"))
 
 
 def load_price_file(source, filename: str = "") -> pd.DataFrame | None:

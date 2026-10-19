@@ -187,7 +187,7 @@ with st.sidebar:
         help="Classeur « Base de données - SMF ». Feuilles reconnues par leur nom : Cours (Date puis une colonne "
              "par ticker, .BRVMCI pour le BRVM Composite), Volume moyen (montants échangés, convertis en titres), "
              "Tableau de bord (capitaux propres, résultat net, chiffre d'affaires, résultat d'exploitation, flux "
-             "de trésorerie par année), Historique_dividende (dividende net par action, année de paiement), "
+             "de trésorerie par année), Historique_dividende (dividende net par action, exercice en lignes), "
              "Moyenne_cours, Nb_titres (titres flottants, nombre de titres).")
     st.caption("À charger après le classeur des états financiers. Apporte cours, volumes, dividendes, nombre de "
                "titres et chiffres clés de toute la cote : les titres hors classeur passent au niveau 2 avec "
