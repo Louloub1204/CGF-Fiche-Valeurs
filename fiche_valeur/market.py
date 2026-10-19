@@ -837,6 +837,20 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
         md.dividends = [Dividend(y, v, None, origin) for y, v in sorted(dps.items())]
         md.sources["dividendes"] = origin
 
+    # Dernier exercice clos sans versement recensé : les sources (sikafinance, brvm.org) ne listent que les versements
+    # effectifs ; passé la saison des assemblées (30 septembre N+1), l'absence de ligne vaut absence de dividende.
+    ly = company.last_year() if company is not None and getattr(company, "years", None) else None
+    if md.dividends and ly and not overrides.get("dps"):
+        known = [d.exercice for d in md.dividends if d.exercice]
+        from_base = md.sources.get("dividendes", "").startswith("Base de marché")
+        # base de marché : les zéros y sont explicites ; l'absence du dernier exercice ne vaut absence de dividende que si
+        # la saison de ce dernier exercice y est déjà renseignée pour d'autres titres
+        season_in_base = (not from_base) or (base is not None and any(
+            d_.exercice and d_.exercice >= ly for ds in base.dividends.values() for d_ in ds))
+        if known and max(known) < ly and season_in_base and date.today() >= date(ly + 1, 9, 30):
+            md.dividends.append(Dividend(ly, 0.0, None, f"Aucun versement recensé au titre de {ly}"))
+            md.sources["dividendes"] = (md.sources.get("dividendes", "") + f" ; aucun versement recensé au titre de {ly}").lstrip(" ;")
+
     # Saisies manuelles (prioritaires) -------------------------------------------
     if is_num(overrides.get("price")):
         md.price = float(overrides["price"])

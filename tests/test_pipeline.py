@@ -647,3 +647,16 @@ def test_no_dividend_last_year_gives_zero_yield(wb, mb, offline):
     assert not a.valuation.div_yield
     assert not any(m.name == "Actualisation des dividendes" for m in a.valuation.methods)
     assert "rendement net" not in a.texts["valorisation"]
+
+
+def test_stale_dividend_means_no_payment(wb, mb, offline):
+    from datetime import date as _d
+    from fiche_valeur.market import Dividend
+    t = wb.tickers[0]
+    ly = wb.companies[t].last_year()
+    mb2 = load_market_base(SMF)
+    mb2.dividends[t] = [Dividend(ly - 2, 190.0, _d(ly - 1, 7, 1), "test"), Dividend(ly - 1, 190.0, _d(ly, 7, 1), "test")]
+    a = run_analysis(wb, t, offline, market_base=mb2)
+    if _d.today() >= _d(ly + 1, 9, 30):
+        assert a.valuation.dps == 0 and a.valuation.dps_exercice == ly
+        assert not a.valuation.div_yield
