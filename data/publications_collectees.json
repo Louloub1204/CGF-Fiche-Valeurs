@@ -1,0 +1,557 @@
+[
+ {
+  "ticker": "BBGC",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-09-24",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/24-09-2026-bridge-bank-group-ci-rapport-d-activites-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 30200.0,
+   "charges_generales": -13100.0,
+   "rbe": 17200.0,
+   "cout_risque": -3800.0,
+   "rai": 13400.0,
+   "rn": 10400.0,
+   "credits_clientele": 645300.0,
+   "depots_clientele": 903600.0
+  }
+ },
+ {
+  "ticker": "BBGC",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-09-24",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/24-09-2026-bridge-bank-group-ci-rapport-d-activites-1er-semestre-2026",
+  "values": {
+   "pnb": 37700.0,
+   "charges_generales": -15200.0,
+   "rbe": 22500.0,
+   "cout_risque": -4300.0,
+   "rai": 18200.0,
+   "rn": 15200.0,
+   "credits_clientele": 823900.0,
+   "depots_clientele": 1318300.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "13/10/2026",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/13-10-2026-bici-ci-rapport-d-activites-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 37146.0,
+   "charges_generales": -19355.0,
+   "rbe": 17791.0,
+   "cout_risque": -123.0,
+   "rai": 17673.0,
+   "rn": 16253.0,
+   "credits_clientele": 512559.0,
+   "depots_clientele": 947270.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-bici-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 18130.0,
+   "rai": 9266.0,
+   "rn": 8011.0,
+   "credits_clientele": 547784.0,
+   "depots_clientele": 870535.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "13/10/2026",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/13-10-2026-bici-ci-rapport-d-activites-1er-semestre-2026",
+  "values": {
+   "pnb": 42637.0,
+   "charges_generales": -18932.0,
+   "rbe": 23705.0,
+   "cout_risque": -1778.0,
+   "rai": 21810.0,
+   "rn": 19948.0,
+   "credits_clientele": 533422.0,
+   "depots_clientele": 1007993.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-bici-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "pnb": 21214.0,
+   "rai": 11223.0,
+   "rn": 10387.0,
+   "credits_clientele": 523300.0,
+   "depots_clientele": 996392.0
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-bernabe-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 11207.24,
+   "rao": -21.53,
+   "rn": -16.147
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-bernabe-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "ca": 11194.069,
+   "rao": 65.566,
+   "rn": 65.566
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-09-23",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/23-09-2026-boa-mali-rapport-dactivites-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 18713.0,
+   "charges_generales": -10357.0,
+   "rbe": 8355.0,
+   "cout_risque": -3664.0,
+   "rn": 6206.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-09-23",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/23-09-2026-boa-mali-rapport-dactivites-1er-semestre-2026",
+  "values": {
+   "pnb": 21987.0,
+   "charges_generales": -11176.0,
+   "rbe": 10811.0,
+   "cout_risque": -4525.0,
+   "rn": 6716.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-29",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/29-04-2026-ecobank-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 29738.0,
+   "rai": 15459.0,
+   "rn": 13258.0,
+   "credits_clientele": 984547.0,
+   "depots_clientele": 1526362.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-29",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/29-04-2026-ecobank-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "pnb": 30846.0,
+   "rai": 15074.0,
+   "rn": 13040.0,
+   "credits_clientele": 958724.0,
+   "depots_clientele": 1709280.0
+  }
+ },
+ {
+  "ticker": "LNBB",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-07-31",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/31-07-2026-lnb-bn-rapport-dactivites-et-rapport-dexamen-limite-des-commissaires-aux-comptes-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 48148.0,
+   "re": 1278.0,
+   "rn": 841.0
+  }
+ },
+ {
+  "ticker": "LNBB",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-07-31",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/31-07-2026-lnb-bn-rapport-dactivites-et-rapport-dexamen-limite-des-commissaires-aux-comptes-1er-semestre-2026",
+  "values": {
+   "ca": 49937.0,
+   "re": 1783.0,
+   "rn": 1348.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-nsia-banque-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 22402.0,
+   "rai": 7940.0,
+   "rn": 7138.0,
+   "credits_clientele": 1573747.0,
+   "depots_clientele": 1782582.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-nsia-banque-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "pnb": 28615.0,
+   "rai": 11830.0,
+   "rn": 10912.0,
+   "credits_clientele": 1744337.0,
+   "depots_clientele": 2162760.0
+  }
+ },
+ {
+  "ticker": "NTLC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-nestle-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 54079.13,
+   "rao": 9487.853,
+   "rn": 5479.04
+  }
+ },
+ {
+  "ticker": "NTLC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-nestle-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "ca": 70821.658,
+   "rao": 10874.637,
+   "rn": 7525.623
+  }
+ },
+ {
+  "ticker": "ORAC",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "08/10/2026",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/08-10-2026-orange-ci-rapport-d-activites-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 579300.0,
+   "ebe": 200800.0,
+   "re": 131800.0,
+   "rao": 118200.0,
+   "rn": 76300.0
+  }
+ },
+ {
+  "ticker": "ORAC",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "08/10/2026",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/08-10-2026-orange-ci-rapport-d-activites-1er-semestre-2026",
+  "values": {
+   "ca": 672800.0,
+   "ebe": 239300.0,
+   "re": 159600.0,
+   "rao": 146800.0,
+   "rn": 90300.0
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "07/10/2026",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/07-10-2026-palm-ci-rapport-d-activites-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 134789.05,
+   "re": 29803.435,
+   "rao": 31070.451,
+   "rn": 22908.673
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-29",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/29-04-2026-palm-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 67519.358,
+   "rao": 15417.398,
+   "rn": 11562.398
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "07/10/2026",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/07-10-2026-palm-ci-rapport-d-activites-1er-semestre-2026",
+  "values": {
+   "ca": 114725.471,
+   "re": 17621.502,
+   "rao": 18295.076,
+   "rn": 13526.883
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-29",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/29-04-2026-palm-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "ca": 49384.116,
+   "rao": 2120.132,
+   "rn": 1594.48
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-05-11",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/11-05-2026-safca-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 1080.0,
+   "cout_risque": -89.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-05-11",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/11-05-2026-safca-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "pnb": 1395.0,
+   "cout_risque": -22.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-08-31",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/31-08-2026-societe-generale-ci-rapport-d-activites-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 132011.0,
+   "charges_generales": -51391.0,
+   "rbe": 80620.0,
+   "cout_risque": -18359.0,
+   "rai": 65712.0,
+   "rn": 53077.0,
+   "credits_clientele": 2417505.0,
+   "depots_clientele": 2934739.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-08-31",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/31-08-2026-societe-generale-ci-rapport-d-activites-1er-semestre-2026",
+  "values": {
+   "pnb": 134059.0,
+   "charges_generales": -49137.0,
+   "rbe": 84922.0,
+   "cout_risque": -20030.0,
+   "rai": 66306.0,
+   "rn": 53350.0,
+   "credits_clientele": 2581361.0,
+   "depots_clientele": 3066575.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-09-28",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/28-09-2026-sib-ci-rapport-d-activites-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 54300.0,
+   "rbe": 34700.0,
+   "rn": 29400.0,
+   "credits_clientele": 1044000.0,
+   "depots_clientele": 1409000.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-05-06",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/06-05-2026-sib-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "pnb": 26500.0,
+   "rbe": 15800.0,
+   "rn": 13600.0,
+   "credits_clientele": 1042000.0,
+   "depots_clientele": 1371000.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-09-28",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/28-09-2026-sib-ci-rapport-d-activites-1er-semestre-2026",
+  "values": {
+   "pnb": 56600.0,
+   "rbe": 36600.0,
+   "rn": 32100.0,
+   "credits_clientele": 1169000.0,
+   "depots_clientele": 1581000.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-05-06",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/06-05-2026-sib-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "pnb": 27700.0,
+   "rbe": 17500.0,
+   "rn": 15200.0,
+   "credits_clientele": 1112000.0,
+   "depots_clientele": 1495000.0
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-smb-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 54777.0,
+   "rn": 2715.0
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-30",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/30-04-2026-smb-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "ca": 31143.0,
+   "rao": 1983.0,
+   "rn": 1487.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2025,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-29",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/29-04-2026-saph-ci-rapport-dactivites-1er-trimestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 94319.0,
+   "re": 16772.0,
+   "rao": 15763.0,
+   "rn": 11804.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2026,
+  "period": "T1",
+  "statut": "Publié",
+  "published": "2026-04-29",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/29-04-2026-saph-ci-rapport-dactivites-1er-trimestre-2026",
+  "values": {
+   "ca": 71772.0,
+   "re": 4456.0,
+   "rao": 3575.0,
+   "rn": 2633.0
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2025,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-07-13",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/13-07-2026-uniwax-ci-rapport-dactivites-1er-semestre-2026 (comparatif N-1)",
+  "values": {
+   "ca": 15711.008,
+   "re": -314.22,
+   "rao": -330.043,
+   "rn": 8216.545
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2026,
+  "period": "S1",
+  "statut": "Publié",
+  "published": "2026-07-13",
+  "source": "https://www.richbourse.com/common/actualite/afficher-fichier/13-07-2026-uniwax-ci-rapport-dactivites-1er-semestre-2026",
+  "values": {
+   "ca": 15752.453,
+   "re": 771.219,
+   "rao": 764.779,
+   "rn": 771.279
+  }
+ }
+]

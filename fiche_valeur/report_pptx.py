@@ -657,8 +657,57 @@ def build_pptx(a) -> bytes:
           + m.notes, size=10.5, color=MUTED)
 
     # 10. Actualités ----------------------------------------------------------------------
+    dyn = a.dynamics
     rep = a.interim
-    if rep is not None and rep.lines:
+    if dyn is not None:
+        from .dynamics import keys_for
+        lab = {k: l for k, l, _ in keys_for(dyn.is_bank)}
+        last = dyn.latest
+        s = d.slide(f"Dynamique de l'exercice {dyn.year}",
+                    f"{dyn.label} face à {dyn.period} {dyn.year - 1}"
+                    + (f" | publication du {last.published:%d/%m/%Y}" if last.published else "")
+                    + (f" | {clean_text(dyn.trend)}" if dyn.trend else ""),
+                    notes=" ".join(tx.get("publication", [])))
+        rows = [["Indicateur (Mds FCFA)", dyn.label, f"{dyn.period} {dyn.year - 1}", "Variation"]]
+        for key, name in lab.items():
+            m_ = last.metrics.get(key)
+            if m_:
+                rows.append([name, fmt_mds(m_[0]), fmt_mds(m_[1]), fmt_pct(m_[2], sign=True) if is_num(m_[2]) else "n.s."])
+        _table(s, Inches(0.6), Inches(1.45), Inches(7.0), rows, [3.0, 1.3, 1.3, 1.2], font=10,
+               row_h=min(0.36, 3.0 / len(rows)))
+        y2 = Inches(1.45) + Inches(min(0.36, 3.0 / len(rows)) * len(rows)) + Inches(0.25)
+        if len(dyn.compares) > 1:
+            hdr = ["Variation sur un an"] + [cp.label for cp in dyn.compares]
+            trows = [hdr]
+            for key, name in lab.items():
+                vals = [cp.metrics.get(key, (None, None, None))[2] for cp in dyn.compares]
+                if any(is_num(x) for x in vals):
+                    trows.append([name] + [fmt_pct(x, sign=True) if is_num(x) else "n.s." for x in vals])
+            if len(trows) > 1:
+                n_ = len(dyn.compares)
+                _table(s, Inches(0.6), y2, Inches(7.0), trows[:7], [3.0] + [4.0 / n_] * n_, font=9.5, row_h=0.3)
+        main = [k for k in ("pnb" if dyn.is_bank else "ca", "ebe", "rbe", "re", "rn") if k in last.metrics
+                and is_num(last.metrics[k][0])][:4]
+        if main:
+            _bar_chart(s, Inches(7.9), Inches(1.4), Inches(4.9), Inches(3.0), [lab[k] for k in main],
+                       [(f"{dyn.period} {dyn.year - 1}", [last.metrics[k][1] / 1e9 if is_num(last.metrics[k][1]) else None for k in main]),
+                        (dyn.label, [last.metrics[k][0] / 1e9 for k in main])],
+                       [GRAY, S1], fmt='#,##0', title="Période en cours face à N-1 (Mds FCFA)", labels_last=False)
+        ltm = []
+        for k in ("pnb" if dyn.is_bank else "ca", "ebe", "re", "rbe", "rn"):
+            if k in dyn.ltm and k in lab and is_num(dyn.ltm_base.get(k)) and dyn.ltm_base[k] > 0 and dyn.ltm[k] > 0:
+                ltm.append(f"{lab[k]} : {fmt_mds(dyn.ltm[k])} Mds FCFA ({fmt_pct(dyn.ltm[k] / dyn.ltm_base[k] - 1, sign=True)} "
+                           f"vs exercice {dyn.year - 1})")
+        if is_num(v.eps_ltm) and is_num(v.pe_ltm):
+            ltm.append(f"BPA glissant {fmt_num(v.eps_ltm)} FCFA, PER glissant {fmt_x(v.pe_ltm)}")
+        _text(s, Inches(7.9), Inches(4.55), Inches(4.9), Inches(0.3), f"12 mois glissants à {dyn.label}", size=12, bold=True,
+              color=NAVY)
+        _bullets(s, Inches(7.9), Inches(4.9), Inches(4.9), Inches(1.7),
+                 ltm or ["Non calculés : exercice précédent absent des comptes annuels."], size=10)
+        _text(s, Inches(0.6), Inches(6.75), Inches(12.2), Inches(0.3),
+              f"Source : {clean_text(dyn.source)}. Montants cumulés depuis le 1er janvier ; 12 mois glissants = exercice "
+              f"{dyn.year - 1} + cumul {dyn.year} - cumul {dyn.year - 1}.", size=8.5, color=MUTED)
+    elif rep is not None and rep.lines:
         s = d.slide("Exercice en cours : dernière publication",
                     f"{clean_text(rep.title or rep.period)[:110]}"
                     + (f" | publiée le {rep.published:%d/%m/%Y}" if rep.published else ""),
@@ -730,6 +779,8 @@ def build_pptx(a) -> bytes:
                                    else f"{c.data_source} ({c.unit_label})")
     else:
         src["chiffres clés"] = c.data_source
+    if a.dynamics is not None:
+        src["dynamique de l'exercice"] = f"{a.dynamics.latest.label} : {a.dynamics.source}"
     src["macroéconomie"] = m.source
     _text(s, Inches(8.2), Inches(1.4), Inches(4.6), Inches(0.35), "Sources", size=13, bold=True, color=NAVY)
     _bullets(s, Inches(8.2), Inches(1.8), Inches(4.6), Inches(3.4), [f"{k.capitalize()} : {vv}" for k, vv in src.items()],

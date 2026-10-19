@@ -21,8 +21,8 @@ from fiche_valeur.market import load_market_base, load_price_file
 from fiche_valeur.parser import parse_workbook
 from fiche_valeur.partial import MANUAL_COLUMNS, empty_manual_table, figures_from_market_base, figures_from_table
 from fiche_valeur.pipeline import run_analysis
+from fiche_valeur.interim_file import build_template as build_interim_template, parse_interim_file
 from fiche_valeur.report_pdf import build_pdf
-from fiche_valeur.sig_file import build_template as build_sig_template, parse_sig_file
 from fiche_valeur.report_pptx import build_pptx
 from fiche_valeur.utils import (clean_text, fmt_fcfa, fmt_num, fmt_pct, fmt_price, fmt_pts, fmt_x, is_num)
 
@@ -71,15 +71,16 @@ def _parse(data: bytes, name: str, ver: str = ""):
 
 
 @st.cache_data(show_spinner=False)
-def _sig(data: bytes, ver: str = ""):
-    return parse_sig_file(data)
+def _interim(data: bytes, ver: str = ""):
+    return parse_interim_file(data)
 
 
-@st.cache_data(show_spinner="Préparation du modèle...")
-def _sig_template(ef_bytes, ef_name: str, mkt_bytes, ver: str = ""):
-    wb_ = _parse(ef_bytes, ef_name, VER) if ef_bytes else None
-    mb_ = _market(mkt_bytes, VER) if mkt_bytes else None
-    return build_sig_template(wb_, mb_)
+@st.cache_data(show_spinner=False)
+def _interim_template(ver: str = ""):
+    import json
+    from pathlib import Path
+    f = Path(__file__).parent / "data" / "publications_collectees.json"
+    return build_interim_template(json.loads(f.read_text(encoding="utf-8")) if f.exists() else None)
 
 
 @st.cache_data(show_spinner=False)
@@ -184,14 +185,20 @@ with st.sidebar:
     st.caption("À charger après le classeur des états financiers. Apporte cours, volumes, dividendes, nombre de "
                "titres et chiffres clés de toute la cote : les titres hors classeur passent au niveau 2 avec "
                "capitaux propres (ROE, P/B), et les exercices manquants du classeur sont complétés.")
-    sig_file = st.file_uploader(
-        "Soldes intermédiaires de gestion (classeur Excel)", type=["xlsx", "xlsm"],
-        help="Fichier de suivi tenu par CGF Gestion : une ligne par titre et par exercice (feuilles Entreprises et "
-             "Banques), montants en millions de FCFA. Il apporte les soldes intermédiaires (valeur ajoutée, EBE, "
-             "résultat d'exploitation, RAO, PNB, RBE...) et le total du bilan que les autres fichiers ne contiennent pas. "
-             "Titre hors classeur : ce fichier prime sur la base SMF. Titre du classeur : il comble les exercices manquants.")
-    st.caption("À charger après la base SMF. Fait passer les titres hors classeur au niveau 1 lorsque le bilan et au "
-               "moins deux soldes sont renseignés.")
+    int_file = st.file_uploader(
+        "Publications intermédiaires T1, S1, T3 (classeur Excel)", type=["xlsx", "xlsm"],
+        help="Fichier de suivi tenu par CGF Gestion : une ligne par titre, exercice et période (feuilles Entreprises et "
+             "Banques), indicateurs cumulés depuis le 1er janvier en millions de FCFA. Il apporte la dynamique de "
+             "l'exercice en cours (croissance face à la même période de l'an dernier, tendance, 12 mois glissants), qui "
+             "s'ajoute aux états financiers du dernier exercice clos. Il prime sur la lecture en ligne de richbourse.com.")
+    st.caption("Facultatif, à charger après la base SMF. La dernière publication est aussi lue en ligne si les données "
+               "en ligne sont activées.")
+    with st.expander("Modèle du fichier des publications intermédiaires"):
+        st.caption("Classeur à tenir à jour (feuilles Entreprises, Banques, Suivi, Lisez-moi), livré avec les publications "
+                   "déjà collectées et leurs sources.")
+        st.download_button("Télécharger le modèle (Excel)", _interim_template(VER),
+                           file_name="Publications_Intermediaires_CGF.xlsx",
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     px_file = st.file_uploader(
         "Historique du titre analysé (CSV ou Excel)", type=["csv", "xlsx", "txt"],
         help="Colonnes Date, Ouverture, Plus haut, Plus bas, Clôture, Volume (français ou anglais). Remplace "
@@ -218,22 +225,16 @@ with st.sidebar:
 
     wb = _parse(ef_bytes, ef_name, VER) if ef_bytes else None
     mb = _market(mkt_bytes, VER) if mkt_bytes else None
-    sig_bytes = sig_file.getvalue() if sig_file is not None else None
-    sig = _sig(sig_bytes, VER) if sig_bytes else None
+    int_bytes = int_file.getvalue() if int_file is not None else None
+    idata = _interim(int_bytes, VER) if int_bytes else None
     in_wb = set(wb.companies) if wb is not None else set()
-    if sig is not None:
-        if sig.fields:
-            st.success(f"Soldes intermédiaires : {len(sig.tickers)} titres, {sig.n_rows} lignes exercice renseignées.")
-        for n_ in sig.notes:
+    if idata is not None:
+        if idata.rows:
+            st.success(f"Publications intermédiaires : {len(idata.tickers)} titres, {idata.n_rows} lignes renseignées.")
+        for n_ in idata.notes:
             st.warning(n_)
-        if sig.unknown:
-            st.warning("Tickers non reconnus dans le fichier des soldes intermédiaires : " + ", ".join(sig.unknown[:10]))
-    with st.expander("Modèle du fichier des soldes intermédiaires"):
-        st.caption("Classeur à compléter et à tenir à jour (feuilles Entreprises, Banques, Suivi, Lisez-moi). Il est "
-                   "pré-rempli avec le classeur des états financiers et la base SMF chargés ci-dessus.")
-        st.download_button("Télécharger le modèle (Excel)", _sig_template(ef_bytes, ef_name, mkt_bytes, VER),
-                           file_name="Soldes_Intermediaires_CGF.xlsx",
-                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        if idata.unknown:
+            st.warning("Tickers non reconnus dans le fichier des publications : " + ", ".join(idata.unknown[:10]))
     if wb is not None and getattr(wb, "sheet_report", None):
         read_ok = [r for r in wb.sheet_report if r[2].startswith("lue")]
         with st.expander(f"Lecture du classeur : {len(read_ok)} feuille(s) rattachée(s) à un titre"):
@@ -469,11 +470,11 @@ with tab_batch:
         "États financiers": "Oui" if t_ in in_wb else "Non",
         "Base de marché": "Oui" if t_ in mkt_tickers else "Non",
         "Chiffres clés SMF": "Oui" if figures_from_market_base(mb, t_) is not None else "Non",
-        "Soldes intermédiaires": ("Oui" if sig is not None and sig.fields.get(t_) else "Non"),
+        "Publications intermédiaires": ("%s %d" % (idata.latest(t_)[1], idata.latest(t_)[0])
+                                        if idata is not None and idata.latest(t_) else "Non"),
         "Niveau attendu": ("Niveau 1" if t_ in in_wb else
-                           ("Niveau 1 ou 1b" if sig is not None and sig.count(t_, "total_actif") >= 2 else
-                            ("Niveau 2" if figures_from_market_base(mb, t_) is not None else
-                             ("Niveau 2 ou 3" if online else "Niveau 3")))),
+                           ("Niveau 2" if figures_from_market_base(mb, t_) is not None else
+                            ("Niveau 2 ou 3" if online else "Niveau 3"))),
     } for t_ in all_tickers])
     n1 = int((cover["États financiers"] == "Oui").sum())
     st.caption(f"{len(cover)} titres : {n1} avec états financiers (niveau 1), {len(cover) - n1} hors classeur.")
@@ -489,7 +490,7 @@ with tab_batch:
         for i, t_ in enumerate(chosen):
             bar.progress(i / max(1, len(chosen)), text=f"{t_} ({i + 1}/{len(chosen)})")
             try:
-                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b, sig=sig))
+                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b, interim_data=idata))
             except Exception as exc:  # une valeur en erreur n'arrête pas le lot
                 errors.append(f"{t_} : {type(exc).__name__} {exc}")
         # Archive construite avant tout enregistrement : un lot interrompu ne laisse pas d'état incomplet
@@ -566,9 +567,6 @@ with tab_one:
             figures = figures_from_table(edited)
             st.caption("Aucune saisie : lecture en ligne (si activée), sinon analyse sur données de marché seules."
                        if figures is None else "Saisie détectée : elle sera utilisée à la prochaine analyse.")
-        if sig is not None and sig.fields.get(ticker):
-            st.info(f"Le fichier des soldes intermédiaires renseigne {ticker} : exercices "
-                    f"{', '.join(str(y_) for y_ in sig.years(ticker))}. Il est pris en compte à l'analyse.")
     report = None
     with st.expander("Dernière publication de la société (soldes de l'exercice en cours)", expanded=False):
         st.markdown(
@@ -604,7 +602,7 @@ with tab_one:
                                                "Variation"]), hide_index=True, width="stretch")
     run_key = (ticker, ef_name, len(ef_bytes or b""), online, tuple(sorted(overrides.items())), rf, erp, g, beta,
                tuple(sorted(w.items())), s_buy, s_sell, major, notes, use_ai, tuple(sorted(b.items())), house, analyst,
-               px_file.name if px_file else None, use_def, len(mkt_bytes or b""), len(sig_bytes or b""),
+               px_file.name if px_file else None, use_def, len(mkt_bytes or b""), len(int_bytes or b""),
                (report.title, report.period, len(report.lines)) if report is not None else None)
     c1, c2 = st.columns([1, 3])
     go = c1.button("Lancer l'analyse", type="primary", width="stretch")
@@ -617,7 +615,7 @@ with tab_one:
         with st.status("Analyse en cours...", expanded=False) as status:
             a = run_analysis(wb, ticker, settings, market_base=mb, price_file=price_df, overrides=overrides,
                              user_notes=notes, major_event=major, bceao=b, use_claude=use_ai,
-                             progress=lambda msg: status.update(label=msg), figures=figs_used, report=report, sig=sig)
+                             progress=lambda msg: status.update(label=msg), figures=figs_used, report=report, interim_data=idata)
             status.update(label="Analyse terminée", state="complete")
         st.session_state["analysis"] = a
         st.session_state["run_key"] = run_key
@@ -719,6 +717,34 @@ with tab_one:
             f2.markdown(f"- {s_}")
 
     with t2:
+        dyn_ = a.dynamics
+        if dyn_ is not None:
+            from fiche_valeur.dynamics import keys_for
+            lab_d = {k_: l_ for k_, l_, _ in keys_for(dyn_.is_bank)}
+            st.subheader(f"Dynamique de l'exercice {dyn_.year} : {dyn_.label} face à l'an dernier")
+            rows_d = []
+            for key_, name_ in lab_d.items():
+                r_ = {"Indicateur (Mds FCFA)": name_}
+                for cp_ in dyn_.compares:
+                    m_ = cp_.metrics.get(key_)
+                    if m_:
+                        r_[cp_.label] = fmt_num(m_[0] / 1e9, 1) if is_num(m_[0]) else "n.d."
+                        r_[f"{cp_.period} {cp_.year - 1}"] = fmt_num(m_[1] / 1e9, 1) if is_num(m_[1]) else "n.d."
+                        r_[f"Var. {cp_.period}"] = fmt_pct(m_[2], sign=True) if is_num(m_[2]) else "n.s."
+                if len(r_) > 1:
+                    rows_d.append(r_)
+            if rows_d:
+                st.dataframe(pd.DataFrame(rows_d), hide_index=True, width="stretch")
+            if dyn_.ltm:
+                ltm_rows = [{"12 mois glissants (Mds FCFA)": lab_d[k_], f"Exercice {dyn_.year - 1}": fmt_num(dyn_.ltm_base[k_] / 1e9, 1),
+                             f"12 mois à {dyn_.label}": fmt_num(v_ / 1e9, 1),
+                             "Écart": fmt_pct(v_ / dyn_.ltm_base[k_] - 1, sign=True) if dyn_.ltm_base[k_] > 0 and v_ > 0 else "n.s."}
+                            for k_, v_ in dyn_.ltm.items() if k_ in lab_d]
+                st.dataframe(pd.DataFrame(ltm_rows), hide_index=True, width="stretch")
+            if dyn_.trend:
+                st.caption(dyn_.trend)
+            st.caption(f"Source : {dyn_.source}. Montants cumulés depuis le 1er janvier ; 12 mois glissants = exercice "
+                       f"{dyn_.year - 1} + cumul {dyn_.year} - cumul {dyn_.year - 1}.")
         if c.level in ("chiffres_cles", "marche"):
             if c.level == "chiffres_cles":
                 st.subheader("Chiffres clés")

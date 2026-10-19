@@ -10,6 +10,29 @@ from .fundamentals import RATIO_META, sig_rows
 from .utils import clean_text, is_num
 
 
+def dynamics_frame(a) -> pd.DataFrame:
+    """Tableau de la dynamique de l'exercice en cours : une ligne par indicateur et par période."""
+    from .dynamics import keys_for
+    dyn = getattr(a, "dynamics", None)
+    rep = getattr(a, "interim", None)
+    if dyn is None:
+        return pd.DataFrame([(ln.label, ln.current, ln.previous, ln.variation) for ln in rep.lines],
+                            columns=["Indicateur (FCFA)", rep.period or "N", rep.period_prev or "N-1", "Variation"]) \
+            if rep is not None and rep.lines else pd.DataFrame()
+    lab = {k: l for k, l, _ in keys_for(dyn.is_bank)}
+    rows = []
+    for key, name in lab.items():
+        for cp in dyn.compares:
+            m = cp.metrics.get(key)
+            if m:
+                rows.append((name, cp.label, m[0], m[1], m[2], cp.statut, cp.origin,
+                             cp.published.strftime("%d/%m/%Y") if cp.published else "", cp.source))
+    for key, v in dyn.ltm.items():
+        rows.append((lab.get(key, key) + " (12 mois glissants)", dyn.label, v, dyn.ltm_base.get(key), None, "", "calcul", "", ""))
+    return pd.DataFrame(rows, columns=["Indicateur", "Période", "Valeur N (FCFA)", "Valeur N-1 ou exercice précédent (FCFA)",
+                                       "Variation", "Statut", "Origine", "Publication", "Source"])
+
+
 def analysis_frames(a) -> dict[str, pd.DataFrame]:
     c, v, fd, t, d = a.company, a.valuation, a.fundamentals, a.technical, a.decision
     years = c.years[-5:]
@@ -50,11 +73,8 @@ def analysis_frames(a) -> dict[str, pd.DataFrame]:
     cov = pd.DataFrame([(i.name, {"ok": "Disponible", "partiel": "Partiel", "absent": "Absent"}[i.status], i.detail,
                          i.impact, i.action) for i in a.coverage.items],
                        columns=["Donnée", "Statut", "Détail", "Effet sur l'analyse", "Pour compléter"]) if a.coverage else pd.DataFrame()
-    rep = getattr(a, "interim", None)
-    pub = pd.DataFrame([(ln.label, ln.current, ln.previous, ln.variation) for ln in rep.lines],
-                       columns=["Indicateur (FCFA)", rep.period or "N", rep.period_prev or "N-1", "Variation"]) \
-        if rep is not None and rep.lines else pd.DataFrame()
-    return {"Synthèse": synth, "Publication": pub, "SIG": sig, "Ratios": ratios, "Valorisation": val, "Technique": tech,
+    pub = dynamics_frame(a)
+    return {"Synthèse": synth, "Dynamique": pub, "SIG": sig, "Ratios": ratios, "Valorisation": val, "Technique": tech,
             "Pairs": peers, "Historique": hist, "Couverture": cov, "Contrôles": notes}
 
 

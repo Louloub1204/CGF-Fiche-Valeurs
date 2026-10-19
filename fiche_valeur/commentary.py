@@ -14,6 +14,37 @@ from .utils import (clean_text, fmt_bp, fmt_fcfa, fmt_num, fmt_pct, fmt_price, f
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 
 
+
+def dynamics_sentences(a) -> list[str]:
+    """Phrases décrivant la dynamique de l'exercice en cours (publications intermédiaires)."""
+    dyn = getattr(a, "dynamics", None)
+    if dyn is None:
+        return []
+    from .dynamics import keys_for
+    lab = {k: l for k, l, _ in keys_for(dyn.is_bank)}
+    last = dyn.latest
+    rev_key = "pnb" if dyn.is_bank else "ca"
+    bits = []
+    for key in (rev_key, "rn"):
+        m = last.metrics.get(key)
+        if m and is_num(m[0]):
+            bits.append(f"{lab[key].lower()} de {fmt_fcfa(m[0])}"
+                        + (f" ({fmt_pct(m[2], sign=True)} sur un an)" if is_num(m[2]) else ""))
+    out = []
+    if bits:
+        when = f" (publication du {last.published:%d/%m/%Y})" if last.published else ""
+        out.append(f"Exercice {dyn.year}, {dyn.period}{when} : " + " et ".join(bits) + ".")
+    if dyn.is_bank and "cout_risque" in last.metrics and is_num(last.metrics["cout_risque"][0]):
+        cr = last.metrics["cout_risque"]
+        out.append(f"Le coût du risque s'établit à {fmt_fcfa(abs(cr[0]))}"
+                   + (f" contre {fmt_fcfa(abs(cr[1]))} un an plus tôt" if is_num(cr[1]) else "") + ".")
+    if dyn.trend:
+        out.append(dyn.trend)
+    if "rn" in dyn.ltm and "rn" in dyn.ltm_base and dyn.ltm_base["rn"]:
+        out.append(f"Sur 12 mois glissants à {dyn.label}, le résultat net atteint {fmt_fcfa(dyn.ltm['rn'])}, soit "
+                   f"{fmt_pct(dyn.ltm['rn'] / dyn.ltm_base['rn'] - 1, sign=True)} par rapport à l'exercice {dyn.year - 1}.")
+    return out
+
 def _rev_word(c) -> str:
     return "produit net bancaire" if c.is_bank else "chiffre d'affaires"
 
@@ -81,8 +112,8 @@ def build_commentary(a) -> dict:
         s.append("Analyse sur chiffres clés : le bilan et les soldes intermédiaires de gestion ne sont pas "
                  "disponibles.")
     rep = getattr(a, "interim", None)
-    pub_txt = []
-    if rep is not None and rep.lines:
+    pub_txt = dynamics_sentences(a)
+    if not pub_txt and rep is not None and rep.lines:
         rev = rep.get("pnb") or rep.get("ca")
         res = rep.get("rn") or rep.get("rao") or rep.get("re")
         bits = []
@@ -93,7 +124,7 @@ def build_commentary(a) -> dict:
         if bits:
             when = f" ({rep.published:%d/%m/%Y})" if rep.published else ""
             pub_txt.append(f"Dernière publication, {rep.period or 'période récente'}{when} : " + " et ".join(bits) + ".")
-        s += pub_txt
+    s += pub_txt
     out["publication"] = pub_txt
     out["activite"] = " ".join(s)
 
@@ -119,6 +150,9 @@ def build_commentary(a) -> dict:
                  + (f" (références {fd.peer_label} : {', '.join(medtxt)})" if medtxt else "")
                  + (f" et offre un rendement net de {fmt_pct(val.div_yield)}" if is_num(val.div_yield) else "")
                  + ".")
+    if is_num(val.eps_ltm) and is_num(val.pe_ltm):
+        v.append(f"Sur {val.ltm_label}, le BPA ressort à {fmt_num(val.eps_ltm)} FCFA (PER glissant de {fmt_x(val.pe_ltm)}), "
+                 f"ce qui intègre la dynamique de l'exercice en cours dans la juste valeur.")
     if is_num(val.fair_value):
         v.append(f"La juste valeur multicritère ressort à {fmt_price(val.fair_value)} "
                  f"(fourchette {fmt_price(val.fv_low)} - {fmt_price(val.fv_high)}), soit un potentiel de "
@@ -302,8 +336,24 @@ def _strengths_risks(a) -> tuple[list[str], list[str]]:
     for w in dec.warnings:
         if "Actualité" in w:
             R.append(w)
+    dyn = getattr(a, "dynamics", None)
     rep = getattr(a, "interim", None)
-    if rep is not None:
+    if dyn is not None:
+        from .dynamics import keys_for
+        lab = {k: l for k, l, _ in keys_for(dyn.is_bank)}
+        for key in ("pnb" if dyn.is_bank else "ca", "rn"):
+            g = dyn.var(key)
+            if not is_num(g):
+                continue
+            if g >= 0.08:
+                S.append(f"{lab[key]} {dyn.label} en hausse de {fmt_pct(g)} sur un an.")
+            elif g <= -0.08:
+                R.append(f"{lab[key]} {dyn.label} en recul de {fmt_pct(abs(g))} sur un an.")
+        if dyn.trend_delta is not None and dyn.trend_delta <= -0.05:
+            R.append(dyn.trend)
+        elif dyn.trend_delta is not None and dyn.trend_delta >= 0.05:
+            S.append(dyn.trend)
+    elif rep is not None:
         for ln in (rep.get("pnb") or rep.get("ca"), rep.get("rn")):
             if ln is None or not is_num(ln.variation):
                 continue

@@ -344,7 +344,7 @@ def _n_years(c: CompanyData, name: str) -> int:
     return sum(1 for v in c.fields.get(name, {}).values() if is_num(v))
 
 
-def assess(c: CompanyData, md, fd, interim=None) -> Coverage:
+def assess(c: CompanyData, md, fd, interim=None, dyn=None) -> Coverage:
     """Mesure la couverture des données et fixe le niveau d'analyse."""
     rev = c.revenue_field
     n_rev, n_rn = _n_years(c, rev), _n_years(c, c.net_income_field)
@@ -415,12 +415,20 @@ def assess(c: CompanyData, md, fd, interim=None) -> Coverage:
     add("Indice BRVM Composite", "ok" if ok_idx else "absent",
         md.sources.get("indice", "n.d."), "Bêta par défaut, force relative non calculée." if not ok_idx else "",
         "Activer les données en ligne ou ajouter la colonne BRVMC dans la feuille Cours.")
-    if interim is not None and interim.lines:
+    if dyn is not None:
+        has_cmp = any(is_num(m[2]) for cp in dyn.compares for m in cp.metrics.values())
+        add("Publication de l'exercice en cours", "ok" if has_cmp else "partiel",
+            f"{', '.join(cp.label for cp in dyn.compares)} ; 12 mois glissants "
+            f"{'calculés' if dyn.ltm else 'non calculés (exercice précédent absent des comptes annuels)'}",
+            "" if has_cmp else "Comparatif de l'an dernier absent : pas de croissance calculée.",
+            "Renseigner la même période de l'exercice précédent dans le fichier des publications intermédiaires.")
+    elif interim is not None and interim.lines:
         add("Publication de l'exercice en cours", "ok", f"{interim.period} ({len(interim.lines)} indicateurs)", "", "")
     else:
-        add("Publication de l'exercice en cours", "absent", "Aucun rapport d'activités exploité",
+        add("Publication de l'exercice en cours", "absent", "Aucune publication intermédiaire exploitée",
             "Pas de lecture de la dynamique de l'exercice en cours.",
-            "Activer les données en ligne (publications richbourse) ou charger le PDF du dernier rapport d'activités.")
+            "Charger le fichier des publications intermédiaires (T1, S1, T3), activer les données en ligne ou "
+            "charger le PDF du dernier rapport d'activités.")
     weights = {"ok": 1.0, "partiel": 0.5, "absent": 0.0}
     core = {"États financiers": 3, "Chiffres clés (CA, résultat net)": 2, "Bilan (capitaux propres, total actif)": 1,
             "Soldes intermédiaires de gestion": 1, "Historique de cours": 2, "Cours actuel": 2,

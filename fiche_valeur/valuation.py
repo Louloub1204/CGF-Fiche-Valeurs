@@ -26,6 +26,9 @@ class Valuation:
     shares: float | None
     market_cap: float | None
     eps: float | None = None
+    eps_ltm: float | None = None
+    pe_ltm: float | None = None
+    ltm_label: str = ""
     bvps: float | None = None
     dps: float | None = None
     dps_exercice: int | None = None
@@ -68,7 +71,7 @@ def _dividend_growth(md: MarketData) -> float | None:
 
 
 def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Technical,
-                      st: Settings) -> Valuation:
+                      st: Settings, dyn=None) -> Valuation:
     y = fd.year
     price, shares = md.price, md.shares
     v = Valuation(price=price, shares=shares, market_cap=md.market_cap)
@@ -82,6 +85,10 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
         v.notes.append("Nombre de titres inconnu : les données par action et les multiples ne peuvent être "
                        "calculés (renseigner le nombre de titres dans le panneau latéral).")
     v.eps = safe_div(rn, shares)
+    ltm_rn = dyn.ltm.get("rn") if dyn is not None else None
+    if is_num(ltm_rn) and is_num(shares) and shares > 0:
+        v.eps_ltm = ltm_rn / shares
+        v.ltm_label = f"12 mois à {dyn.label}"
     v.bvps = safe_div(cp, shares)
     last_div = md.last_dividend()
     if last_div:
@@ -96,6 +103,8 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
     mcap = v.market_cap
     if is_num(mcap):
         v.pe = safe_div(mcap, rn) if is_num(rn) and rn > 0 else None
+        if is_num(ltm_rn) and ltm_rn > 0:
+            v.pe_ltm = mcap / ltm_rn
         v.pb = safe_div(mcap, cp) if is_num(cp) and cp > 0 else None
         v.ps = safe_div(mcap, rev)
         if is_num(ebitda) and ebitda > 0:
@@ -137,9 +146,16 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
     dflt = set(fd.default_multiples)
     methods: list[Method] = []
     if is_num(v.eps) and v.eps > 0 and is_num(med.get("pe")):
-        methods.append(Method("PER sectoriel", med["pe"] * v.eps, w["pe"],
+        use_ltm = is_num(v.eps_ltm) and v.eps_ltm > 0
+        # la dynamique de l'exercice en cours (12 mois glissants) prend la moitié du poids du PER ; un seul trimestre en pèse 30%
+        share_ltm = (0.3 if dyn is not None and dyn.period == "T1" else 0.5) if use_ltm else 0.0
+        methods.append(Method("PER sectoriel", med["pe"] * v.eps, w["pe"] * (1 - share_ltm),
                               f"PER {'médian des pairs' if 'pe' not in dflt else 'de référence'} {med['pe']:.1f}x "
                               f"appliqué au BPA {y}".replace(".", ",")))
+        if use_ltm:
+            methods.append(Method("PER sur 12 mois glissants", med["pe"] * v.eps_ltm, w["pe"] * share_ltm,
+                                  f"PER {'médian des pairs' if 'pe' not in dflt else 'de référence'} {med['pe']:.1f}x "
+                                  f"appliqué au BPA des {v.ltm_label} ({fmt_num(v.eps_ltm)} FCFA)".replace(".", ",")))
     if is_num(v.bvps) and v.bvps > 0 and is_num(med.get("pb")):
         methods.append(Method("P/B sectoriel", med["pb"] * v.bvps, w["pb"],
                               f"P/B {'médian des pairs' if 'pb' not in dflt else 'de référence'} {med['pb']:.2f}x "

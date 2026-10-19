@@ -452,7 +452,8 @@ def test_interim_in_reports(partial_env, offline):
     rep = parse_report_text(REPORT_TXT, "AGRO DEMO : Rapport d'activités - 1er semestre 2026")
     a = run_analysis(None, "DAGC", offline, market_base=partial_env, report=rep)
     assert a.interim is rep and any(p[0].startswith("Dynamique") for p in a.fundamentals.growth_parts)
-    assert "Dernière publication" in a.texts["activite"]
+    assert a.dynamics is not None and a.dynamics.label == "S1 2026"
+    assert "S1" in a.texts["activite"] and "sur un an" in a.texts["activite"]
     assert any(i.name.startswith("Publication") and i.status == "ok" for i in a.coverage.items)
     assert build_pdf(a)[:4] == b"%PDF" and build_pptx(a)[:2] == b"PK"
 
@@ -513,90 +514,70 @@ def test_sheet_name_resolution(tmp_path):
     assert wb_.sheet_report[0][1] == "FTSC" and wb_.sheet_report[0][2].startswith("lue")
 
 
+
 # ---------------------------------------------------------------------------
-# Fichier des soldes intermédiaires de gestion
+# Publications intermédiaires (T1, S1, T3) et dynamique de l'exercice en cours
 # ---------------------------------------------------------------------------
-def _fill_sig(data: bytes, ticker: str, rows: dict[int, dict[str, float]], statut: str = "Publié") -> bytes:
-    book = openpyxl.load_workbook(io.BytesIO(data))
-    sheet = "Banques" if config.TICKERS[ticker]["secteur"] == config.FIN else "Entreprises"
-    ws = book[sheet]
-    head = {ws.cell(4, c).value: c for c in range(1, ws.max_column + 1)}
-    for r in range(5, ws.max_row + 1):
-        if ws.cell(r, 1).value == ticker and ws.cell(r, 3).value in rows:
-            for lab, v in rows[ws.cell(r, 3).value].items():
-                ws.cell(r, head[lab], v)
-            ws.cell(r, 4, statut)
-    out = io.BytesIO()
-    book.save(out)
-    return out.getvalue()
+def _interim_records():
+    ent = lambda y, p, ca, ebe, rn: {"ticker": "FTSC", "year": y, "period": p, "statut": "Publié", "source": "test",
+                                      "values": {"ca": ca, "ebe": ebe, "rn": rn}}
+    return [ent(2026, "T1", 9000, 700, 300), ent(2025, "T1", 8000, 600, 250),
+            ent(2026, "S1", 19000, 1500, 700), ent(2025, "S1", 16000, 1200, 500)]
 
 
-def test_sig_template_and_roundtrip(mb):
-    from fiche_valeur.sig_file import SHEETS, build_template, parse_sig_file
-    data = build_template(None, mb)
+def test_interim_file_roundtrip():
+    from fiche_valeur.interim_file import build_template, parse_interim_file
+    data = build_template(_interim_records())
     book = openpyxl.load_workbook(io.BytesIO(data))
     assert book.sheetnames == ["Lisez-moi", "Entreprises", "Banques", "Suivi", "Titres"]
-    assert {book["Titres"].cell(r, 1).value for r in range(2, book["Titres"].max_row + 1)} == set(config.TICKERS)
-    for s in SHEETS:                          # modèle vierge ou pré-rempli : relu sans erreur
-        assert book[s].cell(4, 1).value == "Ticker"
-    sig = parse_sig_file(data)
-    assert not sig.unknown and all(t in config.TICKERS for t in sig.tickers)
-    if not sig.fields:                        # base de démonstration sans « Tableau de bord » : modèle vierge signalé
-        assert "Aucun solde renseigné" in sig.notes[0]
+    d = parse_interim_file(data)
+    assert d.n_rows == 4 and not d.unknown and not d.notes
+    assert d.latest("FTSC") == (2026, "S1")
+    assert d.rows["FTSC"][(2026, "S1")].values["ca"] == pytest.approx(19000e6)       # millions -> FCFA
+    assert parse_interim_file(build_template(None)).notes                              # modèle vierge signalé
 
 
-def test_sig_parse_units_and_overlay():
-    from fiche_valeur.sig_file import build_template, level_after_overlay, overlay, parse_sig_file
-    base = build_template(None, None)
-    rows = {y: {"Valeur ajoutée": 9000 + 100 * i, "Excédent brut d'exploitation (EBE)": 3500 + 50 * i,
-                "Résultat d'exploitation": 2300 + 40 * i, "Chiffre d'affaires": 40000 + 500 * i,
-                "Résultat net": 1500 + 20 * i, "Capitaux propres": 24000 + 300 * i, "Total du bilan": 60000 + 900 * i}
-            for i, y in enumerate(range(2021, 2026))}
-    sig = parse_sig_file(_fill_sig(base, "FTSC", rows, statut="Estimé"))
-    ca = sig.fields["FTSC"]["ca"]
-    assert ca[2021] == pytest.approx(40000e6) and set(ca) == set(range(2021, 2026))     # millions -> FCFA
-    assert ("FTSC", "va", 2021) in sig.estimated
-    from fiche_valeur.partial import build_company
-    c = build_company("FTSC", None)
-    assert c.level == "marche"
-    assert overlay(c, sig, override=True) > 0
-    assert level_after_overlay(c) == "complet"
+def test_dynamics_ltm_and_trend():
+    from fiche_valeur.dynamics import InterimData, PeriodRow, build_dynamics
+    from fiche_valeur.interim_file import build_template, parse_interim_file
+    from fiche_valeur.partial import KeyFigures, build_company
+    kf = KeyFigures(revenue={2024: 30000e6, 2025: 34000e6}, net_income={2024: 1000e6, 2025: 1300e6},
+                    equity={2025: 9000e6}, source="test")
+    c = build_company("FTSC", kf)
+    d = parse_interim_file(build_template(_interim_records()))
+    dyn = build_dynamics("FTSC", c, d)
+    assert dyn.label == "S1 2026" and [cp.label for cp in dyn.compares] == ["T1 2026", "S1 2026"]
+    assert dyn.var("ca") == pytest.approx(19000 / 16000 - 1)
+    # 12 mois glissants = exercice N-1 + cumul N - cumul N-1
+    assert dyn.ltm["ca"] == pytest.approx((34000 + 19000 - 16000) * 1e6)
+    assert dyn.ltm["rn"] == pytest.approx((1300 + 700 - 500) * 1e6)
+    assert dyn.fy_est["ca"] == pytest.approx(34000e6 * 19000 / 16000)
+    assert "accélération" in dyn.trend                       # croissance du résultat net : +20% (T1) puis +40% (S1)
+    # exercice déjà clos dans les comptes annuels : pas de dynamique
+    kf2 = KeyFigures(revenue={2025: 34000e6, 2026: 40000e6}, net_income={2025: 1300e6, 2026: 1500e6}, source="test")
+    assert build_dynamics("FTSC", build_company("FTSC", kf2), d) is None
 
 
-def test_sig_priority_workbook_and_level(wb, mb):
-    """Titre du classeur : le fichier SIG ne comble que les trous et signale un écart ; titre hors classeur : il prime."""
-    from fiche_valeur.sig_file import build_template, parse_sig_file
-    c0 = next(iter(wb.companies.values()))
-    y = max(c0.fields[c0.revenue_field])
-    # ticker inconnu du référentiel : la ligne est signalée, pas lue
-    book = openpyxl.load_workbook(io.BytesIO(build_template(None, None)))
-    ws = book["Entreprises"]
-    ws.cell(5, 1, "WWWW")
-    ws.cell(5, 3, 2025)
-    ws.cell(5, 6, 100)
-    buf = io.BytesIO()
-    book.save(buf)
-    sig = parse_sig_file(buf.getvalue())
-    assert "WWWW" in sig.unknown and not sig.fields
-    assert y in c0.fields[c0.revenue_field]
+def test_interim_file_priority_over_online():
+    from fiche_valeur.dynamics import InterimData, PeriodRow, merged_rows
+    from fiche_valeur.publications import parse_report_text
+    rep = parse_report_text(REPORT_TXT, "AGRO DEMO : Rapport d'activités - 1er semestre 2026")
+    d = InterimData(rows={"DAGC": {(2026, "S1"): PeriodRow(values={"ca": 1.0}, statut="Publié")}})
+    rows = merged_rows("DAGC", d, rep)
+    assert rows[(2026, "S1")].values["ca"] == 1.0                      # le fichier prime
+    assert "rn" in rows[(2026, "S1")].values and (2025, "S1") in rows  # la lecture en ligne comble le reste
 
 
-def test_sig_in_analysis_levels(mb):
-    from fiche_valeur.sig_file import build_template, parse_sig_file
-    rows = {y: {"Valeur ajoutée": 9000 + 100 * i, "Excédent brut d'exploitation (EBE)": 3500 + 50 * i,
-                "Résultat d'exploitation": 2300 + 40 * i, "Chiffre d'affaires": 40000 + 500 * i,
-                "Résultat net": 1500 + 20 * i, "Capitaux propres": 24000 + 300 * i, "Total du bilan": 60000 + 900 * i}
-            for i, y in enumerate(range(2021, 2026))}
-    tk = "FTSC"
-    sig = parse_sig_file(_fill_sig(build_template(None, None), tk, rows))
-    st = Settings(en_ligne=False)
-    with_sig = run_analysis(None, tk, st, market_base=mb, sig=sig)
-    without = run_analysis(None, tk, st, market_base=mb)
-    assert without.company.level in ("marche", "chiffres_cles")
-    assert with_sig.company.level in ("complet", "partiel")
-    assert with_sig.company.fields["va"][2025] == pytest.approx(9400e6)
-    assert "Fichier des soldes intermédiaires" in with_sig.company.data_source
-    assert with_sig.decision.signal in SIGNALS
-    # le bandeau de niveau n'est plus dans les documents
+def test_ltm_per_in_valuation(partial_env, offline):
+    from fiche_valeur.dynamics import InterimData, PeriodRow
+    cur, prev = {"ca": 700e9, "rn": 100e9}, {"ca": 600e9, "rn": 80e9}
+    d = InterimData(rows={"DAGC": {(2026, "S1"): PeriodRow(values=cur), (2025, "S1"): PeriodRow(values=prev)}})
+    a = run_analysis(None, "DAGC", offline, market_base=partial_env, interim_data=d)
+    assert a.dynamics is not None and a.dynamics.label == "S1 2026"
+    names = [m.name for m in a.valuation.methods]
+    if "PER sectoriel" in names:                              # BPA glissant disponible : le PER est scindé en deux méthodes
+        assert "PER sur 12 mois glissants" in names and a.valuation.pe_ltm
+    assert any(p[0].startswith("Dynamique S1 2026") for p in a.fundamentals.growth_parts)
     from fiche_valeur.report_pdf import build_pdf
-    assert build_pdf(with_sig)[:4] == b"%PDF"
+    from fiche_valeur.report_pptx import build_pptx
+    assert build_pdf(a)[:4] == b"%PDF" and build_pptx(a)[:2] == b"PK"

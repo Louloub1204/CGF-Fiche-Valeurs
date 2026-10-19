@@ -443,7 +443,9 @@ def _sources(a, st):
     s["politique monétaire"] = f"BCEAO, Comité de Politique Monétaire du {a.macro.bceao.get('date_reference')}"
     if a.news.items:
         s["actualités"] = "Google Actualités (flux RSS), tonalité lexicale"
-    if a.interim is not None:
+    if getattr(a, "dynamics", None) is not None:
+        s["dynamique de l'exercice"] = f"{a.dynamics.latest.label} : {a.dynamics.source}"
+    elif a.interim is not None:
         s["publication officielle"] = f"{a.interim.source or 'Document chargé'} : {a.interim.title or a.interim.period}"
     rows = [[k.capitalize(), P(v, st["cell"])] for k, v in s.items()]
     return _table(rows, [40 * mm, CONTENT_W - 40 * mm], st, header=False, bold_cols=(0,))
@@ -483,6 +485,55 @@ def _keyfig_table(a, st):
     first = 62 * mm
     other = (CONTENT_W - first) / len(years)
     return _table(rows, [first] + [other] * len(years), st)
+
+
+def _dynamics_block(a, st):
+    """Dynamique de l'exercice en cours : publications intermédiaires (T1, S1, T3) face à l'an dernier,
+    croissance par période et 12 mois glissants."""
+    dyn = getattr(a, "dynamics", None)
+    if dyn is None:
+        return _interim_block(a, st)
+    from .dynamics import keys_for
+    lab = {k: l for k, l, _ in keys_for(dyn.is_bank)}
+    last = dyn.latest
+    rows = [["Indicateur (Mds FCFA)", f"{dyn.period} {dyn.year}", f"{dyn.period} {dyn.year - 1}", "Variation"]]
+    for key, name in lab.items():
+        m = last.metrics.get(key)
+        if m:
+            rows.append([name, fmt_mds(m[0]), fmt_mds(m[1]), fmt_pct(m[2], sign=True) if is_num(m[2]) else "n.s."])
+    out = [P(f"Dynamique de l'exercice {dyn.year} : {dyn.latest.label} face à l'an dernier", st["h2"]),
+           _table(rows, [70 * mm, 32 * mm, 32 * mm, 26 * mm], st)]
+    if len(dyn.compares) > 1:
+        hdr = ["Variation sur un an"] + [cp.label for cp in dyn.compares]
+        trows = [hdr]
+        for key, name in lab.items():
+            vals = [cp.metrics.get(key, (None, None, None))[2] for cp in dyn.compares]
+            if any(is_num(x) for x in vals):
+                trows.append([name] + [fmt_pct(x, sign=True) if is_num(x) else "n.s." for x in vals])
+        if len(trows) > 1:
+            n = len(dyn.compares)
+            out += [Spacer(1, 3), _table(trows, [70 * mm] + [(90 * mm) / n] * n, st)]
+    if dyn.ltm:
+        lrows = [["12 mois glissants", f"Exercice {dyn.year - 1}", f"12 mois à {dyn.label}", "Écart"]]
+        for key in ("pnb" if dyn.is_bank else "ca", "ebe", "re", "rbe", "rn"):
+            if key in dyn.ltm and key in lab:
+                base = dyn.ltm_base.get(key)
+                lrows.append([lab[key], fmt_mds(base), fmt_mds(dyn.ltm[key]),
+                              fmt_pct(dyn.ltm[key] / base - 1, sign=True) if is_num(base) and base > 0 and dyn.ltm[key] > 0 else "n.s."])
+        if len(lrows) > 1:
+            out += [Spacer(1, 3), _table(lrows, [70 * mm, 32 * mm, 32 * mm, 26 * mm], st)]
+    meta = (f"Publication du {last.published:%d/%m/%Y}. " if last.published else "") + \
+        f"Source : {clean_text(dyn.source)}. Montants cumulés depuis le 1er janvier ; 12 mois glissants = exercice " \
+        f"{dyn.year - 1} + cumul {dyn.year} - cumul {dyn.year - 1}."
+    out.append(P(meta, st["muted"]))
+    if dyn.trend:
+        out.append(P(clean_text(dyn.trend), st["body"]))
+    out += [P(clean_text(n), st["muted"]) for n in dyn.notes]
+    others = [p_ for p_ in a.publications if p_.published][:5]
+    if others:
+        out += [P("Publications récentes de la société", st["h2"])]
+        out += _bullets([f"{p_.published:%d/%m/%Y} : {clean_text(p_.title)}" for p_ in others], st)
+    return [KeepTogether(out[:2])] + out[2:]
 
 
 def _interim_block(a, st):
@@ -638,8 +689,8 @@ def build_pdf(a, compact: bool = False) -> bytes:
 
         # ---------------- Page 5 : actualités, décision, sources ----------------
         story += [PageBreak(), P("Actualités et informations communiquées", st["h1"])]
-        story += _interim_block(a, st)
-        if a.interim is not None:
+        story += _dynamics_block(a, st)
+        if a.interim is not None or a.dynamics is not None:
             story.append(Spacer(1, 4))
         if a.news.items:
             story += [_news_table(a, st), Spacer(1, 3)]

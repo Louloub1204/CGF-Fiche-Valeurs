@@ -12,10 +12,8 @@ from .fundamentals import Fundamentals, analyse_fundamentals
 from .macro import Macro, analyse_macro
 from .market import MarketBase, MarketData, build_market_data
 from .news import News, add_user_notes, fetch_news
+from .dynamics import Dynamics, InterimData, build_dynamics, momentum_from
 from .parser import CompanyData, Workbook
-from .parser import _derive_and_check as derive_and_check
-from .sig_file import SigData, level_after_overlay
-from .sig_file import overlay as sig_overlay
 from .partial import (Coverage, KeyFigures, assess, build_company, fetch_sika_societe, figures_from_market_base,
                       fill_company_gaps, merge_figures, smf_peer_rows)
 from .publications import InterimReport, Publication, latest_report, momentum
@@ -43,19 +41,17 @@ class Analysis:
     coverage: Coverage | None = None
     key_figures: KeyFigures | None = None
     interim: InterimReport | None = None
+    dynamics: Dynamics | None = None
     publications: list[Publication] = field(default_factory=list)
 
 
 def resolve_company(wb: Workbook | None, ticker: str, st: Settings, figures: KeyFigures | None,
-                    errors: list[str], market_base: MarketBase | None = None,
-                    sig: SigData | None = None) -> tuple[CompanyData, KeyFigures | None]:
-    """Société du classeur si elle y figure (exercices manquants complétés par le fichier des soldes
-    intermédiaires, puis par la base SMF) ; sinon chiffres clés (saisis, puis base SMF, puis lecture en ligne)
-    surchargés par le fichier des soldes intermédiaires ; sinon données de marché seules."""
+                    errors: list[str], market_base: MarketBase | None = None) -> tuple[CompanyData, KeyFigures | None]:
+    """Société du classeur si elle y figure (exercices manquants complétés par la base SMF) ; sinon chiffres
+    clés (saisis, puis base SMF, puis lecture en ligne) ; sinon données de marché seules."""
     smf = figures_from_market_base(market_base, ticker)
     if wb is not None and ticker in wb.companies and figures is None:
         c = copy.deepcopy(wb.companies[ticker])
-        sig_overlay(c, sig, override=False)
         fill_company_gaps(c, smf)
         return c, None
     kf = merge_figures(copy.deepcopy(figures), smf) if figures is not None else smf
@@ -63,14 +59,6 @@ def resolve_company(wb: Workbook | None, ticker: str, st: Settings, figures: Key
         online = fetch_sika_societe(ticker, config.TICKERS.get(ticker, {}).get("pays"), errors)
         kf = merge_figures(kf, online) if kf is not None else online
     c = build_company(ticker, kf)
-    if figures is None and sig is not None and sig.fields.get(ticker):
-        if sig_overlay(c, sig, override=True):
-            derive_and_check(c)
-            new_level = level_after_overlay(c)
-            if new_level != c.level:
-                c.notes = [n for n in c.notes if not n.startswith(("Analyse sur chiffres clés", "Analyse sur données de marché",
-                                                                   "Capitaux propres non renseignés"))]
-                c.level = new_level
     return c, kf
 
 
@@ -79,7 +67,7 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
                  user_notes: str = "", major_event: bool = False, bceao: dict | None = None,
                  use_claude: bool = False, progress=None, figures: KeyFigures | None = None,
                  custom: dict | None = None, report: InterimReport | None = None,
-                 sig: SigData | None = None) -> Analysis:
+                 interim_data: InterimData | None = None) -> Analysis:
     """Analyse d'un titre. ``wb`` peut être vide ou absent : le titre est alors traité au niveau 2 ou 3.
 
     ``figures`` : chiffres clés saisis (prioritaires sur ceux du classeur) ; ``custom`` : nom, pays et
@@ -90,7 +78,7 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
         config.register_ticker(ticker, custom.get("nom", ticker), custom.get("pays", "CI"),
                                custom.get("secteur", "Non classé"))
     pre_errors: list[str] = []
-    c, kf = resolve_company(wb, ticker, st, figures, pre_errors, market_base, sig)
+    c, kf = resolve_company(wb, ticker, st, figures, pre_errors, market_base)
 
     def step(msg):
         if progress:
@@ -111,16 +99,19 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
             interim = found
     if interim is not None:
         _merge_annual(c, interim)
+    dyn = build_dynamics(ticker, c, interim_data, interim)
     step("Analyse fondamentale")
     extra = smf_peer_rows(market_base, wb, md.peer_prices, md.peer_shares)
     fd = analyse_fundamentals(c, wb, md.peer_prices, md.peer_shares, use_defaults=st.multiples_defaut,
                               extra_rows=extra)
-    if interim is not None:
-        _apply_momentum(fd, interim)
+    if dyn is not None:
+        _apply_momentum(fd, momentum_from(dyn), dyn.label)
+    elif interim is not None:
+        _apply_momentum(fd, momentum(interim), interim.period or "publication récente")
     step("Analyse technique")
     tech = analyse_technical(md.history, md.index_history, md.float_shares)
     step("Valorisation")
-    val = analyse_valuation(c, fd, md, tech, st)
+    val = analyse_valuation(c, fd, md, tech, st, dyn)
     step("Environnement macroéconomique")
     errors: list[str] = list(md.errors)
     mac = analyse_macro(c.country, c.sector, online=st.en_ligne, bceao=bceao, errors=errors)
@@ -131,12 +122,12 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
     add_user_notes(news, user_notes)
     step("Synthèse et signal")
     pillars = clamp_pillars(pillar_dict(val, fd, tech, mac, news))
-    cov = assess(c, md, fd, interim)
+    cov = assess(c, md, fd, interim, dyn)
     dec = decide(pillars, st, val, tech, news, tech.liquidity if tech.available else None, major_event,
                  level=c.level)
     a = Analysis(company=c, market=md, fundamentals=fd, technical=tech, valuation=val, macro=mac, news=news,
                  decision=dec, settings=st, errors=errors, coverage=cov, key_figures=kf, interim=interim,
-                 publications=pubs)
+                 dynamics=dyn, publications=pubs)
     a.texts = build_commentary(a)
     if use_claude and st.claude_api_key:
         step("Rédaction assistée")
@@ -153,15 +144,17 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
     return a
 
 
-def _apply_momentum(fd: Fundamentals, rep: InterimReport) -> None:
-    """Dynamique de l'exercice en cours (dernière publication) intégrée au pilier croissance."""
-    mo = momentum(rep)
+def _apply_momentum(fd: Fundamentals, mo: dict, label: str) -> None:
+    """Dynamique de l'exercice en cours (publications intermédiaires) intégrée au pilier croissance."""
     parts = [(scale(mo.get("rev"), -0.10, 0.20), 50), (scale(mo.get("res"), -0.20, 0.30), 50)]
     num = sum(s_ * w for s_, w in parts if is_num(s_))
     den = sum(w for s_, w in parts if is_num(s_))
     if den:
         dyn = num / den
-        fd.growth_parts = list(fd.growth_parts) + [(f"Dynamique {rep.period or 'publication récente'}", dyn, 30)]
+        td = mo.get("trend_delta")
+        if is_num(td):                                   # accélération ou ralentissement d'une publication à l'autre
+            dyn = max(0.0, min(100.0, dyn + 20 * max(-1.0, min(1.0, td / 0.20))))
+        fd.growth_parts = list(fd.growth_parts) + [(f"Dynamique {label}", dyn, 30)]
         fd.growth_score = dyn if fd.growth_score is None else (0.7 * fd.growth_score + 0.3 * dyn)
 
 
