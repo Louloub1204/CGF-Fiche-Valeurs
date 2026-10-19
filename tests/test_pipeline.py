@@ -315,3 +315,142 @@ def test_full_referential():
     assert len(config.TICKERS) >= 47
     assert all(v["pays"] in config.COUNTRIES and v["secteur"] in config.SECTOR_MULTIPLES
                for v in config.TICKERS.values())
+
+
+# --------------------------------------------------------------------------- base SMF réelle (format) et publications
+
+def _smf_like(path):
+    """Classeur au format de la « Base de données - SMF » (colonne d'index, .BRVMCI, volumes en FCFA, blocs)."""
+    import numpy as np
+    book = openpyxl.Workbook()
+    ws = book.active
+    ws.title = "Cours"
+    ws.append([None, "Date", "AAAC", "BBBC", ".BRVMCI", "ANNEE"])
+    days = pd.bdate_range("2024-01-02", periods=400)
+    rng = np.random.default_rng(1)
+    pa = 1000 * np.cumprod(1 + rng.normal(0.0005, 0.01, 400))
+    pb = 5000 * np.cumprod(1 + rng.normal(0.0003, 0.012, 400))
+    pi = 250 * np.cumprod(1 + rng.normal(0.0004, 0.007, 400))
+    pa, pb = np.round(pa), np.round(pb)
+    for i, d in enumerate(days):
+        ws.append([i + 2, d.to_pydatetime(), float(pa[i]), float(pb[i]), float(pi[i]), d.year])
+    wv = book.create_sheet("Volume moyen")
+    wv.append([None, "Date", "AAAC", "BBBC"])
+    wv.append([None, "Moyenne", 1, 2])
+    for i, d in enumerate(days):
+        wv.append([i, d.to_pydatetime(), float(pa[i] * (100 + i % 7)), float(pb[i] * (20 + i % 5))])
+    tb = book.create_sheet("Tableau de bord")
+    tb.append([None, 1000000, "AAAC", "BBBC"])
+    tb.append([2, None, "CAPITAUX PROPRES"])
+    for y, a_, b_ in ((2023, 8e9, 40e9), (2024, 9e9, 44e9), (2025, 10e9, 47e9)):
+        tb.append([None, y, a_, b_])
+    tb.append([None, None, "RESULTAT NET"])
+    tb.append([None, None, "AAAC", "BBBC"])
+    for y, a_, b_ in ((2023, 1.5e9, 6e9), (2024, 1.7e9, 0), (2025, 2.0e9, 7e9)):
+        tb.append([None, y, a_, b_])
+    tb.append([None, None, "CHIFFRE D'AFFAIRES"])
+    tb.append([None, None, "AAAC", "BBBC"])
+    for y, a_, b_ in ((2023, 20e9, 60e9), (2024, 22e9, 63e9), (2025, 25e9, 66e9)):
+        tb.append([None, y, a_, b_])
+    hd = book.create_sheet("Historique_dividende")
+    hd.append([None, "Date", "AAAC", "BBBC"])
+    for y, a_, b_ in ((2023, 40, 300), (2024, 45, 320), (2025, 50, 2000)):
+        hd.append([None, y, a_, b_])
+    nb = book.create_sheet("Nb_titres")
+    nb.append([None, "Date", "AAAC", "BBBC"])
+    nb.append([None, "Titres flottants", 4_000_000, 2_000_000])
+    nb.append([None, "Nombre de titres", 20_000_000, 10_000_000])
+    book.save(path)
+    return path
+
+
+def test_smf_format(tmp_path):
+    mb = load_market_base(_smf_like(tmp_path / "smf.xlsx"))
+    assert "BRVMC" in mb.closes.columns and "ANNEE" not in mb.closes.columns
+    assert mb.volumes_in_value and 90 <= mb.volumes["AAAC"].dropna().iloc[5] <= 110
+    assert mb.fundamentals["AAAC"]["capitaux_propres"][2025] == 10e9
+    assert 2024 not in mb.fundamentals["BBBC"]["rn"]           # 0 = non renseigné
+    assert [d.exercice for d in mb.dividends["AAAC"]] == [2022, 2023, 2024]   # année de paiement N -> exercice N-1
+    assert mb.shares_total["BBBC"] == 10_000_000 and mb.shares_float["AAAC"] == 4_000_000
+
+
+def test_smf_key_figures_and_exceptional_dividend(tmp_path, offline):
+    mb = load_market_base(_smf_like(tmp_path / "smf.xlsx"))
+    config.register_ticker("AAAC", "Société A", "CI", "Industriels")
+    config.register_ticker("BBBC", "Société B", "CI", "Industriels")
+    a = run_analysis(None, "AAAC", offline, market_base=mb)
+    assert a.company.level == "chiffres_cles" and "SMF" in a.company.data_source
+    assert a.valuation.pb and a.valuation.pe and a.fundamentals.ratios["roe"][2025] > 0
+    b = run_analysis(None, "BBBC", offline, market_base=mb)
+    assert b.valuation.dps == pytest.approx(310)           # 2 000 jugé exceptionnel : médiane des précédents
+    assert any("exceptionnel" in n for n in b.valuation.notes)
+
+
+def test_smf_fills_workbook_gaps(wb, offline, tmp_path):
+    import copy as _copy
+    from fiche_valeur.partial import KeyFigures, fill_company_gaps
+    c = _copy.deepcopy(wb.companies["DAGC"])
+    kf = KeyFigures(source="Base de données SMF", revenue={2026: 1e12}, net_income={2025: 123.0})
+    added = fill_company_gaps(c, kf)
+    assert added == [2026] and c.fields["ca"][2026] == 1e12
+    assert c.fields["rn"][2025] != 123.0                     # jamais d'écrasement
+
+
+REPORT_TXT = """Montants en milliards de FCFA
+Indicateurs S1 2026 S1 2025 Variation
+Chiffre d'affaires 672,8 579,3 16,1% 93,4
+EBITDAaL 239,3 200,8 19,2% 38,5
+Résultat d'exploitation 159,6 131,8 21,1% 27,8
+Résultat financier (12,8) (13,6) -5,9% 0,8
+Résultat des activités ordinaires 146,8 118,2 24,2% 28,6
+Impôts sur le résultat (56,6) (41,9) 35,0% (14,7)
+Résultat net 90,3 76,3 18,3% 13,9"""
+
+LISTING_HTML = """<div>
+<a href="/common/actualite/details/08-10-2026-orange-ci-rapport-d-activites-1er-semestre-2026">ORANGE CI : Rapport d'activités - 1er semestre 2026</a>
+<a href="/common/actualite/afficher-fichier/08-10-2026-orange-ci-rapport-d-activites-1er-semestre-2026">Télécharger</a>
+<a href="/common/actualite/afficher-fichier/17-09-2026-africa-global-logistics-ci-etats-financiers-certifies-exercice-2025">AFRICA GLOBAL LOGISTICS CI : Etats Financiers certifiés - Exercice 2025</a>
+<a href="/common/actualite/details/25-09-2026-boa-niger-rapport-dactivites-1er-semestre-2026">BOA NIGER : Rapport d'activités - 1er semestre 2026</a>
+</div>"""
+
+
+def test_publications_parsers():
+    from fiche_valeur.publications import parse_listing, parse_report_text, ticker_of_company
+    pubs = parse_listing(LISTING_HTML)
+    assert [(ticker_of_company(p.company), p.kind, p.period) for p in pubs] == [
+        ("ORAC", "interim", "S1 2026"), ("BOAN", "interim", "S1 2026"), ("SDSC", "annuel", "Exercice 2025")]
+    assert pubs[0].pdf_url.endswith("afficher-fichier/08-10-2026-orange-ci-rapport-d-activites-1er-semestre-2026")
+    rep = parse_report_text(REPORT_TXT, "ORANGE CI : Rapport d'activités - 1er semestre 2026")
+    assert rep.period == "S1 2026" and rep.period_prev == "S1 2025" and rep.unit_label == "milliards FCFA"
+    assert rep.get("ca").current == pytest.approx(672.8e9) and rep.get("rf").current == pytest.approx(-12.8e9)
+    assert rep.get("rn").variation == pytest.approx(90.3 / 76.3 - 1)
+    assert parse_report_text("rien d'exploitable", "x") is None
+
+
+def test_report_pdf_roundtrip(tmp_path):
+    """Un PDF texte est relu par pdfplumber puis analysé."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    from fiche_valeur.publications import parse_report_pdf
+    path = tmp_path / "rapport.pdf"
+    cv = canvas.Canvas(str(path), pagesize=A4)
+    y = 800
+    for line in REPORT_TXT.splitlines():
+        cv.drawString(50, y, line)
+        y -= 16
+    cv.save()
+    rep = parse_report_pdf(path.read_bytes(), "ORANGE CI : Rapport d'activités - 1er semestre 2026")
+    assert rep is not None and rep.get("rn").current == pytest.approx(90.3e9)
+
+
+def test_interim_in_reports(partial_env, offline):
+    from fiche_valeur.publications import parse_report_text
+    from fiche_valeur.report_pdf import build_pdf
+    from fiche_valeur.report_pptx import build_pptx
+    rep = parse_report_text(REPORT_TXT, "AGRO DEMO : Rapport d'activités - 1er semestre 2026")
+    a = run_analysis(None, "DAGC", offline, market_base=partial_env, report=rep)
+    assert a.interim is rep and any(p[0].startswith("Dynamique") for p in a.fundamentals.growth_parts)
+    assert "Dernière publication" in a.texts["activite"]
+    assert any(i.name.startswith("Publication") and i.status == "ok" for i in a.coverage.items)
+    assert build_pdf(a)[:4] == b"%PDF" and build_pptx(a)[:2] == b"PK"

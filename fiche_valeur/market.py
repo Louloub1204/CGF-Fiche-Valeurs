@@ -89,10 +89,23 @@ class MarketData:
         return None
 
     def last_dividend(self) -> Dividend | None:
-        divs = [d for d in self.dividends if is_num(d.montant_net) and d.montant_net > 0]
+        """Dernier dividende connu ; None si le dernier exercice renseigné n'a pas donné lieu à distribution."""
+        divs = [d for d in self.dividends if is_num(d.montant_net) and d.montant_net >= 0]
         if not divs:
             return None
-        return sorted(divs, key=lambda d: (d.exercice or 0, d.date_paiement or date(1900, 1, 1)))[-1]
+        divs = sorted(divs, key=lambda d: (d.exercice or 0, d.date_paiement or date(1900, 1, 1)))
+        last = divs[-1]
+        if last.montant_net <= 0:
+            return None
+        prev = [d.montant_net for d in divs[-5:-1] if d.montant_net > 0]
+        if len(prev) >= 2:
+            med = float(np.median(prev))
+            if last.montant_net > 2.5 * med:
+                # versement exceptionnel : le dividende ordinaire sert aux calculs de rendement et d'actualisation
+                return Dividend(last.exercice, med, last.date_paiement,
+                                f"{last.source} ; dernier versement de {last.montant_net:,.0f} FCFA jugé "
+                                f"exceptionnel, dividende ordinaire retenu".replace(",", " "))
+        return last
 
 
 @dataclass
@@ -104,7 +117,9 @@ class MarketBase:
     shares_float: dict[str, float] = field(default_factory=dict)
     avg_prices: dict[str, dict[int, float]] = field(default_factory=dict)
     dividends: dict[str, list[Dividend]] = field(default_factory=dict)
+    fundamentals: dict[str, dict[str, dict[int, float]]] = field(default_factory=dict)   # Tableau de bord
     notes: list[str] = field(default_factory=list)
+    volumes_in_value: bool = False
 
     @property
     def tickers(self) -> list[str]:
@@ -115,6 +130,19 @@ class MarketBase:
 # Lecture de la base de marché (classeur)
 # ---------------------------------------------------------------------------
 TICKER_RE = re.compile(r"^[A-Z]{3,6}$")
+NOT_TICKERS = {"DATE", "DATES", "ANNEE", "JOUR", "MOIS", "NONE", "NAN", "TOTAL", "MOYENNE", "SEANCE"}
+
+
+def _ticker_of(h) -> str | None:
+    """En-tête de colonne -> ticker (ou BRVMC pour l'indice composite), sinon None."""
+    if h is None or (isinstance(h, float) and not is_num(h)):
+        return None
+    t = re.sub(r"[^A-Z0-9]", "", strip_accents(str(h)).upper())
+    if t in {"BRVMCOMPOSITE", "BRVMC", "BRVMCOMP", "BRVMCI"}:
+        return INDEX_TICKER
+    if t in NOT_TICKERS:
+        return None
+    return t if TICKER_RE.match(t) or t.startswith("BRVM") else None
 
 
 def _to_date(v) -> date | None:
@@ -151,12 +179,10 @@ def _wide_series(raw: pd.DataFrame) -> pd.DataFrame | None:
     dates = body.iloc[:, date_col].map(_to_date)
     out = {}
     for j, h in enumerate(headers):
-        if j == date_col or h is None:
+        if j == date_col:
             continue
-        t = strip_accents(str(h)).upper().strip().replace("-", "").replace(" ", "")
-        if t in {"BRVMCOMPOSITE", "BRVMC", "BRVMCOMP"}:
-            t = INDEX_TICKER
-        if not (TICKER_RE.match(t) or t.startswith("BRVM")):
+        t = _ticker_of(h)
+        if t is None or t in out:       # premier bloc seulement si la feuille répète les tickers
             continue
         out[t] = pd.to_numeric(body.iloc[:, j].map(to_float), errors="coerce").values
     if not out:
@@ -184,11 +210,72 @@ def load_market_base(source) -> MarketBase:
             _read_shares(raw, mb)
         elif key.startswith("moyenne"):
             _read_avg(raw, mb)
-        elif key.startswith("divid"):
+        elif "divid" in key:
             _read_dividends_sheet(raw, mb)
+        elif key.startswith("tableau de bord") or key.startswith("fondamentaux") or key.startswith("donnees financieres"):
+            _read_dashboard(raw, mb)
     if mb.closes is None:
         mb.notes.append("Feuille « Cours » introuvable dans la base de marché.")
+    if mb.closes is not None:
+        mb.closes = mb.closes.dropna(how="all")
+    if mb.volumes is not None and mb.closes is not None:
+        mb.volumes_in_value = _volumes_are_values(mb.volumes, mb.closes)
+        if mb.volumes_in_value:
+            vol = mb.volumes.reindex(mb.closes.index)
+            common = [c for c in vol.columns if c in mb.closes.columns]
+            mb.volumes = (vol[common] / mb.closes[common].replace(0, np.nan)).round()
+            mb.notes.append("Volumes de la base exprimés en FCFA : convertis en nombre de titres (montant / cours).")
     return mb
+
+
+def _volumes_are_values(vol: pd.DataFrame, closes: pd.DataFrame) -> bool:
+    """Vrai si les volumes sont des montants échangés : montant / cours tombe sur un nombre entier de titres."""
+    common = [c for c in vol.columns if c in closes.columns and c != INDEX_TICKER]
+    if not common:
+        return False
+    v = vol[common].reindex(closes.index)
+    ratio = (v / closes[common]).stack()
+    ratio = ratio[(ratio > 0.5) & np.isfinite(ratio)]
+    if len(ratio) < 30:
+        return False
+    ratio = ratio.sample(min(len(ratio), 3000), random_state=0)
+    near_int = (np.abs(ratio - ratio.round()) < 0.02).mean()
+    return bool(near_int > 0.6)
+
+
+DASHBOARD_FIELDS = {
+    "CAPITAUX PROPRES": "capitaux_propres", "RESULTAT NET": "rn", "CHIFFRE D AFFAIRES": "ca",
+    "PRODUIT NET BANCAIRE": "pnb", "RESULTAT D EXPLOITATION": "re", "FLUX DE TRESORERIE": "flux_tresorerie",
+    "TOTAL ACTIF": "total_actif", "TOTAL BILAN": "total_actif", "EBE": "ebe", "EXCEDENT BRUT D EXPLOITATION": "ebe",
+    "VALEUR AJOUTEE": "va", "RESULTAT DES ACTIVITES ORDINAIRES": "rao", "PNB": "pnb",
+}
+
+
+def _read_dashboard(raw: pd.DataFrame, mb: MarketBase) -> None:
+    """Feuille « Tableau de bord » : blocs (titre de l'agrégat, ligne des tickers, années en lignes), en FCFA."""
+    header: list | None = None
+    current: str | None = None
+    for i in range(len(raw)):
+        row = raw.iloc[i].tolist()
+        texts = [norm_label(x) for x in row if isinstance(x, str)]
+        tick_cells = sum(1 for x in row if isinstance(x, str) and _ticker_of(x) not in (None, INDEX_TICKER))
+        if tick_cells >= 2:
+            header = row
+            continue
+        label = next((DASHBOARD_FIELDS[t] for t in texts if t in DASHBOARD_FIELDS), None)
+        if label is not None:
+            current = label
+            continue
+        y = next((int(v) for v in row[:3] if is_num(v) and 1990 < float(v) < 2100), None)
+        if y is None or header is None or current is None:
+            continue
+        for j, h in enumerate(header):
+            t = _ticker_of(h) if isinstance(h, str) else None
+            if t is None or t == INDEX_TICKER or j >= len(row):
+                continue
+            v = to_float(row[j])
+            if is_num(v) and v != 0:          # 0 = donnée non renseignée dans la base
+                mb.fundamentals.setdefault(t, {}).setdefault(current, {})[y] = float(v)
 
 
 def _read_shares(raw: pd.DataFrame, mb: MarketBase) -> None:
@@ -197,8 +284,8 @@ def _read_shares(raw: pd.DataFrame, mb: MarketBase) -> None:
     i_float = next((i for k, i in rows.items() if "flott" in k), 1 if len(raw) > 1 else None)
     i_total = next((i for k, i in rows.items() if "total" in k or "nombre" in k), 2 if len(raw) > 2 else None)
     for j, h in enumerate(header):
-        t = strip_accents(str(h or "")).upper().strip()
-        if not TICKER_RE.match(t):
+        t = _ticker_of(h)
+        if t is None or t == INDEX_TICKER or not TICKER_RE.match(t):
             continue
         if i_total is not None:
             v = to_float(raw.iloc[i_total, j])
@@ -220,8 +307,8 @@ def _read_avg(raw: pd.DataFrame, mb: MarketBase) -> None:
         if y is None:
             continue
         for j, h in enumerate(header):
-            t = strip_accents(str(h or "")).upper().strip()
-            if TICKER_RE.match(t):
+            t = _ticker_of(h)
+            if t and t != INDEX_TICKER and TICKER_RE.match(t):
                 v = to_float(raw.iloc[i, j])
                 if is_num(v):
                     mb.avg_prices.setdefault(t, {})[y] = v
@@ -254,18 +341,19 @@ def _read_dividends_sheet(raw: pd.DataFrame, mb: MarketBase) -> None:
             mb.dividends.setdefault(t, []).append(
                 Dividend(int(y) if is_num(y) else (d.year - 1 if d else None), m, d, "Base de marché"))
         return
-    # format large : années en lignes, tickers en colonnes
+    # format large : années de paiement en lignes, tickers en colonnes (dividende de l'exercice N-1 payé en N)
     header = raw.iloc[0].tolist()
     for i in range(1, len(raw)):
         y = next((int(v) for v in raw.iloc[i, :3].tolist() if is_num(v) and 1990 < float(v) < 2100), None)
         if y is None:
             continue
         for j, h in enumerate(header):
-            t = strip_accents(str(h or "")).upper().strip()
-            if TICKER_RE.match(t):
+            t = _ticker_of(h)
+            if t and t != INDEX_TICKER and TICKER_RE.match(t):
                 v = to_float(raw.iloc[i, j])
-                if is_num(v) and v > 0:
-                    mb.dividends.setdefault(t, []).append(Dividend(y, v, None, "Base de marché"))
+                if is_num(v) and v >= 0:      # 0 = pas de dividende cette année-là
+                    mb.dividends.setdefault(t, []).append(
+                        Dividend(y - 1, v, date(y, 7, 1), "Base de marché (Historique_dividende)"))
 
 
 def load_price_file(source, filename: str = "") -> pd.DataFrame | None:

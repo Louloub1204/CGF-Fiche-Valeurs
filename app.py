@@ -19,7 +19,7 @@ from fiche_valeur.export import build_excel, build_screening_excel, screening_fr
 from fiche_valeur.fundamentals import RATIO_META, sig_table
 from fiche_valeur.market import load_market_base, load_price_file
 from fiche_valeur.parser import parse_workbook
-from fiche_valeur.partial import MANUAL_COLUMNS, empty_manual_table, figures_from_table
+from fiche_valeur.partial import MANUAL_COLUMNS, empty_manual_table, figures_from_market_base, figures_from_table
 from fiche_valeur.pipeline import run_analysis
 from fiche_valeur.report_pdf import build_pdf
 from fiche_valeur.report_pptx import build_pptx
@@ -65,6 +65,18 @@ def _prices(data: bytes, name: str):
     return load_price_file(io.BytesIO(data), name)
 
 
+@st.cache_data(show_spinner=False)
+def _report_from_pdf(data: bytes, title: str):
+    from fiche_valeur.publications import parse_report_pdf
+    return parse_report_pdf(data, title, "Document chargé par l'utilisateur")
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def _report_from_url(url: str):
+    from fiche_valeur.publications import fetch_url_report
+    return fetch_url_report(url)
+
+
 def _secret(key: str) -> str:
     try:
         return st.secrets.get(key, "")
@@ -103,12 +115,16 @@ with st.sidebar:
             "**Niveau 1 - Analyse complète.** Classeur des états financiers (une feuille par ticker, au moins "
             "trois exercices). Donne : soldes intermédiaires de gestion, ratios, solidité, croissance, comparaison "
             "aux pairs, valorisation par PER, P/B, Gordon, dividendes et VE/EBE.\n\n"
-            "**Niveau 2 - Chiffres clés.** Chiffre d'affaires, résultat net, BNPA, dividendes (lus "
-            "automatiquement sur sikafinance, ou saisis dans l'onglet d'analyse), éventuellement capitaux propres. "
+            "**Niveau 2 - Chiffres clés.** Chiffre d'affaires, résultat net, capitaux propres, résultat "
+            "d'exploitation (feuille Tableau de bord de la base SMF), sinon BNPA et dividendes lus sur sikafinance, "
+            "ou saisis dans l'onglet d'analyse. "
             "Donne : croissance, PER, rendement, valorisation. Pas de solidité financière ; conviction plafonnée.\n\n"
             "**Niveau 3 - Marché seul.** Cours, volumes, dividendes. Donne : analyse technique, valorisation par "
             "les dividendes, macro et actualités. Signal indicatif prudent, conviction faible, pas de VENDRE "
             "et achat seulement avec un fort potentiel.\n\n"
+            "**Exercice en cours.** À tous les niveaux, la dernière publication (rapport d'activités trimestriel ou "
+            "semestriel, états financiers annuels) est lue sur richbourse.com ou dans le PDF que vous chargez : ses "
+            "soldes N / N-1 alimentent la fiche et le pilier croissance.\n\n"
             "Chaque fiche indique le niveau atteint, le taux de couverture des données et ce qu'il faut "
             "ajouter pour monter d'un niveau.")
 
@@ -121,11 +137,15 @@ with st.sidebar:
              "restent analysables aux niveaux 2 et 3.")
     st.caption("Facultatif mais recommandé. Alimente le niveau 1 et les comparaisons entre sociétés.")
     mkt_file = st.file_uploader(
-        "Base de marché (classeur Excel)", type=["xlsx", "xlsm"],
-        help="Classeur type « Base de données - SMF ». Feuilles reconnues par leur nom : Cours (colonne Date puis "
-             "une colonne par ticker, avec BRVMC pour l'indice), Volumes, Nb_titres (ticker, nombre de titres, "
-             "flottant), Moyenne_cours, Dividendes (ticker, exercice, dividende net par action).")
-    st.caption("Facultatif si les données en ligne sont activées. Utile hors connexion ou pour figer les cours.")
+        "Base de données SMF (classeur Excel)", type=["xlsx", "xlsm"],
+        help="Classeur « Base de données - SMF ». Feuilles reconnues par leur nom : Cours (Date puis une colonne "
+             "par ticker, .BRVMCI pour le BRVM Composite), Volume moyen (montants échangés, convertis en titres), "
+             "Tableau de bord (capitaux propres, résultat net, chiffre d'affaires, résultat d'exploitation, flux "
+             "de trésorerie par année), Historique_dividende (dividende net par action, année de paiement), "
+             "Moyenne_cours, Nb_titres (titres flottants, nombre de titres).")
+    st.caption("À charger après le classeur des états financiers. Apporte cours, volumes, dividendes, nombre de "
+               "titres et chiffres clés de toute la cote : les titres hors classeur passent au niveau 2 avec "
+               "capitaux propres (ROE, P/B), et les exercices manquants du classeur sont complétés.")
     px_file = st.file_uploader(
         "Historique du titre analysé (CSV ou Excel)", type=["csv", "xlsx", "txt"],
         help="Colonnes Date, Ouverture, Plus haut, Plus bas, Clôture, Volume (français ou anglais). Remplace "
@@ -153,6 +173,9 @@ with st.sidebar:
     wb = _parse(ef_bytes, ef_name) if ef_bytes else None
     mb = _market(mkt_bytes) if mkt_bytes else None
     in_wb = set(wb.companies) if wb is not None else set()
+    if mb is not None and mb.closes is not None and not mb.closes.empty:
+        st.success(f"Base SMF : {len([t_ for t_ in mb.tickers if t_ in config.TICKERS])} titres cotés, cours "
+                   f"jusqu'au {mb.closes.index.max():%d/%m/%Y}, chiffres clés pour {len(mb.fundamentals)} titres.")
 
     st.markdown("### 2. Valeur analysée")
     all_tickers = _universe(wb, demo)
@@ -305,9 +328,9 @@ if demo and ef_file is None:
     st.warning("Mode démonstration : sociétés et chiffres fictifs. Décochez-le dans la barre latérale pour analyser "
                "les valeurs réelles de la BRVM.")
 if wb is None and not demo:
-    st.info("Aucun classeur d'états financiers chargé : les titres sont analysés sur chiffres clés (niveau 2, "
-            "lecture en ligne) ou sur données de marché (niveau 3). Chargez votre classeur dans la barre "
-            "latérale pour passer les titres qu'il contient au niveau 1.")
+    st.info("Aucun classeur d'états financiers chargé : les titres sont analysés sur chiffres clés (niveau 2 : "
+            "base SMF, saisie ou lecture en ligne) ou sur données de marché (niveau 3). Chargez votre classeur "
+            "dans la barre latérale pour passer les titres qu'il contient au niveau 1.")
 if wb is not None and wb.notes:
     for n in wb.notes:
         st.error(n)
@@ -346,9 +369,43 @@ with tab_one:
             figures = figures_from_table(edited)
             st.caption("Aucune saisie : lecture en ligne (si activée), sinon analyse sur données de marché seules."
                        if figures is None else "Saisie détectée : elle sera utilisée à la prochaine analyse.")
+    report = None
+    with st.expander("Dernière publication de la société (soldes de l'exercice en cours)", expanded=False):
+        st.markdown(
+            "Les rapports d'activités trimestriels et semestriels et les états financiers annuels donnent les soldes "
+            "de l'exercice en cours (chiffre d'affaires ou PNB, EBE, résultat d'exploitation, RAO, coût du risque, "
+            "résultat net) face à la même période de l'an passé. **Données en ligne activées** : la publication la "
+            "plus récente est recherchée automatiquement sur richbourse.com (relais des avis BRVM). Vous pouvez "
+            "aussi charger le PDF ou coller son adresse ; votre document est alors prioritaire.")
+        rep_file = st.file_uploader("PDF du rapport d'activités ou des états financiers", type=["pdf"],
+                                    key=f"rep_{ticker}",
+                                    help="Document publié par la société (brvm.org, richbourse.com, site de la "
+                                         "société). Le PDF doit contenir du texte : un document scanné n'est pas lu.")
+        rep_url = st.text_input("Ou adresse du document (lien « afficher-fichier » richbourse ou PDF)",
+                                key=f"repurl_{ticker}", placeholder="https://www.richbourse.com/common/actualite/afficher-fichier/...")
+        rep_title = st.text_input("Période couverte (facultatif)", key=f"reptitle_{ticker}",
+                                  placeholder="Ex. Rapport d'activités - 1er semestre 2026",
+                                  help="Sert à nommer la période si le document ne l'indique pas clairement.")
+        if rep_file is not None:
+            report = _report_from_pdf(rep_file.getvalue(), rep_title or rep_file.name.rsplit(".", 1)[0])
+            if report is None:
+                st.error("Aucun tableau d'indicateurs reconnu dans ce PDF (document scanné ou mise en page atypique).")
+        elif rep_url.strip():
+            report = _report_from_url(rep_url.strip())
+            if report is None:
+                st.error("Document inaccessible ou illisible à cette adresse.")
+        if report is not None:
+            st.caption(f"Document lu : {report.period or 'période non identifiée'}, {len(report.lines)} indicateurs, "
+                       f"montants en {report.unit_label}.")
+            st.dataframe(pd.DataFrame([(ln.label, fmt_num(ln.current / 1e9, 1), fmt_num(ln.previous / 1e9, 1),
+                                        fmt_pct(ln.variation, sign=True) if is_num(ln.variation) else "n.s.")
+                                       for ln in report.lines],
+                                      columns=["Indicateur (Mds FCFA)", report.period or "N", report.period_prev or "N-1",
+                                               "Variation"]), hide_index=True, width="stretch")
     run_key = (ticker, ef_name, len(ef_bytes or b""), online, tuple(sorted(overrides.items())), rf, erp, g, beta,
                tuple(sorted(w.items())), s_buy, s_sell, major, notes, use_ai, tuple(sorted(b.items())), house, analyst,
-               px_file.name if px_file else None, use_def)
+               px_file.name if px_file else None, use_def, len(mkt_bytes or b""),
+               (report.title, report.period, len(report.lines)) if report is not None else None)
     c1, c2 = st.columns([1, 3])
     go = c1.button("Lancer l'analyse", type="primary", width="stretch")
     if go or (st.session_state.get("run_key") != run_key and st.session_state.get("auto", False)):
@@ -360,7 +417,7 @@ with tab_one:
         with st.status("Analyse en cours...", expanded=False) as status:
             a = run_analysis(wb, ticker, settings, market_base=mb, price_file=price_df, overrides=overrides,
                              user_notes=notes, major_event=major, bceao=b, use_claude=use_ai,
-                             progress=lambda msg: status.update(label=msg), figures=figs_used)
+                             progress=lambda msg: status.update(label=msg), figures=figs_used, report=report)
             status.update(label="Analyse terminée", state="complete")
         st.session_state["analysis"] = a
         st.session_state["run_key"] = run_key
@@ -543,6 +600,24 @@ with tab_one:
         if md_rows:
             st.dataframe(pd.DataFrame(md_rows, index=[str(y0 - 1), f"{y0}p", f"{y0 + 1}p"]).T, width="stretch")
         st.caption(m.source)
+        st.subheader("Publications officielles de la société")
+        if a.interim is not None and a.interim.lines:
+            rp = a.interim
+            st.markdown(f"**{rp.title or rp.period}**" + (f" (publiée le {rp.published:%d/%m/%Y})" if rp.published else "")
+                        + (f" | [document]({rp.url})" if rp.url else ""))
+            st.dataframe(pd.DataFrame([(ln.label, fmt_num(ln.current / 1e9, 1), fmt_num(ln.previous / 1e9, 1),
+                                        fmt_pct(ln.variation, sign=True) if is_num(ln.variation) else "n.s.")
+                                       for ln in rp.lines],
+                                      columns=["Indicateur (Mds FCFA)", rp.period or "N", rp.period_prev or "N-1",
+                                               "Variation"]), hide_index=True, width="stretch")
+        else:
+            st.caption("Aucune publication exploitée : activez les données en ligne ou chargez le PDF du dernier "
+                       "rapport d'activités dans l'onglet d'analyse.")
+        if a.publications:
+            st.dataframe(pd.DataFrame([(p_.published.strftime("%d/%m/%Y") if p_.published else "", p_.title, p_.pdf_url)
+                                       for p_ in a.publications[:12]], columns=["Date", "Publication", "Document"]),
+                         hide_index=True, width="stretch",
+                         column_config={"Document": st.column_config.LinkColumn("Document", display_text="Ouvrir")})
         st.subheader("Actualités")
         if a.news.items:
             st.dataframe(pd.DataFrame([(n_.published.strftime("%d/%m/%Y") if n_.published else "", n_.source,
@@ -595,7 +670,10 @@ with tab_batch:
         "Pays": config.COUNTRIES.get(config.TICKERS.get(t_, {}).get("pays", ""), {}).get("nom", "n.d."),
         "États financiers": "Oui" if t_ in in_wb else "Non",
         "Base de marché": "Oui" if t_ in mkt_tickers else "Non",
-        "Niveau attendu": ("Niveau 1" if t_ in in_wb else ("Niveau 2 ou 3" if online else "Niveau 3")),
+        "Chiffres clés SMF": "Oui" if figures_from_market_base(mb, t_) is not None else "Non",
+        "Niveau attendu": ("Niveau 1" if t_ in in_wb else
+                           ("Niveau 2" if figures_from_market_base(mb, t_) is not None else
+                            ("Niveau 2 ou 3" if online else "Niveau 3"))),
     } for t_ in all_tickers])
     n1 = int((cover["États financiers"] == "Oui").sum())
     st.caption(f"{len(cover)} titres : {n1} avec états financiers (niveau 1), {len(cover) - n1} hors classeur.")

@@ -8,3 +8,5 @@ python-pptx>=1.0
 requests>=2.31
 beautifulsoup4>=4.12
 lxml>=5.0
+pdfplumber>=0.10
+pypdf>=4.0

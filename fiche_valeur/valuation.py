@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 
 from .config import Settings
 from .fundamentals import Fundamentals, net_debt
@@ -85,6 +86,9 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
     last_div = md.last_dividend()
     if last_div:
         v.dps, v.dps_exercice = last_div.montant_net, last_div.exercice
+        if "exceptionnel" in (last_div.source or ""):
+            v.notes.append("Dernier dividende jugé exceptionnel (plus de 2,5 fois les versements précédents) : "
+                           "le dividende ordinaire médian est retenu pour le rendement et l'actualisation.")
     elif c.fields.get("dps"):
         yy = max(c.fields["dps"])
         v.dps, v.dps_exercice = c.fields["dps"][yy], yy
@@ -174,6 +178,23 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
         v.notes.append("Multiples de référence du secteur utilisés faute de comparables suffisants dans le classeur : "
                        "charger le classeur complet pour des multiples issus des pairs.")
     methods = [m for m in methods if is_num(m.value) and m.value > 0 and m.weight > 0]
+    if is_num(y) and y < date.today().year - 3:
+        kept = [m for m in methods if m.name in ("Actualisation des dividendes", "Rendement de référence")]
+        if len(kept) < len(methods):
+            v.notes.append(f"Derniers résultats connus datant de {y} : méthodes fondées sur les résultats et les "
+                           f"fonds propres écartées.")
+        methods = kept
+    if is_num(price) and price > 0:
+        sane = [m for m in methods if 0.15 * price <= m.value <= 8 * price]
+        dropped = [m.name for m in methods if m not in sane]
+        if dropped and sane:
+            v.notes.append("Méthode(s) écartée(s) pour valeur aberrante au regard du cours : "
+                           + ", ".join(dropped).lower() + " (donnée source à vérifier).")
+            methods = sane
+        elif dropped:
+            v.notes.append("Toutes les méthodes donnent des valeurs aberrantes au regard du cours : données "
+                           "financières à vérifier, aucune juste valeur retenue.")
+            methods = []
     v.methods = methods
     if methods:
         tw = sum(m.weight for m in methods)

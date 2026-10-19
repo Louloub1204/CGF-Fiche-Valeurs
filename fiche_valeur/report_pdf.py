@@ -414,6 +414,8 @@ def _sources(a, st):
     s["politique monétaire"] = f"BCEAO, Comité de Politique Monétaire du {a.macro.bceao.get('date_reference')}"
     if a.news.items:
         s["actualités"] = "Google Actualités (flux RSS), tonalité lexicale"
+    if a.interim is not None:
+        s["publication officielle"] = f"{a.interim.source or 'Document chargé'} : {a.interim.title or a.interim.period}"
     rows = [[k.capitalize(), P(v, st["cell"])] for k, v in s.items()]
     return _table(rows, [40 * mm, CONTENT_W - 40 * mm], st, header=False, bold_cols=(0,))
 
@@ -468,6 +470,27 @@ def _keyfig_table(a, st):
     first = 62 * mm
     other = (CONTENT_W - first) / len(years)
     return _table(rows, [first] + [other] * len(years), st)
+
+
+def _interim_block(a, st):
+    """Soldes de l'exercice en cours d'après la dernière publication officielle."""
+    rep = a.interim
+    if rep is None or not rep.lines:
+        return []
+    rows = [["Indicateur (Mds FCFA)", rep.period or "Période N", rep.period_prev or "N-1", "Variation"]]
+    for ln in rep.lines:
+        rows.append([ln.label, fmt_mds(ln.current), fmt_mds(ln.previous),
+                     fmt_pct(ln.variation, sign=True) if is_num(ln.variation) else "n.s."])
+    head = f"Exercice en cours : {clean_text(rep.title or rep.period)}"
+    meta = (f"Publication du {rep.published:%d/%m/%Y}. " if rep.published else "") + \
+        f"Source : {clean_text(rep.source or 'document chargé')} ; montants lus en {rep.unit_label}."
+    out = [P(head[:150], st["h2"]), _table(rows, [70 * mm, 32 * mm, 32 * mm, 26 * mm], st), P(meta, st["muted"])]
+    out += [P(n, st["muted"]) for n in rep.notes]
+    others = [p_ for p_ in a.publications if p_.published][:5]
+    if others:
+        out += [P("Publications récentes de la société", st["h2"])]
+        out += _bullets([f"{p_.published:%d/%m/%Y} : {clean_text(p_.title)}" for p_ in others], st)
+    return [KeepTogether(out[:3])] + out[3:]
 
 
 def _coverage_table(a, st):
@@ -605,6 +628,9 @@ def build_pdf(a, compact: bool = False) -> bytes:
 
         # ---------------- Page 5 : actualités, décision, sources ----------------
         story += [PageBreak(), P("Actualités et informations communiquées", st["h1"])]
+        story += _interim_block(a, st)
+        if a.interim is not None:
+            story.append(Spacer(1, 4))
         if a.news.items:
             story += [_news_table(a, st), Spacer(1, 3)]
         story.append(P(tx.get("actualites", ""), st["body"]))

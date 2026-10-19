@@ -143,17 +143,23 @@ Une feuille `SYNTHÈSE` facultative (colonnes ticker et secteur) permet d'impose
 chaque société. Le référentiel interne (`fiche_valeur/config.py`) couvre les 48 valeurs de la cote
 (nom, pays, secteur).
 
-### 2. Base de marché (facultative)
+### 2. Base de données SMF (facultative, à charger après le classeur)
 
-Classeur type « Base de données - SMF » ; les feuilles sont reconnues par leur nom :
+Classeur « Base de données - SMF » ; les feuilles sont reconnues par leur nom :
 
-| Feuille | Contenu |
-|---|---|
-| `Cours` | colonne `Date` puis une colonne par ticker (cours de clôture) ; une colonne `BRVMC` pour l'indice composite |
-| `Volumes` | même structure, volumes échangés |
-| `Nb_titres` | ticker, nombre total de titres, flottant |
-| `Moyenne_cours` | ticker, cours moyen par année |
-| `Dividendes` | ticker, exercice, dividende net par action, date de paiement |
+| Feuille | Contenu | Usage |
+|---|---|---|
+| `Cours` | `Date` puis une colonne par ticker ; `.BRVMCI` (ou `BRVMC`) pour le BRVM Composite | historique, technique, bêta |
+| `Volume moyen` ou `Volumes` | même structure ; montants en FCFA détectés et convertis en nombre de titres | liquidité |
+| `Tableau de bord` | blocs par agrégat (capitaux propres, résultat net, chiffre d'affaires, résultat d'exploitation, flux de trésorerie), années en lignes, montants en FCFA ; 0 = non renseigné | chiffres clés (niveau 2), comparables, exercices manquants du classeur |
+| `Historique_dividende` ou `Dividendes` | dividende net par action, **année de paiement** en lignes (exercice N-1) | rendement, actualisation des dividendes |
+| `Nb_titres` | lignes « Titres flottants » et « Nombre de titres » | capitalisation, flottant |
+| `Moyenne_cours` | cours moyen par année | historique |
+
+Apports : les titres hors classeur passent au niveau 2 avec capitaux propres (ROE, P/B, P/B justifié),
+les exercices absents du classeur sont complétés sans jamais écraser une valeur existante (signalé dans
+la fiche), et les comparables sectoriels couvrent toute la cote. Un dividende plus de 2,5 fois supérieur
+aux versements précédents est traité comme exceptionnel : le dividende ordinaire médian sert aux calculs.
 
 ### 3. Historique d'un titre (facultatif)
 
@@ -168,6 +174,23 @@ section « Sources » de la fiche.
 
 ---
 
+## Soldes de l'exercice en cours : publications officielles
+
+Une fois un titre choisi (données en ligne activées), l'application parcourt la rubrique « États
+financiers » de richbourse.com, qui relaie les avis publiés à la BRVM, repère les publications de la
+société par leur intitulé (« ORANGE CI : Rapport d'activités - 1er semestre 2026 »), télécharge le PDF
+le plus récent et lit son tableau d'indicateurs : chiffre d'affaires ou PNB, EBE, résultat
+d'exploitation, résultat financier, résultat des activités ordinaires, coût du risque, résultat avant
+impôt, résultat net, période N face à N-1.
+
+Ces soldes figurent dans la fiche PDF, le rapport PowerPoint (diapositive « Exercice en cours »),
+l'export Excel et l'application. Leur évolution sur un an entre pour 30% dans le pilier croissance. Pour
+un titre sans états financiers détaillés, des états financiers annuels publiés complètent l'exercice
+manquant.
+
+Si le site ne répond pas ou si le document est scanné, chargez le PDF ou collez son adresse dans
+l'onglet d'analyse (« Dernière publication de la société ») : le même analyseur est utilisé.
+
 ## Sources en ligne
 
 | Donnée | Source |
@@ -176,6 +199,7 @@ section « Sources » de la fiche.
 | Nombre de titres, cours du jour, capitalisation flottante | brvm.org (capitalisations) |
 | Dividendes publiés | brvm.org (paiement de dividendes), puis sikafinance.com |
 | Chiffres clés (CA, résultat net, BNPA, PER, dividende, actionnariat) des titres hors classeur | sikafinance.com (fiche société) |
+| Rapports d'activités et états financiers publiés (soldes de l'exercice en cours) | richbourse.com, rubrique États financiers (PDF) |
 | Croissance du PIB et inflation par pays (2024-2027) | FMI, API DataMapper (valeurs de repli intégrées) |
 | Parité EUR/USD (sociétés en USD) | frankfurter.app (parité fixe EUR/XOF 655,957) |
 | Actualités de l'émetteur | Google Actualités (flux RSS) |
@@ -280,7 +304,8 @@ fiche-valeur-brvm/
 │   ├── config.py              référentiel des valeurs, paramètres, BCEAO, pondérations
 │   ├── parser.py              lecture et contrôle du classeur des états financiers
 │   ├── market.py              cours, titres, dividendes (fichiers et sources en ligne)
-│   ├── partial.py             titres à données partielles : chiffres clés, saisie, couverture
+│   ├── partial.py             titres à données partielles : chiffres clés, saisie, base SMF, couverture
+│   ├── publications.py        publications officielles : liste richbourse, lecture des PDF
 │   ├── fundamentals.py        SIG, ratios, solidité, pairs
 │   ├── valuation.py           juste valeur multi-méthodes
 │   ├── technical.py           indicateurs techniques et niveaux
@@ -315,7 +340,7 @@ Pour régénérer les données de démonstration : `python sample_data/make_demo
 ## Limites
 
 - Les sites de données peuvent changer leur présentation ; les analyseurs sont isolés
-  (`parse_capitalisations`, `parse_sika_payload`, `parse_sika_societe`, `parse_rss`) pour être ajustés facilement.
+  (`parse_capitalisations`, `parse_sika_payload`, `parse_sika_societe`, `parse_listing`, `parse_report_text`, `parse_rss`) pour être ajustés facilement.
   Une base de marché locale garantit des résultats reproductibles.
 - Les paramètres BCEAO et les valeurs macroéconomiques de repli datent de la dernière mise à jour
   du code : vérifiez-les dans la barre latérale avant diffusion.
@@ -324,6 +349,9 @@ Pour régénérer les données de démonstration : `python sample_data/make_demo
   compte.
 - - Les chiffres clés lus en ligne (niveau 2) n'incluent pas le bilan : sans capitaux propres saisis, ni
   ROE ni P/B. Les multiples de référence par secteur sont indicatifs.
+- Les rapports d'activités n'ont pas tous la même mise en page : les lignes non reconnues sont
+  ignorées, et un PDF scanné (image) n'est pas lu. Les périodes trimestrielles peuvent être cumulées
+  depuis le début de l'exercice : se référer à l'intitulé du document.
 - Les sociétés de démonstration sont fictives.
 
 ## Avertissement

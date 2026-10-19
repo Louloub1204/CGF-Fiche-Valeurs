@@ -80,6 +80,21 @@ def build_commentary(a) -> dict:
     elif c.level == "chiffres_cles":
         s.append("Analyse sur chiffres clés : le bilan et les soldes intermédiaires de gestion ne sont pas "
                  "disponibles.")
+    rep = getattr(a, "interim", None)
+    pub_txt = []
+    if rep is not None and rep.lines:
+        rev = rep.get("pnb") or rep.get("ca")
+        res = rep.get("rn") or rep.get("rao") or rep.get("re")
+        bits = []
+        for ln in (rev, res):
+            if ln is not None and is_num(ln.current):
+                bits.append(f"{ln.label.lower()} de {fmt_fcfa(ln.current)}"
+                            + (f" ({fmt_pct(ln.variation, sign=True)} sur un an)" if is_num(ln.variation) else ""))
+        if bits:
+            when = f" ({rep.published:%d/%m/%Y})" if rep.published else ""
+            pub_txt.append(f"Dernière publication, {rep.period or 'période récente'}{when} : " + " et ".join(bits) + ".")
+        s += pub_txt
+    out["publication"] = pub_txt
     out["activite"] = " ".join(s)
 
     # ---- Valorisation -----------------------------------------------------------
@@ -287,6 +302,15 @@ def _strengths_risks(a) -> tuple[list[str], list[str]]:
     for w in dec.warnings:
         if "Actualité" in w:
             R.append(w)
+    rep = getattr(a, "interim", None)
+    if rep is not None:
+        for ln in (rep.get("pnb") or rep.get("ca"), rep.get("rn")):
+            if ln is None or not is_num(ln.variation):
+                continue
+            if ln.variation >= 0.08:
+                S.append(f"{ln.label} {rep.period} en hausse de {fmt_pct(ln.variation)} sur un an.")
+            elif ln.variation <= -0.08:
+                R.append(f"{ln.label} {rep.period} en recul de {fmt_pct(abs(ln.variation))} sur un an.")
     if c.level in ("chiffres_cles", "marche"):
         R.insert(0, f"Données limitées ({config.LEVELS[c.level][0].split(' - ')[1].lower()}) : conviction plafonnée, "
                     f"signal à confirmer avec les états financiers.")

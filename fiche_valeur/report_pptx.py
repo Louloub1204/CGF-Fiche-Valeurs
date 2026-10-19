@@ -543,6 +543,30 @@ def build_pptx(a) -> bytes:
           + m.notes, size=10.5, color=MUTED)
 
     # 10. Actualités ----------------------------------------------------------------------
+    rep = a.interim
+    if rep is not None and rep.lines:
+        s = d.slide("Exercice en cours : dernière publication",
+                    f"{clean_text(rep.title or rep.period)[:110]}"
+                    + (f" | publiée le {rep.published:%d/%m/%Y}" if rep.published else ""),
+                    notes=" ".join(tx.get("publication", [])))
+        rows = [["Indicateur (Mds FCFA)", rep.period or "N", rep.period_prev or "N-1", "Variation"]]
+        for ln in rep.lines:
+            rows.append([ln.label, fmt_mds(ln.current), fmt_mds(ln.previous),
+                         fmt_pct(ln.variation, sign=True) if is_num(ln.variation) else "n.s."])
+        _table(s, Inches(0.6), Inches(1.5), Inches(7.0), rows, [3.0, 1.3, 1.3, 1.2], font=10.5,
+               row_h=min(0.4, 5.0 / len(rows)))
+        main = [ln for ln in rep.lines if ln.key in ("ca", "pnb", "ebe", "rbe", "re", "rao", "rn")][:5]
+        if main:
+            _bar_chart(s, Inches(7.9), Inches(1.4), Inches(4.9), Inches(3.6), [ln.label for ln in main],
+                       [(rep.period_prev or "N-1", [ln.previous / 1e9 if is_num(ln.previous) else None for ln in main]),
+                        (rep.period or "N", [ln.current / 1e9 if is_num(ln.current) else None for ln in main])],
+                       [GRAY, S1], fmt='#,##0', title="Période en cours face à N-1 (Mds FCFA)", labels_last=False)
+        others = [f"{p_.published:%d/%m/%Y} : {clean_text(p_.title)[:95]}" for p_ in a.publications[:4] if p_.published]
+        _text(s, Inches(7.9), Inches(5.15), Inches(4.9), Inches(0.3), "Publications récentes", size=12, bold=True,
+              color=NAVY)
+        _bullets(s, Inches(7.9), Inches(5.5), Inches(4.9), Inches(1.5),
+                 others or [f"Source : {clean_text(rep.source)}"], size=9.5)
+
     s = d.slide("Actualités et informations communiquées", "Veille de presse sur douze mois et communication de la société",
                 notes=tx.get("actualites"))
     items = a.news.items[:9]

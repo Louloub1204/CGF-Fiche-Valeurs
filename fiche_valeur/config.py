@@ -235,7 +235,7 @@ LEVELS = {
     "partiel": ("Niveau 1b - Analyse complète avec lacunes",
                 "États financiers présents mais incomplets (exercices ou postes manquants)."),
     "chiffres_cles": ("Niveau 2 - Chiffres clés",
-                      "Chiffre d'affaires, résultat net, BNPA et dividendes, sans bilan détaillé."),
+                      "Chiffre d'affaires, résultat net, fonds propres ou BNPA et dividendes, sans états financiers détaillés."),
     "marche": ("Niveau 3 - Données de marché",
                "Cours, volumes et dividendes uniquement : analyse technique et valorisation par les "
                "dividendes, signal indicatif prudent."),

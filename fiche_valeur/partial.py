@@ -37,6 +37,8 @@ class KeyFigures:
     eps: dict[int, float] = field(default_factory=dict)
     dps: dict[int, float] = field(default_factory=dict)
     per: dict[int, float] = field(default_factory=dict)
+    operating_income: dict[int, float] = field(default_factory=dict)
+    cash_flow: dict[int, float] = field(default_factory=dict)
     shares: float | None = None
     float_pct: float | None = None
     shareholders: list[tuple[str, float]] = field(default_factory=list)
@@ -191,6 +193,69 @@ def fetch_sika_societe(ticker: str, country: str | None = None, errors: list[str
     return _cached(f"sikasoc:{ticker}", run)
 
 
+def figures_from_market_base(mb, ticker: str) -> KeyFigures | None:
+    """Chiffres clés de la feuille « Tableau de bord » de la base SMF (montants en FCFA)."""
+    if mb is None or ticker not in getattr(mb, "fundamentals", {}):
+        return None
+    f = mb.fundamentals[ticker]
+    kf = KeyFigures(source="Base de données SMF (Tableau de bord)")
+    kf.revenue = dict(f.get("pnb") or f.get("ca") or {})
+    kf.net_income = dict(f.get("rn", {}))
+    kf.equity = dict(f.get("capitaux_propres", {}))
+    kf.total_assets = dict(f.get("total_actif", {}))
+    kf.operating_income = dict(f.get("re", {}))
+    kf.cash_flow = dict(f.get("flux_tresorerie", {}))
+    if ticker in mb.shares_total:
+        kf.shares = mb.shares_total[ticker]
+        if ticker in mb.shares_float and kf.shares:
+            kf.float_pct = mb.shares_float[ticker] / kf.shares
+    return kf if kf.has_data() else None
+
+
+def merge_figures(primary: KeyFigures | None, secondary: KeyFigures | None) -> KeyFigures | None:
+    """Complète ``primary`` (prioritaire) par les années ou postes absents de ``secondary``."""
+    if primary is None:
+        return secondary
+    if secondary is None:
+        return primary
+    for attr in ("revenue", "net_income", "equity", "total_assets", "eps", "dps", "per", "operating_income",
+                 "cash_flow"):
+        a, b = getattr(primary, attr), getattr(secondary, attr)
+        for y, v in b.items():
+            a.setdefault(y, v)
+    primary.shares = primary.shares or secondary.shares
+    primary.float_pct = primary.float_pct or secondary.float_pct
+    if secondary.source and secondary.source not in primary.source:
+        primary.source = f"{primary.source}, complété par {secondary.source}"
+    return primary
+
+
+def fill_company_gaps(c: CompanyData, kf: KeyFigures | None) -> list[int]:
+    """Comble les exercices manquants des postes clés d'une société du classeur (jamais d'écrasement)."""
+    if kf is None:
+        return []
+    mapping = [(c.revenue_field, kf.revenue), (c.net_income_field, kf.net_income),
+               (c.equity_field, kf.equity), ("total_actif", kf.total_assets)]
+    if not c.is_bank:
+        mapping.append(("re", kf.operating_income))
+    added: set[int] = set()
+    for fname, series in mapping:
+        if not series:
+            continue
+        target = c.fields.setdefault(fname, {})
+        for y, v in series.items():
+            in_range = not c.years or y > max(c.years) or min(c.years) <= y <= max(c.years)
+            if not is_num(target.get(y)) and is_num(v) and in_range:
+                target[y] = float(v)
+                c.estimated.add((fname, y))
+                added.add(y)
+    if added:
+        c.years = sorted(set(c.years) | added)
+        c.notes.append("Postes clés complétés par " + kf.source + " pour l'exercice "
+                       + ", ".join(str(y) for y in sorted(added)) + " (absent du classeur).")
+    return sorted(added)
+
+
 # ---------------------------------------------------------------------------
 # Construction d'une société à partir de chiffres clés
 # ---------------------------------------------------------------------------
@@ -217,6 +282,10 @@ def build_company(ticker: str, kf: KeyFigures | None, level: str | None = None) 
             fields["capitaux_propres"] = dict(kf.equity)
         if kf.total_assets:
             fields["total_actif"] = dict(kf.total_assets)
+        if kf.operating_income and kind != "banque":
+            fields["re"] = dict(kf.operating_income)
+        if kf.cash_flow:
+            fields["flux_tresorerie"] = dict(kf.cash_flow)
         if kf.eps:
             fields["bpa_pub"] = dict(kf.eps)
         if kf.dps:
@@ -275,7 +344,7 @@ def _n_years(c: CompanyData, name: str) -> int:
     return sum(1 for v in c.fields.get(name, {}).values() if is_num(v))
 
 
-def assess(c: CompanyData, md, fd) -> Coverage:
+def assess(c: CompanyData, md, fd, interim=None) -> Coverage:
     """Mesure la couverture des données et fixe le niveau d'analyse."""
     rev = c.revenue_field
     n_rev, n_rn = _n_years(c, rev), _n_years(c, c.net_income_field)
@@ -303,8 +372,10 @@ def assess(c: CompanyData, md, fd) -> Coverage:
             f"{n_rev} exercices de revenus, {n_rn} de résultat net ({c.data_source})",
             "Croissance et PER sur une période plus courte.",
             "Charger l'onglet du titre dans le classeur ou compléter le tableau de saisie.")
-        add("Bilan (capitaux propres, total actif)", "ok" if min(n_cp, n_ta) >= 2 else "absent",
+        add("Bilan (capitaux propres, total actif)",
+            "ok" if min(n_cp, n_ta) >= 2 else ("partiel" if n_cp >= 2 else "absent"),
             f"{n_cp} exercices de fonds propres, {n_ta} de total bilan",
+            "Autonomie financière et solidité non évaluées." if n_cp >= 2 else
             "ROE, P/B, P/B justifié, autonomie financière et solidité non évalués.",
             "Saisir capitaux propres et total du bilan (états financiers publiés sur brvm.org).")
         add("Soldes intermédiaires de gestion", "absent", "Non disponibles",
@@ -339,10 +410,51 @@ def assess(c: CompanyData, md, fd) -> Coverage:
     add("Indice BRVM Composite", "ok" if ok_idx else "absent",
         md.sources.get("indice", "n.d."), "Bêta par défaut, force relative non calculée." if not ok_idx else "",
         "Activer les données en ligne ou ajouter la colonne BRVMC dans la feuille Cours.")
+    if interim is not None and interim.lines:
+        add("Publication de l'exercice en cours", "ok", f"{interim.period} ({len(interim.lines)} indicateurs)", "", "")
+    else:
+        add("Publication de l'exercice en cours", "absent", "Aucun rapport d'activités exploité",
+            "Pas de lecture de la dynamique de l'exercice en cours.",
+            "Activer les données en ligne (publications richbourse) ou charger le PDF du dernier rapport d'activités.")
     weights = {"ok": 1.0, "partiel": 0.5, "absent": 0.0}
     core = {"États financiers": 3, "Chiffres clés (CA, résultat net)": 2, "Bilan (capitaux propres, total actif)": 1,
             "Soldes intermédiaires de gestion": 1, "Historique de cours": 2, "Cours actuel": 2,
-            "Nombre de titres": 1.5, "Dividendes": 1, "Sociétés comparables": 1, "Indice BRVM Composite": 0.5}
+            "Nombre de titres": 1.5, "Dividendes": 1, "Sociétés comparables": 1, "Indice BRVM Composite": 0.5,
+            "Publication de l'exercice en cours": 0.5}
     num = sum(weights[i.status] * core.get(i.name, 1) for i in items)
     den = sum(core.get(i.name, 1) for i in items)
     return Coverage(level=c.level, items=items, score=100 * num / den if den else 0.0)
+
+
+def smf_peer_rows(mb, wb, prices: dict | None, shares: dict | None) -> list:
+    """Comparables issus du Tableau de bord de la base SMF (titres absents du classeur)."""
+    from .fundamentals import PeerRow
+    if mb is None or not getattr(mb, "fundamentals", None):
+        return []
+    prices, shares = prices or {}, shares or {}
+    in_wb = set(wb.companies) if wb is not None else set()
+    rows = []
+    for t, f in mb.fundamentals.items():
+        if t in in_wb or t not in config.TICKERS:
+            continue
+        sector = normalise_sector(None, t)
+        kind = kind_for(t, sector)
+        rev = f.get("pnb") or f.get("ca") or {}
+        rn, cp = f.get("rn", {}), f.get("capitaux_propres", {})
+        ys = [y for y in rn if is_num(rn[y])]
+        if not ys:
+            continue
+        y = max(ys)
+        eq_avg = [cp[k] for k in (y, y - 1) if is_num(cp.get(k))]
+        eq_avg = sum(eq_avg) / len(eq_avg) if eq_avg else None
+        divs = [d for d in mb.dividends.get(t, []) if is_num(d.montant_net)]
+        last_div = sorted(divs, key=lambda d: d.exercice or 0)[-1].montant_net if divs else None
+        rows.append(PeerRow(
+            ticker=t, name=config.TICKERS[t]["nom"], sector=sector, kind=kind, year=y,
+            revenue=rev.get(y), net_income=rn.get(y), equity=cp.get(y),
+            roe=(rn[y] / eq_avg) if eq_avg and eq_avg > 0 else None,
+            net_margin=(rn[y] / rev[y]) if is_num(rev.get(y)) and rev[y] else None,
+            growth_rev=(rev[y] / rev[y - 1] - 1) if is_num(rev.get(y)) and is_num(rev.get(y - 1)) and rev[y - 1] else None,
+            ebitda=None, net_debt=None, price=prices.get(t), shares=shares.get(t) or mb.shares_total.get(t),
+            dps=last_div))
+    return rows

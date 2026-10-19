@@ -50,7 +50,11 @@ def analysis_frames(a) -> dict[str, pd.DataFrame]:
     cov = pd.DataFrame([(i.name, {"ok": "Disponible", "partiel": "Partiel", "absent": "Absent"}[i.status], i.detail,
                          i.impact, i.action) for i in a.coverage.items],
                        columns=["Donnée", "Statut", "Détail", "Effet sur l'analyse", "Pour compléter"]) if a.coverage else pd.DataFrame()
-    return {"Synthèse": synth, "SIG": sig, "Ratios": ratios, "Valorisation": val, "Technique": tech,
+    rep = getattr(a, "interim", None)
+    pub = pd.DataFrame([(ln.label, ln.current, ln.previous, ln.variation) for ln in rep.lines],
+                       columns=["Indicateur (FCFA)", rep.period or "N", rep.period_prev or "N-1", "Variation"]) \
+        if rep is not None and rep.lines else pd.DataFrame()
+    return {"Synthèse": synth, "Publication": pub, "SIG": sig, "Ratios": ratios, "Valorisation": val, "Technique": tech,
             "Pairs": peers, "Historique": hist, "Couverture": cov, "Contrôles": notes}
 
 

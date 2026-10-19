@@ -487,17 +487,24 @@ class Fundamentals:
 
 
 def analyse_fundamentals(c: CompanyData, wb: Workbook | None, prices=None, shares=None,
-                         use_defaults: bool = True) -> Fundamentals:
+                         use_defaults: bool = True, extra_rows: list | None = None) -> Fundamentals:
     r = compute_ratios(c)
     sol = solidity(c, r)
     gs = growth_stats(c)
     rows = peer_rows(wb, prices, shares) if wb is not None and wb.companies else []
-    peers, label = peer_group(rows, c) if rows else ([], "aucun comparable dans le classeur")
+    known = {r.ticker for r in rows}
+    rows += [r for r in (extra_rows or []) if r.ticker not in known]
+    peers, label = peer_group(rows, c) if rows else ([], "aucun comparable disponible")
     med = peer_medians(peers)
     defaults: list[str] = []
     if use_defaults:
         ref = config.SECTOR_MULTIPLES.get(c.sector, config.SECTOR_MULTIPLES["Non classé"])
-        for key in ("pe", "pb", "ev_ebitda", "div_yield"):
+        wanted = ["pe", "pb"]
+        if not c.is_bank and c.fields.get("ebe"):
+            wanted.append("ev_ebitda")
+        if c.level in ("chiffres_cles", "marche"):
+            wanted.append("div_yield")
+        for key in wanted:
             if not is_num(med.get(key)) and is_num(ref.get(key)):
                 med[key] = ref[key]
                 defaults.append(key)
