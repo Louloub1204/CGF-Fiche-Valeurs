@@ -1,5 +1,109 @@
 [
  {
+  "ticker": "ABJC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 3554.427,
+   "rao": 217.834,
+   "rn": 163.376
+  }
+ },
+ {
+  "ticker": "ABJC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 4768.275,
+   "rao": 1034.581,
+   "rn": 779.721
+  }
+ },
+ {
+  "ticker": "ABJC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 2312.139,
+   "rao": 472.178,
+   "rn": 354.3
+  }
+ },
+ {
+  "ticker": "ABJC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 7811.642,
+   "rao": 1677.939,
+   "rn": 1258.015
+  }
+ },
+ {
+  "ticker": "ABJC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 5475.013,
+   "rao": 942.999,
+   "rn": 707.249
+  }
+ },
+ {
+  "ticker": "ABJC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 2664.658,
+   "rao": 338.151,
+   "rn": 255.651
+  }
+ },
+ {
+  "ticker": "ABJC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 8423.103,
+   "rao": 1517.613,
+   "rn": 1182.024
+  }
+ },
+ {
+  "ticker": "ABJC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 3078.618,
+   "rao": 484.925,
+   "rn": 371.355
+  }
+ },
+ {
   "ticker": "BBGC",
   "year": 2025,
   "period": "S1",
@@ -33,6 +137,126 @@
    "rn": 15200.0,
    "credits_clientele": 823900.0,
    "depots_clientele": 1318300.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 20948.0,
+   "rn": 4413.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 10544.0,
+   "rn": 2126.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 32711.0,
+   "rn": 7581.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 23146.0,
+   "rn": 6105.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 10957.0,
+   "rn": 2529.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 35303.0,
+   "rn": 9742.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 25813.0,
+   "rn": 7226.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 12004.0,
+   "rn": 1892.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 40690.0,
+   "rn": 12061.0
+  }
+ },
+ {
+  "ticker": "BICC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 16591.0,
+   "rn": 6512.0
   }
  },
  {
@@ -103,6 +327,136 @@
  },
  {
   "ticker": "BNBC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 23087.63,
+   "rao": 1217.6,
+   "rn": 931.14
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 11403.92,
+   "rao": 520.794,
+   "rn": 390.595
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 33829.2,
+   "rao": 1863.91,
+   "rn": 1422.09
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 25470.395,
+   "rao": 1632.586,
+   "rn": 1230.606
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 12841.154,
+   "rao": 1035.508,
+   "rn": 776.631
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 38361.914,
+   "rao": 2341.24,
+   "rn": 1805.367
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 22042.366,
+   "rao": -286.239,
+   "rn": -162.73
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 12386.377,
+   "rao": 688.773,
+   "rn": 516.58
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 34428.743,
+   "rao": 402.534,
+   "rn": 353.85
+  }
+ },
+ {
+  "ticker": "BNBC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 10824.381,
+   "rao": -101.574,
+   "rn": -76.181
+  }
+ },
+ {
+  "ticker": "BNBC",
   "year": 2025,
   "period": "T1",
   "statut": "Publié",
@@ -125,6 +479,450 @@
    "ca": 11194.069,
    "rao": 65.566,
    "rn": 65.566
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 22242.0,
+   "rn": 9054.0
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 10367.0,
+   "rn": 4357.0
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 33492.0,
+   "rn": 14778.0
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 21803.0,
+   "rn": 10413.0
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 10651.0,
+   "rn": 5135.0
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 34512.0,
+   "rn": 17189.0
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 23991.0,
+   "rn": 12538.0
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 11361.0,
+   "rn": 5844.0
+  }
+ },
+ {
+  "ticker": "BOAB",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 35505.0,
+   "rn": 17018.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 24175.0,
+   "rn": 11936.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 11466.0,
+   "rn": 5075.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 37272.0,
+   "rn": 18002.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 25926.0,
+   "rn": 12228.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 12084.0,
+   "rn": 6015.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 40593.0,
+   "rn": 19046.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 29853.013,
+   "rn": 15087.681
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 14669.0,
+   "rn": 6821.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 44930.0,
+   "rn": 22299.0
+  }
+ },
+ {
+  "ticker": "BOABF",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 13906.0,
+   "rn": 6230.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 20399.0,
+   "rn": 9043.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 10519.0,
+   "rn": 5590.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 32122.0,
+   "rn": 15213.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 21880.0,
+   "rn": 8571.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 10615.0,
+   "rn": 5141.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 34193.0,
+   "rn": 15134.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 30279.0,
+   "rn": 16568.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 14878.0,
+   "rn": 7100.0
+  }
+ },
+ {
+  "ticker": "BOAC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 46003.0,
+   "rn": 25058.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 17995.0,
+   "rn": 1731.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 8972.0,
+   "rn": 1458.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 25646.0,
+   "rn": 2764.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 16701.0,
+   "rn": 1786.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 8160.0,
+   "rn": 1491.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 25372.0,
+   "rn": 2898.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 17504.0,
+   "rn": 2073.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 8405.0,
+   "rn": 1578.0
+  }
+ },
+ {
+  "ticker": "BOAM",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 26705.0,
+   "rn": 3753.0
   }
  },
  {
@@ -158,6 +956,824 @@
   }
  },
  {
+  "ticker": "BOAN",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 12360.94,
+   "rn": 5404.09
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 5781.26,
+   "rn": 2313.81
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 18368.44,
+   "rn": 8827.21
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 12413.47,
+   "rn": 5445.83
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 5795.42,
+   "rn": 2732.66
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 18116.97,
+   "rn": 7561.75
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 13196.09,
+   "rn": 5469.31
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 6122.28,
+   "rn": 2828.68
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 20264.41,
+   "rn": 8532.51
+  }
+ },
+ {
+  "ticker": "BOAN",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 5713.6,
+   "rn": 2286.1
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 16273.0,
+   "rn": 4061.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 7931.0,
+   "rn": 3304.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 25593.0,
+   "rn": 7558.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 18965.0,
+   "rn": 6856.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 8449.0,
+   "rn": 3297.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 29461.0,
+   "rn": 10923.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 22921.0,
+   "rn": 9436.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 10331.0,
+   "rn": 4042.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 33486.0,
+   "rn": 12888.0
+  }
+ },
+ {
+  "ticker": "BOAS",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 11504.0,
+   "rn": 4787.0
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 8492.4,
+   "re": 574.8,
+   "rn": 303.7
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 3925.7,
+   "re": 379.7,
+   "rn": 238.9
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 13522.8,
+   "re": 907.0,
+   "rn": 516.4
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 8514.9,
+   "re": 932.5,
+   "rn": 615.4
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 4548.7,
+   "re": 365.3,
+   "rn": 255.7
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 13129.0,
+   "re": 1294.3,
+   "rn": 863.1
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 8488.9,
+   "re": 1005.2,
+   "rn": 747.8
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 4539.7,
+   "re": 786.6,
+   "rn": 587.6
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 13047.8,
+   "re": 1231.3,
+   "rn": 887.0
+  }
+ },
+ {
+  "ticker": "CABC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 4709.3,
+   "re": 661.1,
+   "rn": 516.8
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 42627.0,
+   "rn": 22706.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 22822.0,
+   "rn": 12443.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 64689.0,
+   "rn": 34737.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 52324.0,
+   "rn": 27109.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 24238.0,
+   "rn": 14039.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 82244.0,
+   "rn": 43176.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 57656.0,
+   "rn": 33176.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 28096.0,
+   "rn": 16569.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 91764.0,
+   "rn": 48912.0
+  }
+ },
+ {
+  "ticker": "CBIBF",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 27889.0,
+   "rn": 16646.0
+  }
+ },
+ {
+  "ticker": "CFAC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 56857.538,
+   "re": 4737.182,
+   "rn": 3718.656
+  }
+ },
+ {
+  "ticker": "CFAC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 28548.704,
+   "re": 3190.185,
+   "rn": 2753.828
+  }
+ },
+ {
+  "ticker": "CFAC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 87171.202,
+   "re": 6594.169,
+   "rn": 4986.902
+  }
+ },
+ {
+  "ticker": "CFAC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 64533.151,
+   "re": 4180.109,
+   "rn": 2720.415
+  }
+ },
+ {
+  "ticker": "CFAC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 28690.079,
+   "re": 931.4,
+   "rn": 380.641
+  }
+ },
+ {
+  "ticker": "CFAC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 104996.578,
+   "re": 7195.908,
+   "rn": 4615.221
+  }
+ },
+ {
+  "ticker": "CFAC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 91085.234,
+   "re": 5871.79,
+   "rn": 3712.447
+  }
+ },
+ {
+  "ticker": "CFAC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 47003.984,
+   "re": 2424.819,
+   "rn": 1217.414
+  }
+ },
+ {
+  "ticker": "CIEC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 109101.0,
+   "rao": 6494.0,
+   "rn": 4263.0
+  }
+ },
+ {
+  "ticker": "CIEC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 113465.0,
+   "rao": 6997.0,
+   "rn": 5391.0
+  }
+ },
+ {
+  "ticker": "CIEC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 61954.0,
+   "rao": 2459.0,
+   "rn": 1638.0
+  }
+ },
+ {
+  "ticker": "CIEC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 175419.0,
+   "rao": 9456.0,
+   "rn": 7029.0
+  }
+ },
+ {
+  "ticker": "CIEC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 114672.0,
+   "rao": 6570.0,
+   "rn": 4059.0
+  }
+ },
+ {
+  "ticker": "CIEC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 65884.0,
+   "rao": 3403.0,
+   "rn": 2353.0
+  }
+ },
+ {
+  "ticker": "CIEC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 180556.0,
+   "rao": 9973.0,
+   "rn": 6412.0
+  }
+ },
+ {
+  "ticker": "CIEC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 54206.0,
+   "rao": 3024.0,
+   "rn": 2633.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 42268.0,
+   "rn": 14740.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 22653.0,
+   "rn": 8481.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 65312.0,
+   "rn": 24389.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 45650.0,
+   "rn": 17726.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 21245.0,
+   "rn": 8493.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 70099.0,
+   "rn": 28386.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 53158.0,
+   "rn": 23922.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 25769.0,
+   "rn": 11510.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 79715.0,
+   "rn": 36296.0
+  }
+ },
+ {
+  "ticker": "ECOC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 30279.0,
+   "rn": 14052.0
+  }
+ },
+ {
   "ticker": "ECOC",
   "year": 2025,
   "period": "T1",
@@ -185,6 +1801,244 @@
    "rn": 13040.0,
    "credits_clientele": 958724.0,
    "depots_clientele": 1709280.0
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 824.505,
+   "rn": 154.01
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 409.389,
+   "rn": 75.827
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 1265.311,
+   "rn": 256.186
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 909.79,
+   "rn": 185.419
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 436.08,
+   "rn": 92.059
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 1355.031,
+   "rn": 278.912
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 1037.163,
+   "rn": 215.65
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 483.178,
+   "rn": 87.602
+  }
+ },
+ {
+  "ticker": "ETIT",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 1518.402,
+   "rn": 313.973
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 18227.0,
+   "re": -79.0,
+   "rao": -118.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 9921.0,
+   "re": 322.0,
+   "rao": 204.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 25280.0,
+   "re": -53.0,
+   "rao": -450.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 19485.0,
+   "re": -743.0,
+   "rao": 268.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 10935.0,
+   "re": -103.0,
+   "rao": -382.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 26393.0,
+   "re": -583.0,
+   "rao": -227.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 19630.0,
+   "re": 306.0,
+   "rao": 3485.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 10854.0,
+   "re": 308.0,
+   "rao": 139.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 27095.0,
+   "re": 1062.0,
+   "rao": 4078.0
+  }
+ },
+ {
+  "ticker": "FTSC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 5372.0,
+   "re": 204.0,
+   "rao": 25.0
   }
  },
  {
@@ -225,6 +2079,243 @@
    "ca": 49937.0,
    "re": 1783.0,
    "rn": 1348.0
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 1656.997,
+   "rao": 251.932,
+   "rn": -187.98
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 190.162,
+   "rao": -153.91,
+   "rn": -154.989
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 7166.686,
+   "rao": 2024.218,
+   "rn": 1200.934
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 2852.453,
+   "rao": 943.306,
+   "rn": 494.39
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 126.649,
+   "rao": -153.201,
+   "rn": -154.273
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 7410.767,
+   "rao": 1929.566,
+   "rn": 1268.594
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 2511.376,
+   "rao": 537.143,
+   "rn": 162.296
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 92.678,
+   "rao": -269.671,
+   "rn": -270.229
+  }
+ },
+ {
+  "ticker": "NEIC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 7260.894,
+   "rao": 1817.936,
+   "rn": 1109.162
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 35901.0,
+   "rn": 10028.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 17028.0,
+   "rn": 3325.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 54074.0,
+   "rn": 14722.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 36130.0,
+   "rn": 9622.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 16991.0,
+   "rn": 3680.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 56843.0,
+   "rn": 15100.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 41400.0,
+   "rn": 11398.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 21383.0,
+   "rn": 6559.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 63416.0,
+   "rn": 18346.0
+  }
+ },
+ {
+  "ticker": "NSBC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 21849.0,
+   "rn": 7103.0
   }
  },
  {
@@ -285,6 +2376,162 @@
  },
  {
   "ticker": "ONTBF",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 78912.0,
+   "rao": 23748.0,
+   "rn": 17476.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 40756.0,
+   "rao": 10697.0,
+   "rn": 7624.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 116824.0,
+   "rao": 34126.0,
+   "rn": 24740.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 75058.0,
+   "rao": 18024.0,
+   "rn": 12526.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 37905.0,
+   "rao": 9686.0,
+   "rn": 6811.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 110280.0,
+   "rao": 24540.0,
+   "rn": 16852.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 69834.0,
+   "rao": 15954.0,
+   "rn": 11163.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 34268.0,
+   "rao": 6778.0,
+   "rn": 4827.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 104379.0,
+   "rao": 22854.0,
+   "rn": 16183.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2024,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 70996.0,
+   "rao": 14860.0,
+   "rn": 9330.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 34693.0,
+   "rao": 7061.0,
+   "rn": 5279.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
+  "year": 2024,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 106269.0,
+   "rao": 20264.0,
+   "rn": 13296.0
+  }
+ },
+ {
+  "ticker": "ONTBF",
   "year": 2025,
   "period": "S1",
   "statut": "Publié",
@@ -339,6 +2586,97 @@
  },
  {
   "ticker": "ORAC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 480100.0,
+   "ebe": 179900.0,
+   "rn": 83700.0
+  }
+ },
+ {
+  "ticker": "ORAC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 237000.0,
+   "ebe": 83000.0,
+   "rn": 28000.0
+  }
+ },
+ {
+  "ticker": "ORAC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 714800.0,
+   "ebe": 262200.0,
+   "rn": 106600.0
+  }
+ },
+ {
+  "ticker": "ORAC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 498700.0,
+   "ebe": 171500.0,
+   "rn": 55900.0
+  }
+ },
+ {
+  "ticker": "ORAC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 246000.0,
+   "ebe": 85000.0,
+   "rn": 33000.0
+  }
+ },
+ {
+  "ticker": "ORAC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 753200.0,
+   "ebe": 259100.0,
+   "rn": 86000.0
+  }
+ },
+ {
+  "ticker": "ORAC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 261100.0,
+   "ebe": 93000.0,
+   "rn": 37900.0
+  }
+ },
+ {
+  "ticker": "ORAC",
   "year": 2025,
   "period": "S1",
   "statut": "Publié",
@@ -365,6 +2703,126 @@
    "re": 159600.0,
    "rao": 146800.0,
    "rn": 90300.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 85827.0,
+   "rn": 9597.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 43505.0,
+   "rn": 2664.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 141729.0,
+   "rn": 14646.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 100354.0,
+   "rn": 14470.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 52778.0,
+   "rn": 6088.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 166064.0,
+   "rn": 14761.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 106287.0,
+   "rn": -33479.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 58287.0,
+   "rn": -3965.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 171620.0,
+   "rn": -27379.0
+  }
+ },
+ {
+  "ticker": "ORGT",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 52074.0,
+   "rn": -3012.0
   }
  },
  {
@@ -578,6 +3036,218 @@
   }
  },
  {
+  "ticker": "PRSC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 28879.402,
+   "rao": 1872.958,
+   "rn": 1357.856
+  }
+ },
+ {
+  "ticker": "PRSC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 14827.948,
+   "rao": 961.906,
+   "rn": 707.172
+  }
+ },
+ {
+  "ticker": "PRSC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 48000.714,
+   "rao": 3805.443,
+   "rn": 2791.861
+  }
+ },
+ {
+  "ticker": "PRSC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 36300.112,
+   "rao": 3191.169,
+   "rn": 2347.089
+  }
+ },
+ {
+  "ticker": "PRSC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 17076.392,
+   "rao": 1738.675,
+   "rn": 1260.233
+  }
+ },
+ {
+  "ticker": "PRSC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 51843.204,
+   "rao": 3939.526,
+   "rn": 2879.641
+  }
+ },
+ {
+  "ticker": "PRSC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 37254.219,
+   "rao": 1142.365,
+   "rn": 719.495
+  }
+ },
+ {
+  "ticker": "PRSC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 21228.089,
+   "rao": 1179.967,
+   "rn": 848.248
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 1803.0,
+   "rn": -631.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 536.0,
+   "rn": -444.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 2244.0,
+   "rn": -887.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 1527.0,
+   "rn": -218.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 697.0,
+   "rn": -273.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 2380.0,
+   "rn": -152.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 1650.0,
+   "rn": -64.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 613.0,
+   "rn": -228.0
+  }
+ },
+ {
+  "ticker": "SAFC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 2424.0,
+   "rn": -351.0
+  }
+ },
+ {
   "ticker": "SAFC",
   "year": 2025,
   "period": "T1",
@@ -607,11 +3277,11 @@
   "period": "S1",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 93379.0,
-   "rao": 9144.0,
-   "rn": 8056.0
+   "ca": 31672.246,
+   "rao": 3130.561,
+   "rn": 2770.763
   }
  },
  {
@@ -620,11 +3290,11 @@
   "period": "T1",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 42236.0,
-   "rao": 2008.0,
-   "rn": 1506.0
+   "ca": 16782.572,
+   "rao": 4990.388,
+   "rn": 4753.038
   }
  },
  {
@@ -633,11 +3303,11 @@
   "period": "T3",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 148615.0,
-   "rao": 17307.0,
-   "rn": 12986.0
+   "ca": 44961.244,
+   "rao": -1435.858,
+   "rn": -1846.96
   }
  },
  {
@@ -646,11 +3316,11 @@
   "period": "S1",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 103845.0,
-   "rao": 9253.0,
-   "rn": 6019.0
+   "ca": 37705.502,
+   "rao": -2253.052,
+   "rn": -2437.569
   }
  },
  {
@@ -659,11 +3329,11 @@
   "period": "T1",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 50008.0,
-   "rao": 4889.0,
-   "rn": 3664.0
+   "ca": 20959.899,
+   "rao": 6157.667,
+   "rn": 6069.92
   }
  },
  {
@@ -672,11 +3342,11 @@
   "period": "T3",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 169150.0,
-   "rao": 20749.0,
-   "rn": 14642.0
+   "ca": 50552.361,
+   "rao": -7908.477,
+   "rn": -8210.122
   }
  },
  {
@@ -685,11 +3355,11 @@
   "period": "S1",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 94668.0,
-   "rao": 3306.0,
-   "rn": 2444.0
+   "ca": 41304.549,
+   "rao": -7388.951,
+   "rn": -8159.358
   }
  },
  {
@@ -698,11 +3368,11 @@
   "period": "T1",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 48829.0,
-   "rao": 1801.0,
-   "rn": 1349.0
+   "ca": 24618.058,
+   "rao": 2732.557,
+   "rn": 2601.45
   }
  },
  {
@@ -711,11 +3381,11 @@
   "period": "T3",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 142657.0,
-   "rao": 5359.0,
-   "rn": 3984.0
+   "ca": 53972.185,
+   "rao": -13251.347,
+   "rn": -14046.142
   }
  },
  {
@@ -724,11 +3394,404 @@
   "period": "T1",
   "statut": "Publié",
   "published": null,
-  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
   "values": {
-   "ca": 54968.0,
-   "rao": 1592.0,
-   "rn": 1126.0
+   "ca": 28842.21,
+   "rao": 4773.245,
+   "rn": 4686.93
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 60902.0,
+   "rao": 4079.0,
+   "rn": 2198.0
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 28823.0,
+   "rao": 1651.0,
+   "rn": 827.0
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 100302.0,
+   "rao": 5134.0,
+   "rn": 2981.0
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 75537.0,
+   "rao": 3853.0,
+   "rn": 2516.0
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 37080.0,
+   "rao": 1689.0,
+   "rn": 1050.0
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 117258.0,
+   "rao": 5485.0,
+   "rn": 3658.0
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 74139.0,
+   "rao": 3658.0,
+   "rn": 1683.0
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 37114.0,
+   "rao": 2000.0,
+   "rn": 915.0
+  }
+ },
+ {
+  "ticker": "SDCC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 120735.0,
+   "rao": 3760.0,
+   "rn": 2048.0
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 45472.857,
+   "rao": 14385.164,
+   "rn": 12973.997
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 24389.039,
+   "rao": 2263.817,
+   "rn": 1351.793
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 65940.893,
+   "rao": 14278.933,
+   "rn": 12555.665
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 44978.821,
+   "rao": 12731.794,
+   "rn": 11892.622
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 23315.913,
+   "rao": 577.785,
+   "rn": 33.499
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 62837.741,
+   "rao": 10563.348,
+   "rn": 9857.981
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 43234.276,
+   "rao": 14419.253,
+   "rn": 13562.381
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 23470.387,
+   "rao": 1220.863,
+   "rn": 611.98
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 62067.879,
+   "rao": 19356.52,
+   "rn": 17986.871
+  }
+ },
+ {
+  "ticker": "SDSC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 21706.375,
+   "rao": -169.277,
+   "rn": -416.35
+  }
+ },
+ {
+  "ticker": "SEMC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 6564.047,
+   "rao": 833.355,
+   "rn": 620.437
+  }
+ },
+ {
+  "ticker": "SEMC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 7649.979,
+   "rao": 1142.049,
+   "rn": 855.654
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 88732.0,
+   "rn": 30894.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 43617.0,
+   "rn": 14809.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 135386.0,
+   "rn": 48438.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 103071.0,
+   "rn": 28058.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 49343.0,
+   "rn": 18649.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 154926.0,
+   "rn": 47084.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 121661.0,
+   "rn": 44454.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 59476.0,
+   "rn": 22509.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 185297.0,
+   "rn": 66696.0
+  }
+ },
+ {
+  "ticker": "SGBC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 65427.0,
+   "rn": 26498.0
   }
  },
  {
@@ -765,6 +3828,244 @@
    "rn": 53350.0,
    "credits_clientele": 2581361.0,
    "depots_clientele": 3066575.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 180724.0,
+   "rao": 1556.0,
+   "rn": 1074.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 88622.0,
+   "rao": 949.0,
+   "rn": 703.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 270061.0,
+   "rao": 2279.0,
+   "rn": 1287.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 225033.0,
+   "rao": 1553.0,
+   "rn": 889.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 101691.0,
+   "rao": 934.0,
+   "rn": 715.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 350192.0,
+   "rao": 2219.0,
+   "rn": 1393.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 267630.0,
+   "rao": 2044.0,
+   "rn": 1168.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 135553.0,
+   "rao": 1394.0,
+   "rn": 872.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 398935.0,
+   "rao": 3118.0,
+   "rn": 1747.0
+  }
+ },
+ {
+  "ticker": "SHEC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 149433.0,
+   "rao": 2203.0,
+   "rn": 1288.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 39198.0,
+   "rn": 18971.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 21219.0,
+   "rn": 11180.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 57300.0,
+   "rn": 26600.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 43477.0,
+   "rn": 22811.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 21827.0,
+   "rn": 12273.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 62400.0,
+   "rn": 31100.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 46593.0,
+   "rn": 24193.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 23200.0,
+   "rn": 11600.0
+  }
+ },
+ {
+  "ticker": "SIBC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "pnb": 73300.0,
+   "rn": 36200.0
   }
  },
  {
@@ -828,6 +4129,204 @@
   }
  },
  {
+  "ticker": "SIVC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 3510.809,
+   "rao": 8.046,
+   "rn": 184.587
+  }
+ },
+ {
+  "ticker": "SIVC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 4547.165,
+   "rao": -259.963,
+   "rn": -93.917
+  }
+ },
+ {
+  "ticker": "SLBC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 123136.324,
+   "re": 23381.802,
+   "rao": 21338.753,
+   "rn": 15607.683
+  }
+ },
+ {
+  "ticker": "SLBC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 120879.94,
+   "re": 6274.143,
+   "rao": 3865.43,
+   "rn": 3153.011
+  }
+ },
+ {
+  "ticker": "SLBC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 137319.58,
+   "re": 8402.496,
+   "rao": 6309.301,
+   "rn": 11070.119
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 49038.0,
+   "rao": 6370.0,
+   "rn": 4178.0
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 20136.705,
+   "rao": 3432.33,
+   "rn": 2584.203
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 85418.0,
+   "rao": 9276.0,
+   "rn": 6360.0
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 113553.0,
+   "rao": 7443.0,
+   "rn": 5244.0
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 43568.877,
+   "rao": 861.632,
+   "rn": 660.632
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 194788.0,
+   "rao": 8473.0,
+   "rn": 6465.0
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 133962.664,
+   "rao": 11184.69,
+   "rn": 7699.059
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 72331.1,
+   "rao": 3502.569,
+   "rn": 2553.553
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 179523.801,
+   "rao": 16919.698,
+   "rn": 12165.43
+  }
+ },
+ {
+  "ticker": "SMBC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 70179.117,
+   "rao": 4447.295,
+   "rn": 2922.295
+  }
+ },
+ {
   "ticker": "SMBC",
   "year": 2025,
   "period": "T1",
@@ -850,6 +4349,253 @@
    "ca": 31143.0,
    "rao": 1983.0,
    "rn": 1487.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 642000.0,
+   "ebe": 276600.0,
+   "rn": 118900.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 314200.0,
+   "ebe": 132200.0,
+   "rn": 55000.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 984500.0,
+   "ebe": 430300.0,
+   "rn": 189300.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 713400.0,
+   "ebe": 304100.0,
+   "rn": 130300.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 350400.0,
+   "ebe": 144800.0,
+   "rn": 62700.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 1080000.0,
+   "ebe": 463000.0,
+   "rn": 200300.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 794100.0,
+   "ebe": 348400.0,
+   "rn": 148600.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 384700.0,
+   "ebe": 165600.0,
+   "rn": 82700.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 1201500.0,
+   "ebe": 535400.0,
+   "rn": 240600.0
+  }
+ },
+ {
+  "ticker": "SNTS",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 425400.0,
+   "ebe": 193300.0,
+   "rn": 96600.0
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 40050.102,
+   "rao": 9751.501,
+   "rn": 7537.287
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 21512.084,
+   "rao": 3827.062,
+   "rn": 3212.447
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 62116.978,
+   "rao": 14839.271,
+   "rn": 11238.738
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 50187.543,
+   "rao": 12967.284,
+   "rn": 9780.599
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 24721.443,
+   "rao": 4051.807,
+   "rn": 3271.558
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 69635.017,
+   "rao": 16082.374,
+   "rn": 11929.47
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 37803.102,
+   "rao": 5095.994,
+   "rn": 3773.984
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 19945.922,
+   "rao": 3227.254,
+   "rn": 2409.803
+  }
+ },
+ {
+  "ticker": "SOGC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 54478.813,
+   "rao": 6139.341,
+   "rn": 4404.106
   }
  },
  {
@@ -1034,6 +4780,539 @@
    "re": 4456.0,
    "rao": 3575.0,
    "rn": 2633.0
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 65522.939,
+   "re": 4847.611,
+   "rn": 3724.024
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 32763.978,
+   "re": 2551.946,
+   "rn": 2559.474
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 72660.556,
+   "re": 7221.26,
+   "rn": 7271.802
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 35055.152,
+   "re": 3569.196,
+   "rn": 3578.331
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 111024.669,
+   "re": 10343.611,
+   "rn": 10434.537
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 80460.072,
+   "re": 8134.176,
+   "rn": 6257.686
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 38747.08,
+   "re": 3486.435,
+   "rn": 3580.897
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 123554.282,
+   "re": 11117.98,
+   "rn": 8455.95
+  }
+ },
+ {
+  "ticker": "STBC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 45603.711,
+   "re": 5291.394,
+   "rn": 3840.367
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 249028.0,
+   "rao": 7716.0,
+   "rn": 5566.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 113698.0,
+   "rao": 3224.0,
+   "rn": 2291.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 366733.0,
+   "rao": 11798.0,
+   "rn": 8643.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 277751.0,
+   "rao": 8742.0,
+   "rn": 6559.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 133247.0,
+   "rao": 4102.0,
+   "rn": 3092.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 419384.0,
+   "rao": 11971.0,
+   "rn": 9149.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 293793.0,
+   "rao": 6577.0,
+   "rn": 5003.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 153174.0,
+   "rao": 3274.0,
+   "rn": 2674.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 430882.0,
+   "rao": 10571.0,
+   "rn": 8402.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2024,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 319347.0,
+   "rao": 7530.0,
+   "rn": 6425.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 157073.0,
+   "rao": 3458.0,
+   "rn": 3178.0
+  }
+ },
+ {
+  "ticker": "TTLC",
+  "year": 2024,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 464969.0,
+   "rao": 11776.0,
+   "rn": 9334.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 183186.0,
+   "rao": 4316.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 87409.0,
+   "rao": 1875.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 285911.0,
+   "rao": 6330.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 231373.0,
+   "rao": 7320.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 103605.0,
+   "rao": 2529.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 357587.0,
+   "rao": 11265.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 212106.0,
+   "rao": 5250.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 124058.0,
+   "rao": 3115.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 313038.0,
+   "rao": 8319.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "TTLS",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 126905.0,
+   "rao": 2315.0,
+   "rn": 0.0
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 20549.935,
+   "rao": 1538.299,
+   "rn": 1153.749
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 10196.137,
+   "rao": 890.21,
+   "rn": 667.657
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 29068.641,
+   "rao": 2031.637,
+   "rn": 1524.472
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 21553.027,
+   "rao": 1295.455,
+   "rn": 982.453
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 11183.126,
+   "rao": 695.541,
+   "rn": 527.093
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 29250.412,
+   "rao": 379.659,
+   "rn": 295.606
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 18075.556,
+   "rao": 217.951,
+   "rn": 167.638
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 9397.016,
+   "rao": 64.312,
+   "rn": 48.234
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 23708.666,
+   "rao": -849.972,
+   "rn": -879.407
+  }
+ },
+ {
+  "ticker": "UNXC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Etats_financiers_des_sociétés.xlsx (tableau 1, données cumulées)",
+  "values": {
+   "ca": 6885.002,
+   "rao": -1193.707,
+   "rn": -1228.414
   }
  },
  {
