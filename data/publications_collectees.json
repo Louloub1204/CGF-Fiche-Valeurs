@@ -369,6 +369,162 @@
  },
  {
   "ticker": "PALC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 110064.498,
+   "rao": 39535.075,
+   "rn": 31372.57
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 49929.701,
+   "rao": 14883.42,
+   "rn": 12134.025
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 152647.849,
+   "rao": 46171.232,
+   "rn": 36390.491
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 141201.886,
+   "rao": 55327.938,
+   "rn": 41393.818
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 71426.626,
+   "rao": 24743.673,
+   "rn": 18565.357
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 189320.122,
+   "rao": 55346.645,
+   "rn": 41419.739
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 134797.91,
+   "rao": 31248.673,
+   "rn": 23030.82
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 64339.996,
+   "rao": 12553.062,
+   "rn": 12753.966
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 172795.053,
+   "rao": 30210.881,
+   "rn": 22252.8
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2024,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 107450.669,
+   "rao": 22305.222,
+   "rn": 16692.591
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 51001.068,
+   "rao": 9278.581,
+   "rn": 6986.441
+  }
+ },
+ {
+  "ticker": "PALC",
+  "year": 2024,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 143468.442,
+   "rao": 21590.467,
+   "rn": 16156.388
+  }
+ },
+ {
+  "ticker": "PALC",
   "year": 2025,
   "period": "S1",
   "statut": "Publié",
@@ -443,6 +599,136 @@
   "values": {
    "pnb": 1395.0,
    "cout_risque": -22.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 93379.0,
+   "rao": 9144.0,
+   "rn": 8056.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 42236.0,
+   "rao": 2008.0,
+   "rn": 1506.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 148615.0,
+   "rao": 17307.0,
+   "rn": 12986.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 103845.0,
+   "rao": 9253.0,
+   "rn": 6019.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 50008.0,
+   "rao": 4889.0,
+   "rn": 3664.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 169150.0,
+   "rao": 20749.0,
+   "rn": 14642.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 94668.0,
+   "rao": 3306.0,
+   "rn": 2444.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 48829.0,
+   "rao": 1801.0,
+   "rn": 1349.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 142657.0,
+   "rao": 5359.0,
+   "rn": 3984.0
+  }
+ },
+ {
+  "ticker": "SCRC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 54968.0,
+   "rao": 1592.0,
+   "rn": 1126.0
   }
  },
  {
@@ -564,6 +850,162 @@
    "ca": 31143.0,
    "rao": 1983.0,
    "rn": 1487.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2021,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 93379.0,
+   "rao": 9144.0,
+   "rn": 8056.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2021,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 42236.0,
+   "rao": 2008.0,
+   "rn": 1506.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2021,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 148615.0,
+   "rao": 17307.0,
+   "rn": 12986.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2022,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 103845.0,
+   "rao": 9253.0,
+   "rn": 6019.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2022,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 50008.0,
+   "rao": 4889.0,
+   "rn": 3664.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2022,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 169150.0,
+   "rao": 20749.0,
+   "rn": 14642.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2023,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 94668.0,
+   "rao": 3306.0,
+   "rn": 2444.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2023,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 48829.0,
+   "rao": 1801.0,
+   "rn": 1349.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2023,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 142657.0,
+   "rao": 5359.0,
+   "rn": 3984.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2024,
+  "period": "S1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 113379.0,
+   "rao": 4417.0,
+   "rn": 3303.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2024,
+  "period": "T1",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 54968.0,
+   "rao": 1592.0,
+   "rn": 1126.0
+  }
+ },
+ {
+  "ticker": "SPHC",
+  "year": 2024,
+  "period": "T3",
+  "statut": "Publié",
+  "published": null,
+  "source": "Fichier Financial_Statements.xlsx (données trimestrielles cumulées ; résultat opérationnel courant = RAO)",
+  "values": {
+   "ca": 186335.0,
+   "rao": 13370.0,
+   "rn": 10018.0
   }
  },
  {
