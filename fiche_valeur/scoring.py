@@ -42,6 +42,7 @@ class Decision:
     trace: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     level: str = "complet"
+    no_fair_value: bool = False
 
 
 def _wavg(pillars: dict, weights: dict, keys) -> float | None:
@@ -81,6 +82,15 @@ def decide(pillars: dict, st: Settings, valuation, technical, news=None, liquidi
         d.tech_zone = ("haussière" if T >= 55 else "baissière" if T < st.seuil_technique_defavorable else "neutre")
     tech_bear = d.tech_zone == "baissière"
     tech_bull = d.tech_zone == "haussière"
+
+    # Juste valeur indéterminable : prudence maximale ---------------------------
+    if valuation is not None and not is_num(valuation.fair_value):
+        d.no_fair_value = True
+        d.signal, d.conviction = "VENDRE", "Faible"
+        d.trace.append("Juste valeur indéterminable faute d'informations suffisantes sur la société : par "
+                       "prudence, le signal est VENDRE (impossible de justifier une position sans valorisation).")
+        return _finalise(d, valuation, technical, liquidity,
+                         sum(1 for k in PILLAR_LABELS if is_num(pillars.get(k))), news, major_event)
 
     # Données insuffisantes -----------------------------------------------------
     available = sum(1 for k in PILLAR_LABELS if is_num(pillars.get(k)))
@@ -154,7 +164,7 @@ def _apply_level(d: Decision) -> None:
             d.signal = "ATTENDRE"
             d.trace.append("Données de marché seules : l'achat exige un potentiel d'au moins 25% et une tendance "
                            "haussière ; signal ramené à ATTENDRE.")
-        elif d.signal == "VENDRE":
+        elif d.signal == "VENDRE" and not d.no_fair_value:
             d.signal = "ALLÉGER"
             d.trace.append("Données de marché seules : la vente intégrale n'est pas préconisée sans états "
                            "financiers ; signal ramené à ALLÉGER.")

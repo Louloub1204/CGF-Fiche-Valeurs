@@ -160,6 +160,10 @@ def build_commentary(a) -> dict:
                  f"{fmt_pct(val.upside, sign=True)}"
                  + (f" et une rentabilité totale attendue de {fmt_pct(val.total_return, sign=True)} dividende inclus"
                     if is_num(val.total_return) and is_num(val.div_yield) else "") + ".")
+    else:
+        v.append("La juste valeur ne peut pas être déterminée faute d'informations suffisantes sur la société "
+                 "(résultats, fonds propres ou dividendes non disponibles) : par prudence, la recommandation est "
+                 "la vente, à réexaminer dès la publication d'états financiers exploitables.")
     if is_num(val.implied_roe) and is_num(val.roe_norm):
         v.append(f"Ce que le cours suppose : un ROE durable de {fmt_pct(val.implied_roe)} "
                  f"pour un ROE normatif observé de {fmt_pct(val.roe_norm)} (coût des fonds propres "

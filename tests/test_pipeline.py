@@ -287,7 +287,10 @@ def test_level3_market_only(partial_env, offline):
 def test_level3_without_any_data(offline):
     config.register_ticker("QQXQ", "Titre sans données", "CI", "Non classé")
     a = run_analysis(None, "QQXQ", offline)
-    assert a.decision.signal == "ATTENDRE" and a.decision.conviction == "Faible"
+    # Juste valeur indéterminable faute d'informations : vente par prudence
+    assert a.valuation.fair_value is None and a.decision.no_fair_value
+    assert a.decision.signal == "VENDRE" and a.decision.conviction == "Faible"
+    assert "faute d'informations suffisantes" in a.texts["valorisation"]
     assert a.coverage.score < 40
 
 
