@@ -692,3 +692,102 @@ def test_date_arrete_cuts_all_sources(wb, mb):
     assert a.as_of == date(2025, 3, 31) and "31/03/2025" in a.date_note
     full = run_analysis(wb, "DBQC", Settings(en_ligne=False), market_base=mb)
     assert max(full.company.years) == 2025 and full.market.price != a.market.price
+
+
+def _common_files(tmp_path):
+    """Classeur d'états financiers (format 2021-2025) et base SMF minimale, pour le moteur commun."""
+    import numpy as np
+    import openpyxl
+    ef = openpyxl.Workbook()
+    ef.active.title = "SYNTHÈSE"
+    ws = ef.create_sheet("DAGC")
+    ws.append(["Société test (DAGC) — États financiers (en millions FCFA)"])
+    ws.append(["Poste", "2021", "2022", "2023", "2024", "2025"])
+    rows = [("CHIFFRE D'AFFAIRES", [100000, 108000, 115000, 121000, 130000]),
+            ("Dotations amort./prov.", [-5000, -5200, -5400, -5600, -5800]),
+            ("RÉSULTAT D'EXPLOITATION", [14000, 15000, 16500, 17000, 18500]),
+            ("Frais financiers", [-800, -750, -700, -650, -600]),
+            ("RÉSULTAT ACTIVITÉS ORDINAIRES", [13200, 14250, 15800, 16350, 17900]),
+            ("Résultat HAO", [0, 0, 0, 0, 0]),
+            ("Impôts sur le résultat", [-3300, -3560, -3950, -4090, -4475]),
+            ("RÉSULTAT NET", [9900, 10690, 11850, 12260, 13425]),
+            ("TOTAL ACTIF", [90000, 95000, 99000, 104000, 110000]),
+            ("CAPITAUX PROPRES", [40000, 44000, 48000, 52000, 56000]),
+            ("Dettes financières", [10000, 9500, 9000, 8500, 8000]),
+            ("Trésorerie - Actif", [3000, 3200, 3500, 3800, 4000])]
+    for lab, vals in rows:
+        ws.append([lab] + vals)
+    ef_path = tmp_path / "ef_commun.xlsx"
+    ef.save(ef_path)
+    dates = pd.bdate_range("2022-01-03", "2026-06-30")
+    rng = np.random.default_rng(7)
+    idx = 200 * np.cumprod(1 + rng.normal(0.0003, 0.008, len(dates)))
+    ret = np.r_[0, np.diff(idx) / idx[:-1]]
+    px = 9000 * np.cumprod(1 + 0.9 * ret + rng.normal(0, 0.006, len(dates)))
+    mb = openpyxl.Workbook()
+    c = mb.active
+    c.title = "Cours"
+    c.append(["Date", "DAGC", ".BRVMCI"])
+    for d_, p_, i_ in zip(dates, px, idx):
+        c.append([d_.to_pydatetime(), float(round(p_)), float(i_)])
+    nb = mb.create_sheet("Nb_titres")
+    nb.append([None, "Date", "DAGC"])
+    nb.append([None, "Titres flottants", 3000000])
+    nb.append([None, "Nombre de titres", 10000000])
+    dv = mb.create_sheet("Historique_dividende")
+    dv.append(["Date", "DAGC", "AAAA", "BBBB"])
+    for y, v in ((2021, 450), (2022, 480), (2023, 520), (2024, 560), (2025, 600)):
+        dv.append([y, v, 1, 1])
+    mc = mb.create_sheet("Moyenne_cours")
+    mc.append([None, "Date", "DAGC"])
+    tb = mb.create_sheet("Tableau de bord")
+    tb.append([None, 1000000, "DAGC"])
+    mb_path = tmp_path / "base_commune.xlsx"
+    mb.save(mb_path)
+    return ef_path, mb_path
+
+
+def test_moteur_commun_aligne_fiche_et_smf(tmp_path):
+    """La juste valeur de la fiche est celle du moteur commun, y compris après l'aller-retour JSON de l'application SMF."""
+    from datetime import date
+
+    from fiche_valeur import valorisation_commune as vc
+    ef_path, mb_path = _common_files(tmp_path)
+    ef_c, base_c = vc.lire_etats_financiers(ef_path), vc.lire_base_smf(mb_path)
+    assert ef_c["DAGC"].rn(2025) == 13425e6 and base_c.nb_titres["DAGC"] == 10000000
+    ref = vc.valeur_fondamentale("DAGC", ef_c, base_c)
+    assert ref.valeur and {m.nom for m in ref.methodes} >= {"PER", "Dividendes", "DCF"}
+    assert ref.k - ref.g >= vc.PARAMS["ecart_min_k_g"] - 1e-12
+    # chemin de l'application SMF : sérialisation GitHub puis relecture
+    smf = vc.valeur_fondamentale("DAGC", vc.ef_depuis_json(vc.ef_vers_json(ef_c)),
+                                 vc.base_depuis_json(vc.base_vers_json(base_c)))
+    assert abs(smf.valeur - ref.valeur) < 1e-6
+    # chemin de l'application des fiches
+    config.register_ticker("DAGC", "Société test", "CI", "Consommation de base")
+    st = Settings(en_ligne=False, date_arrete=base_c.derniere_date)
+    a = run_analysis(None, "DAGC", st, market_base=load_market_base(mb_path), commun=(ef_c, base_c))
+    assert abs(a.valuation.fair_value - ref.valeur) < 1e-6
+    assert a.valuation.moteur_commun and "moteur commun" in a.valuation.notes[0]
+    # date d'arrêté antérieure : exercice 2025 non clos, dividende 2025 non encore payé
+    r24 = vc.valeur_fondamentale("DAGC", ef_c, base_c, date(2025, 10, 31))
+    assert r24.annee_ref == 2024 and r24.dpa_exercice == 2024
+
+
+def test_moteur_commun_regles_donnees(tmp_path):
+    from datetime import date
+
+    from fiche_valeur import valorisation_commune as vc
+    # fractionnement détecté et ajusté ; erreur de saisie d'un jour ignorée
+    d = pd.bdate_range("2024-01-01", periods=60)
+    s = pd.Series([10000.0] * 30 + [1000.0] * 30, index=d)
+    e = pd.Series([5000.0] * 20 + [2500.0] + [5000.0] * 39, index=d)
+    adj, found = vc.ajuster_fractionnements(pd.DataFrame({"AAAA": s, "BBBB": e}))
+    assert found == [("AAAA", d[30].date(), 10)] and adj["AAAA"].max() == 1000.0
+    # dividende exceptionnel : supérieur à 2,5 fois les précédents ET au bénéfice par action
+    base = vc.BaseMarche(cours=pd.DataFrame({"AAAA": s}), dividendes={"AAAA": {2021: 100, 2022: 110, 2023: 120, 2024: 900}})
+    d0, y, note = vc.dividende_retenu(base, "AAAA", date(2025, 12, 31), {2024: 500})
+    assert y == 2024 and d0 == 110 and "exceptionnel" in note
+    d0, _, note = vc.dividende_retenu(base, "AAAA", date(2025, 12, 31), {2024: 1200})
+    assert d0 == 900 and not note                      # distribution couverte par le bénéfice : ordinaire
+    base.dividendes["AAAA"][2025] = 0.0
+    assert vc.dividende_retenu(base, "AAAA", date(2026, 7, 2))[0] == 0.0

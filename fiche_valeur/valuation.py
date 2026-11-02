@@ -56,6 +56,7 @@ class Valuation:
     score: float | None = None
     parts: list = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    moteur_commun: bool = False
 
 
 def _dividend_growth(md: MarketData) -> float | None:
@@ -71,7 +72,10 @@ def _dividend_growth(md: MarketData) -> float | None:
 
 
 def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Technical,
-                      st: Settings, dyn=None) -> Valuation:
+                      st: Settings, dyn=None, commun=None) -> Valuation:
+    """``commun`` : résultat du moteur commun (valorisation_commune.Resultat). Lorsqu'il est fourni, la juste
+    valeur, ses méthodes, le bêta et le coût des fonds propres sont ceux du moteur commun, identiques à ceux de
+    l'application SMF."""
     y = fd.year
     price, shares = md.price, md.shares
     v = Valuation(price=price, shares=shares, market_cap=md.market_cap)
@@ -131,6 +135,8 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
         v.beta_source = "valeur par défaut (corrélation à l'indice trop faible ou indisponible)"
     k = (st.taux_sans_risque + v.beta * st.prime_risque_marche) / 100.0
     g = min(st.croissance_long_terme / 100.0, k - 0.02)
+    if commun is not None:
+        v.beta, v.beta_source, k, g = commun.beta, commun.beta_source, commun.k, commun.g
     v.cost_of_equity, v.g = k, g
 
     roe_series = fd.ratios.get("roe", {})
@@ -218,13 +224,23 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
             v.notes.append("Toutes les méthodes donnent des valeurs aberrantes au regard du cours : données "
                            "financières à vérifier, aucune juste valeur retenue.")
             methods = []
+    if commun is not None:
+        from .valorisation_commune import VERSION, empreinte_moteur
+        methods = [Method(m.nom, m.valeur, m.poids, m.detail) for m in commun.methodes]
+        v.notes = [n for n in v.notes if not any(x in n for x in ("Multiples de référence", "aberrante", "Derniers résultats connus", "Aucune méthode"))]
+        v.notes.insert(0, f"Juste valeur calculée par le moteur commun v{VERSION} (empreinte {empreinte_moteur()}), "
+                          f"identique à la valeur fondamentale de l'application SMF : mêmes fichiers, même méthode, "
+                          f"mêmes paramètres.")
+        v.notes += list(commun.notes)
+        v.notes += [f"Méthode écartée - {n} : {w}." for n, w in commun.ecartees]
+        v.moteur_commun = True
     v.methods = methods
     if methods:
         tw = sum(m.weight for m in methods)
         v.fair_value = sum(m.value * m.weight for m in methods) / tw
         vals = sorted(m.value for m in methods)
         v.fv_low, v.fv_high = vals[0], vals[-1]
-        if len(methods) == 1:
+        if len(methods) == 1 and commun is None:
             v.notes.append("Une seule méthode de valorisation disponible : juste valeur à interpréter avec prudence.")
     else:
         v.notes.append("Aucune méthode de valorisation applicable (cours, nombre de titres, pairs cotés ou "

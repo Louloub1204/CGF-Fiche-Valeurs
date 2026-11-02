@@ -95,6 +95,21 @@ def _market(data: bytes, ver: str = ""):
     return load_market_base(io.BytesIO(data))
 
 
+@st.cache_data(show_spinner="Lecture des fichiers par le moteur commun de valorisation...")
+def _commun(ef: bytes | None, mkt: bytes | None, ver: str = ""):
+    """États financiers et base SMF lus par le moteur commun (identique à l'application SMF)."""
+    from fiche_valeur import valorisation_commune as vc
+    try:
+        ef_c = vc.lire_etats_financiers(ef) if ef else None
+    except Exception:
+        ef_c = None
+    try:
+        base_c = vc.lire_base_smf(mkt) if mkt else None
+    except Exception:
+        base_c = None
+    return ef_c, base_c
+
+
 @st.cache_data(show_spinner=False)
 def _prices(data: bytes, name: str, ver: str = ""):
     return load_price_file(io.BytesIO(data), name)
@@ -271,6 +286,10 @@ with st.sidebar:
              "dividendes payés et cours jusqu'à cette date. Par défaut : dernière date à jour dans les fichiers chargés.")
     st.caption(f"Par défaut : {asof_default:%d/%m/%Y} (dernière date à jour des fichiers chargés). Exercices retenus "
                f"jusqu'au 31/12/{last_closed_exercise(as_of)}.")
+    from fiche_valeur import valorisation_commune as _vc
+    st.caption(f"Valeur fondamentale : moteur commun v{_vc.VERSION} (empreinte {_vc.empreinte_moteur()}), identique "
+               "à celui de l'application SMF. Les deux applications affichent la même valeur lorsqu'elles chargent les "
+               "mêmes fichiers (états financiers et base SMF) à la même date d'arrêté.")
     if wb is not None and getattr(wb, "sheet_report", None):
         read_ok = [r for r in wb.sheet_report if r[2].startswith("lue")]
         with st.expander(f"Lecture du classeur : {len(read_ok)} feuille(s) rattachée(s) à un titre"):
@@ -446,7 +465,9 @@ with st.sidebar:
 settings = Settings(taux_sans_risque=rf, prime_risque_marche=erp, croissance_long_terme=g, beta_defaut=beta,
                     poids=w, seuil_potentiel_achat=s_buy, seuil_potentiel_vente=s_sell, en_ligne=online,
                     multiples_defaut=use_def, claude_api_key=api_key or "", claude_model=model,
-                    maison=house or config.DEFAULT_HOUSE, analyste=analyst, date_arrete=as_of)
+                    maison=house or config.DEFAULT_HOUSE, analyste=analyst, date_arrete=as_of,
+                    taux_sans_risque_saisi=bool(ap) and abs(float(rf) - float(ap.rf)) > 1e-9)
+commun = _commun(ef_bytes, mkt_bytes, VER) if (ef_bytes and mkt_bytes) else None
 overrides = {}
 
 
@@ -528,7 +549,7 @@ with tab_batch:
             bar.progress(i / max(1, len(chosen)), text=f"{t_} ({i + 1}/{len(chosen)})")
             try:
                 results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b, interim_data=idata,
-                                        charia_data=chdata))
+                                        charia_data=chdata, commun=commun))
             except Exception as exc:  # une valeur en erreur n'arrête pas le lot
                 errors.append(f"{t_} : {type(exc).__name__} {exc}")
         # Archive construite avant tout enregistrement : un lot interrompu ne laisse pas d'état incomplet
@@ -654,7 +675,7 @@ with tab_one:
             a = run_analysis(wb, ticker, settings, market_base=mb, price_file=price_df, overrides=overrides,
                              user_notes=notes, major_event=major, bceao=b, use_claude=use_ai,
                              progress=lambda msg: status.update(label=msg), figures=figs_used, report=report, interim_data=idata,
-                             charia_data=chdata)
+                             charia_data=chdata, commun=commun)
             status.update(label="Analyse terminée", state="complete")
         st.session_state["analysis"] = a
         st.session_state["run_key"] = run_key

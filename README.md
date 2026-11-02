@@ -444,3 +444,19 @@ intermédiaire). Les fiches sont alors produites avec les seules données connue
 - actualités : fenêtre d'un an se terminant à cette date ; les cours du jour de brvm.org sont écartés pour une date passée.
 
 En ligne de commande : `--date-arrete 31/10/2026`.
+
+## Moteur commun de valeur fondamentale (aligné avec l'application SMF)
+
+`fiche_valeur/valorisation_commune.py` est **le même fichier** que `valorisation_commune.py` de l'application SMF
+(dépôt MF_TEST). Lorsque le classeur des états financiers (format une feuille par titre, exercices en colonnes) et la
+base de données SMF sont chargés, la juste valeur de la fiche est celle de ce moteur : les deux applications affichent
+la même valeur à fichiers et date d'arrêté identiques. L'empreinte du moteur (8 caractères) est affichée dans les deux
+applications pour le vérifier ; toute modification du fichier doit être recopiée dans l'autre dépôt.
+
+Méthode : PER et P/B médians historiques du titre (cours moyens de la feuille Cours, ajustée automatiquement des
+fractionnements), actualisation des dividendes à deux étapes, DCF simplifié (entreprises) ou P/B justifié (banques),
+bêta hebdomadaire sur 2 ans contre le BRVM Composite (Blume, borné 0,6-1,4), taux souverain du pays + prime de risque
+5,5%, croissance perpétuelle 3% avec un écart minimal de 3 points avec le taux d'actualisation. Un dividende supérieur à
+2,5 fois les précédents et au bénéfice par action est traité comme exceptionnel ; un exercice sans dividende rend la
+méthode inapplicable. Une méthode hors de [0,2x ; 5x] le cours est écartée. Pour un titre absent du classeur commun, la
+fiche conserve sa propre valorisation (signalée comme sans équivalent dans SMF).

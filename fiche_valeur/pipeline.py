@@ -71,7 +71,8 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
                  user_notes: str = "", major_event: bool = False, bceao: dict | None = None,
                  use_claude: bool = False, progress=None, figures: KeyFigures | None = None,
                  custom: dict | None = None, report: InterimReport | None = None,
-                 interim_data: InterimData | None = None, charia_data: CharData | None = None) -> Analysis:
+                 interim_data: InterimData | None = None, charia_data: CharData | None = None,
+                 commun: tuple | None = None) -> Analysis:
     """Analyse d'un titre. ``wb`` peut être vide ou absent : le titre est alors traité au niveau 2 ou 3.
 
     ``figures`` : chiffres clés saisis (prioritaires sur ceux du classeur) ; ``custom`` : nom, pays et
@@ -128,7 +129,17 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
     step("Analyse technique")
     tech = analyse_technical(md.history, md.index_history, md.float_shares)
     step("Valorisation")
-    val = analyse_valuation(c, fd, md, tech, st, dyn)
+    res_commun = None
+    if commun is not None and commun[0] and commun[1] is not None and ticker in commun[0]:
+        from . import valorisation_commune as vc
+        res_commun = vc.valeur_fondamentale(
+            ticker, commun[0], commun[1], date_arrete=as_of,
+            params={"prime_risque": st.prime_risque_marche / 100, "croissance_perpetuelle": st.croissance_long_terme / 100},
+            taux_sans_risque=st.taux_sans_risque / 100 if st.taux_sans_risque_saisi else None)
+    val = analyse_valuation(c, fd, md, tech, st, dyn, commun=res_commun)
+    if commun is not None and res_commun is None:
+        val.notes.insert(0, "Titre absent du classeur d'états financiers lu par le moteur commun : juste valeur propre "
+                            "à la fiche, sans équivalent dans l'application SMF.")
     step("Environnement macroéconomique")
     errors: list[str] = list(md.errors)
     mac = analyse_macro(c.country, c.sector, online=st.en_ligne, bceao=bceao, errors=errors)

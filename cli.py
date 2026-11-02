@@ -65,6 +65,11 @@ def main(argv=None) -> int:
     st.date_arrete = (datetime.strptime(args.date_arrete, "%d/%m/%Y").date() if args.date_arrete
                       else default_as_of(mb, idata))
     print(f"Date d'arrêté : {st.date_arrete:%d/%m/%Y}")
+    commun = None
+    if args.ef and args.smf:
+        from fiche_valeur import valorisation_commune as vc
+        commun = (vc.lire_etats_financiers(args.ef), vc.lire_base_smf(args.smf))
+        print(f"Moteur commun de valorisation v{vc.VERSION} (empreinte {vc.empreinte_moteur()})")
     if args.all:
         # en démonstration (classeur sans titre du référentiel), seules les sociétés du classeur
         tickers = sorted(known) if set(config.TICKERS) & in_wb or not in_wb else sorted(in_wb)
@@ -78,7 +83,7 @@ def main(argv=None) -> int:
             print(f"{t} : titre inconnu (absent du référentiel et du classeur)", file=sys.stderr)
             continue
         try:
-            a = run_analysis(wb, t, st, market_base=mb, interim_data=idata, charia_data=chdata)
+            a = run_analysis(wb, t, st, market_base=mb, interim_data=idata, charia_data=chdata, commun=commun)
         except Exception as exc:
             print(f"{t} : échec de l'analyse ({type(exc).__name__}: {exc})", file=sys.stderr)
             continue

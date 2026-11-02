@@ -302,6 +302,8 @@ class Settings:
     analyste: str = ""
     # Date d'arrêté des données (None : données les plus récentes)
     date_arrete: "date | None" = None
+    # Taux sans risque saisi par l'analyste (sinon : taux souverain du pays, comme dans le moteur commun)
+    taux_sans_risque_saisi: bool = False
 
     @property
     def cout_fonds_propres_base(self) -> float:
