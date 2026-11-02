@@ -53,7 +53,7 @@ def analysis_frames(a) -> dict[str, pd.DataFrame]:
     years = c.years[-5:]
     synth = pd.DataFrame([
         ("Société", c.name), ("Ticker", c.ticker), ("Secteur", c.sector),
-        ("Pays", config.COUNTRIES.get(c.country, {}).get("nom", c.country)), ("Date d'analyse", a.as_of),
+        ("Pays", config.COUNTRIES.get(c.country, {}).get("nom", c.country)), ("Date d'analyse" if not getattr(a, "date_note", "") else "Date d'arrêté", a.as_of),
         ("Niveau de données", config.LEVELS[c.level][0]),
         ("Couverture des données", a.coverage.score / 100 if a.coverage else None),
         ("Signal", d.signal), ("Conviction", d.conviction), ("Note globale /100", d.composite),

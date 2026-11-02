@@ -722,8 +722,11 @@ def _extend_history(file_h: pd.DataFrame, web_h: pd.DataFrame) -> tuple[pd.DataF
 
 def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
                       price_file: pd.DataFrame | None = None, online: bool = True,
-                      years: int = 3, overrides: dict | None = None) -> MarketData:
+                      years: int = 3, overrides: dict | None = None, as_of: date | None = None) -> MarketData:
+    from .cutoff import cut_history, dividend_known, is_historical, last_closed_exercise
     md = MarketData(ticker=ticker)
+    ref = as_of or date.today()
+    past = is_historical(as_of)
     overrides = overrides or {}
     country = getattr(company, "country", None) or config.TICKERS.get(ticker, {}).get("pays")
     name = getattr(company, "name", None) or config.TICKERS.get(ticker, {}).get("nom", ticker)
@@ -731,7 +734,7 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
     # Historique de cours : fichiers d'abord, le web ne complète que les séances postérieures ----------
     split = 1
     if price_file is not None and not price_file.empty:
-        md.history = price_file
+        md.history = cut_history(price_file, ref) if as_of else price_file
         md.sources["historique"] = "Fichier d'historique chargé"
     if md.history is None and base is not None and base.closes is not None and ticker in base.closes:
         h = pd.DataFrame({"close": base.closes[ticker]})
@@ -745,7 +748,7 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
             md.history = h[["open", "high", "low", "close", "volume"]]
             md.sources["historique"] = "Base de marché (feuille Cours)"
     if online:
-        stale = md.history is None or md.history.index.max() < pd.Timestamp(date.today() - timedelta(days=4))
+        stale = md.history is None or md.history.index.max() < pd.Timestamp(ref - timedelta(days=4))
         if stale:
             h = fetch_sikafinance_history(ticker, country, years, md.errors)
             if h is not None and not h.empty:
@@ -766,7 +769,7 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
         if not ih.empty:
             md.index_history = ih
             md.sources["indice"] = "Base de marché"
-    if online and (md.index_history is None or md.index_history.index.max() < pd.Timestamp(date.today() - timedelta(days=4))):
+    if online and (md.index_history is None or md.index_history.index.max() < pd.Timestamp(ref - timedelta(days=4))):
         ih = fetch_sikafinance_history(INDEX_TICKER, None, years, md.errors)
         if ih is not None and not ih.empty:
             if md.index_history is None:
@@ -777,6 +780,10 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
                 md.index_history = pd.concat([md.index_history, ih.loc[ih.index > last, ["close"]]])
                 md.sources["indice"] += ", complété par sikafinance.com"
 
+    if as_of is not None:
+        # séances postérieures à la date d'arrêté écartées (y compris celles complétées en ligne)
+        md.history = cut_history(md.history, ref)
+        md.index_history = cut_history(md.index_history, ref)
     if md.history is not None and not md.history.empty:
         md.price = float(md.history["close"].iloc[-1])
         md.price_date = md.history.index[-1].date()
@@ -797,6 +804,12 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
             md.peer_prices = {t: float(v) for t, v in last.items() if is_num(v)}
         md.peer_shares = dict(base.shares_total)
     capi = fetch_brvm_capitalisations(md.errors) if online else None
+    if capi is not None and past:
+        # cours du jour de brvm.org postérieurs à la date d'arrêté : seul le nombre de titres manquant est repris
+        if ticker in capi.index and md.shares is None and is_num(capi.loc[ticker, "nb_titres"]):
+            md.shares = float(capi.loc[ticker, "nb_titres"])
+            md.sources["nombre de titres"] = "brvm.org (capitalisations, nombre de titres actuel)"
+        capi = None
     if capi is not None:
         # pairs : couple cours / titres de la base s'il est complet, sinon celui de brvm.org (même source)
         for t, row_ in capi.iterrows():
@@ -835,13 +848,16 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
         md.sources["dividendes"] = "Base de marché (Dividendes)" + (" ajustés du fractionnement" if split > 1 else "")
     if not md.dividends and online:
         divs = fetch_dividends_online(ticker, name, md.errors)
+        if as_of is not None:
+            divs = [d_ for d_ in divs if dividend_known(d_, ref)]
         if divs:
             md.dividends = divs
             md.sources["dividendes"] = divs[0].source
     if not md.dividends and company is not None and company.fields.get("dps"):
         dps = company.fields["dps"]
         origin = getattr(company, "data_source", "Classeur des états financiers")
-        md.dividends = [Dividend(y, v, None, origin) for y, v in sorted(dps.items())]
+        md.dividends = [Dividend(y, v, None, origin) for y, v in sorted(dps.items())
+                        if as_of is None or dividend_known(Dividend(y, v), ref)]
         md.sources["dividendes"] = origin
 
     # Dernier exercice clos sans versement recensé : les sources (sikafinance, brvm.org) ne listent que les versements
@@ -854,14 +870,14 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
         # la saison de ce dernier exercice y est déjà renseignée pour d'autres titres
         season_in_base = (not from_base) or (base is not None and any(
             d_.exercice and d_.exercice >= ly for ds in base.dividends.values() for d_ in ds))
-        if known and max(known) < ly and season_in_base and date.today() >= date(ly + 1, 9, 30):
+        if known and max(known) < ly and season_in_base and ref >= date(ly + 1, 9, 30):
             md.dividends.append(Dividend(ly, 0.0, None, f"Aucun versement recensé au titre de {ly}"))
             md.sources["dividendes"] = (md.sources.get("dividendes", "") + f" ; aucun versement recensé au titre de {ly}").lstrip(" ;")
 
     # Saisies manuelles (prioritaires) -------------------------------------------
     if is_num(overrides.get("price")):
         md.price = float(overrides["price"])
-        md.price_date = overrides.get("price_date") or date.today()
+        md.price_date = overrides.get("price_date") or ref
         md.sources["cours"] = "Saisie manuelle"
     if is_num(overrides.get("shares")):
         md.shares = float(overrides["shares"])
@@ -870,7 +886,7 @@ def build_market_data(ticker: str, company=None, base: MarketBase | None = None,
         md.float_shares = float(overrides["float_pct"]) * md.shares
         md.sources["flottant"] = "Saisie manuelle"
     if is_num(overrides.get("dps")):
-        md.dividends.append(Dividend(int(overrides.get("dps_exercice") or date.today().year - 1),
+        md.dividends.append(Dividend(int(overrides.get("dps_exercice") or last_closed_exercise(ref)),
                                      float(overrides["dps"]), None, "Saisie manuelle"))
         md.sources["dividendes"] = "Saisie manuelle"
     if md.history is None:

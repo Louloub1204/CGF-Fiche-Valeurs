@@ -793,7 +793,8 @@ def build_pptx(a) -> bytes:
     s = d.slide("Méthodologie, sources et avertissement")
     _text(s, Inches(0.6), Inches(1.4), Inches(7.2), Inches(0.35), "Méthode", size=13, bold=True, color=NAVY)
     _text(s, Inches(0.6), Inches(1.8), Inches(7.2), Inches(3.2), METHODO, size=10.5)
-    src = dict(a.market.sources)
+    src = {"date d'arrêté": a.date_note} if getattr(a, "date_note", "") else {}
+    src.update(a.market.sources)
     if c.level in ("complet", "partiel"):
         src["états financiers"] = (f"Classeur, feuille {c.sheet} ({c.unit_label})" if c.sheet
                                    else f"{c.data_source} ({c.unit_label})")

@@ -12,6 +12,7 @@ from .fundamentals import Fundamentals, analyse_fundamentals
 from .macro import Macro, analyse_macro
 from .market import MarketBase, MarketData, build_market_data
 from .news import News, add_user_notes, fetch_news
+from .cutoff import cut_company, cut_history, cut_interim, cut_market_base, cut_workbook, last_closed_exercise, report_known
 from .charia import CharData, CharResult, resolve as charia_resolve
 from .dynamics import Dynamics, InterimData, build_dynamics, momentum_from
 from .parser import CompanyData, Workbook
@@ -45,6 +46,7 @@ class Analysis:
     dynamics: Dynamics | None = None
     charia: CharResult | None = None
     publications: list[Publication] = field(default_factory=list)
+    date_note: str = ""
 
 
 def resolve_company(wb: Workbook | None, ticker: str, st: Settings, figures: KeyFigures | None,
@@ -76,11 +78,24 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
     secteur d'un titre absent du référentiel.
     """
     st = settings or Settings()
+    as_of = st.date_arrete
+    ref = as_of or date.today()
+    if as_of is not None:
+        # toutes les sources restreintes à ce qui était connu à la date d'arrêté
+        wb = cut_workbook(wb, as_of)
+        market_base = cut_market_base(market_base, as_of)
+        interim_data = cut_interim(interim_data, as_of)
+        if price_file is not None:
+            price_file = cut_history(price_file, as_of)
+        if report is not None and not report_known(report, as_of):
+            report = None
     if custom:
         config.register_ticker(ticker, custom.get("nom", ticker), custom.get("pays", "CI"),
                                custom.get("secteur", "Non classé"))
     pre_errors: list[str] = []
     c, kf = resolve_company(wb, ticker, st, figures, pre_errors, market_base)
+    if as_of is not None:
+        cut_company(c, as_of)
 
     def step(msg):
         if progress:
@@ -88,7 +103,7 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
 
     step("Données de marché")
     md = build_market_data(ticker, c, market_base, price_file, online=st.en_ligne,
-                           years=st.annees_historique, overrides=overrides)
+                           years=st.annees_historique, overrides=overrides, as_of=as_of)
     md.errors[:0] = pre_errors
     if kf is not None and kf.float_pct and md.float_shares is None and is_num(md.shares):
         md.float_shares = kf.float_pct * md.shares
@@ -96,7 +111,7 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
     interim, pubs = report, []
     if st.en_ligne:
         step("Publications officielles")
-        found, pubs = latest_report(ticker, md.errors)
+        found, pubs = latest_report(ticker, md.errors, as_of=as_of)
         if interim is None:
             interim = found
     if interim is not None:
@@ -118,7 +133,7 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
     errors: list[str] = list(md.errors)
     mac = analyse_macro(c.country, c.sector, online=st.en_ligne, bceao=bceao, errors=errors)
     step("Actualités")
-    news = fetch_news(ticker, c.name, c.country) if st.en_ligne else News(error="Mode hors ligne : actualités non consultées.")
+    news = fetch_news(ticker, c.name, c.country, as_of=as_of) if st.en_ligne else News(error="Mode hors ligne : actualités non consultées.")
     if news.error and st.en_ligne:
         errors.append(news.error)
     add_user_notes(news, user_notes)
@@ -129,7 +144,11 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
                  level=c.level)
     a = Analysis(company=c, market=md, fundamentals=fd, technical=tech, valuation=val, macro=mac, news=news,
                  decision=dec, settings=st, errors=errors, coverage=cov, key_figures=kf, interim=interim,
-                 dynamics=dyn, publications=pubs, charia=charia_resolve(ticker, c, charia_data))
+                 dynamics=dyn, publications=pubs, charia=charia_resolve(ticker, c, charia_data), as_of=ref)
+    if as_of is not None:
+        a.date_note = (f"Fiche arrêtée au {as_of:%d/%m/%Y} : exercices clos jusqu'au 31/12/{last_closed_exercise(as_of)}, "
+                       f"publications intermédiaires et dividendes connus à cette date, cours jusqu'au "
+                       + (f"{md.price_date:%d/%m/%Y}" if md.price_date else "n.d.") + ".")
     a.texts = build_commentary(a)
     if use_claude and st.claude_api_key:
         step("Rédaction assistée")

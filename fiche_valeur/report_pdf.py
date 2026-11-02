@@ -178,7 +178,7 @@ def _decorations(a, total_pages_holder):
         canvas.drawRightString(PAGE_W - MARGIN, y0 + 0.5 * mm, "FICHE DE VALEUR")
         canvas.setFillColor(MUTED)
         canvas.setFont(_FONTS["body"], 7.5)
-        canvas.drawRightString(PAGE_W - MARGIN, y0 - 4.2 * mm, clean_text(f"{fmt_date_fr(a.as_of)}  |  {a.settings.maison}"))
+        canvas.drawRightString(PAGE_W - MARGIN, y0 - 4.2 * mm, clean_text(("Arrêté au " if getattr(a, "date_note", "") else "") + f"{fmt_date_fr(a.as_of)}  |  {a.settings.maison}"))
         canvas.setFillColor(GOLD)
         canvas.rect(MARGIN, PAGE_H - HEADER_H - TITLE_H + 1 * mm, 22 * mm, 0.9 * mm, stroke=0, fill=1)
         _footer(canvas, doc)
@@ -433,7 +433,8 @@ def _news_table(a, st):
 
 
 def _sources(a, st):
-    s = dict(a.market.sources)
+    s = {"date d'arrêté": a.date_note} if getattr(a, "date_note", "") else {}
+    s.update(a.market.sources)
     if a.company.level in ("complet", "partiel"):
         s["états financiers"] = (f"Classeur {a.company.sheet} ({a.company.unit_label})" if a.company.sheet
                             else f"{a.company.data_source} ({a.company.unit_label})")

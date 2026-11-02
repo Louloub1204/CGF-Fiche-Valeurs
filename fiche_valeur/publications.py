@@ -431,14 +431,22 @@ def fetch_url_report(url: str, errors: list[str] | None = None) -> InterimReport
     return parse_report_pdf(r.content, title, "Document en ligne", url)
 
 
-def latest_report(ticker: str, errors: list[str] | None = None) -> tuple[InterimReport | None, list[Publication]]:
-    """Publications de la société et indicateurs de la plus récente exploitable (intérimaire ou annuelle)."""
+def latest_report(ticker: str, errors: list[str] | None = None,
+                  as_of: date | None = None) -> tuple[InterimReport | None, list[Publication]]:
+    """Publications de la société et indicateurs de la plus récente exploitable (intérimaire ou annuelle) ;
+    avec ``as_of``, seules les publications parues au plus tard à cette date sont retenues."""
     pubs = find_publications(ticker, errors=errors)
+    if as_of is not None:
+        pubs = [p for p in pubs if p.published is None or p.published <= as_of]
     usable = [p for p in pubs if p.kind in ("interim", "annuel")]
     # rapport d'activités (texte) avant attestation des commissaires aux comptes
     usable.sort(key=lambda p: (p.published or date(1900, 1, 1), "RAPPORT" in norm_label(p.title)), reverse=True)
     for pub in usable[:3]:
         rep = fetch_report(pub, errors)
+        if rep is not None and rep.lines and as_of is not None:
+            from .cutoff import report_known
+            if not report_known(rep, as_of):
+                continue
         if rep is not None and rep.lines:
             return rep, pubs
     return None, pubs

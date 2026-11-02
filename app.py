@@ -257,6 +257,20 @@ with st.sidebar:
             st.warning(n_)
         if idata.unknown:
             st.warning("Tickers non reconnus dans le fichier des publications : " + ", ".join(idata.unknown[:10]))
+    # Date d'arrêté -----------------------------------------------------------------------------
+    from fiche_valeur.cutoff import default_as_of, last_closed_exercise
+    px_default = _prices(px_file.getvalue(), px_file.name, VER) if px_file is not None else None
+    asof_default = default_as_of(mb, idata, px_default)
+    st.markdown("### Date d'arrêté")
+    as_of = st.date_input(
+        "Fiches arrêtées au", value=asof_default, max_value=date.today(), format="DD/MM/YYYY",
+        key=f"asof_{asof_default:%Y%m%d}",
+        help="Les fiches sont produites avec les seules données connues à cette date : exercices clos jusqu'au "
+             "31/12 de l'année précédente (l'exercice de l'année est inclus au 31/12), publications intermédiaires "
+             "parues jusqu'à cette date (à défaut de date de publication : fin de période au 31/03, 30/06, 30/09), "
+             "dividendes payés et cours jusqu'à cette date. Par défaut : dernière date à jour dans les fichiers chargés.")
+    st.caption(f"Par défaut : {asof_default:%d/%m/%Y} (dernière date à jour des fichiers chargés). Exercices retenus "
+               f"jusqu'au 31/12/{last_closed_exercise(as_of)}.")
     if wb is not None and getattr(wb, "sheet_report", None):
         read_ok = [r for r in wb.sheet_report if r[2].startswith("lue")]
         with st.expander(f"Lecture du classeur : {len(read_ok)} feuille(s) rattachée(s) à un titre"):
@@ -432,7 +446,7 @@ with st.sidebar:
 settings = Settings(taux_sans_risque=rf, prime_risque_marche=erp, croissance_long_terme=g, beta_defaut=beta,
                     poids=w, seuil_potentiel_achat=s_buy, seuil_potentiel_vente=s_sell, en_ligne=online,
                     multiples_defaut=use_def, claude_api_key=api_key or "", claude_model=model,
-                    maison=house or config.DEFAULT_HOUSE, analyste=analyst)
+                    maison=house or config.DEFAULT_HOUSE, analyste=analyst, date_arrete=as_of)
 overrides = {}
 
 
@@ -627,7 +641,7 @@ with tab_one:
     run_key = (ticker, ef_name, len(ef_bytes or b""), online, tuple(sorted(overrides.items())), rf, erp, g, beta,
                tuple(sorted(w.items())), s_buy, s_sell, major, notes, use_ai, tuple(sorted(b.items())), house, analyst,
                px_file.name if px_file else None, use_def, len(mkt_bytes or b""), len(int_bytes or b""), len(ch_bytes or b""),
-               (report.title, report.period, len(report.lines)) if report is not None else None)
+               (report.title, report.period, len(report.lines)) if report is not None else None, as_of)
     c1, c2 = st.columns([1, 3])
     go = c1.button("Lancer l'analyse", type="primary", width="stretch")
     if go or (st.session_state.get("run_key") != run_key and st.session_state.get("auto", False)):
@@ -665,6 +679,8 @@ with tab_one:
     h2.markdown(f'<div style="text-align:center"><span class="fv-badge" style="background:{color}">{d.signal}'
                 f'</span><div class="fv-small">Conviction {d.conviction.lower()} | note '
                 f'{(fmt_num(d.composite) + "/100") if is_num(d.composite) else "n.d."}</div></div>', unsafe_allow_html=True)
+    if getattr(a, "date_note", ""):
+        st.caption(a.date_note)
 
     if wb is not None and c.level in ("chiffres_cles", "marche"):
         ign = [sh for sh, t, stt in getattr(wb, "sheet_report", []) if not stt.startswith("lue")]

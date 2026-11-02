@@ -201,7 +201,7 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
         v.notes.append("Multiples de référence du secteur utilisés faute de comparables suffisants dans le classeur : "
                        "charger le classeur complet pour des multiples issus des pairs.")
     methods = [m for m in methods if is_num(m.value) and m.value > 0 and m.weight > 0]
-    if is_num(y) and y < date.today().year - 3:
+    if is_num(y) and y < (st.date_arrete or date.today()).year - 3:
         kept = [m for m in methods if m.name in ("Actualisation des dividendes", "Rendement de référence")]
         if len(kept) < len(methods):
             v.notes.append(f"Derniers résultats connus datant de {y} : méthodes fondées sur les résultats et les "

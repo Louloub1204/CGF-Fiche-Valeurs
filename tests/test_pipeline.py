@@ -663,3 +663,32 @@ def test_stale_dividend_means_no_payment(wb, mb, offline):
     if _d.today() >= _d(ly + 1, 9, 30):
         assert a.valuation.dps == 0 and a.valuation.dps_exercice == ly
         assert not a.valuation.div_yield
+
+
+def test_date_arrete_cuts_all_sources(wb, mb):
+    from dataclasses import replace
+    from datetime import date
+
+    from fiche_valeur.cutoff import cut_interim, default_as_of, last_closed_exercise
+    from fiche_valeur.dynamics import InterimData, PeriodRow
+
+    assert last_closed_exercise(date(2026, 10, 31)) == 2025
+    assert last_closed_exercise(date(2026, 12, 31)) == 2026
+    # défaut : dernière date à jour des fichiers chargés
+    assert default_as_of(mb) == mb.closes.index.max().date()
+    idata = InterimData(rows={"DBQC": {(2025, "S1"): PeriodRow({"pnb": 1.0}), (2026, "T1"): PeriodRow({"pnb": 1.0}),
+                                       (2026, "S1"): PeriodRow({"pnb": 1.0}, published=date(2026, 9, 25)),
+                                       (2026, "T3"): PeriodRow({"pnb": 1.0})}})
+    kept = cut_interim(idata, date(2026, 9, 1)).rows["DBQC"]
+    assert set(kept) == {(2025, "S1"), (2026, "T1")}          # S1 2026 publié après, T3 2026 non clos
+    assert set(cut_interim(idata, date(2026, 10, 31)).rows["DBQC"]) == set(idata.rows["DBQC"])
+
+    st = replace(Settings(en_ligne=False), date_arrete=date(2025, 3, 31))
+    a = run_analysis(wb, "DBQC", st, market_base=mb)
+    assert max(a.company.years) == 2024                         # exercice 2025 non clos au 31/03/2025
+    assert a.market.price_date <= date(2025, 3, 31)
+    assert a.market.history.index.max() <= pd.Timestamp("2025-03-31")
+    assert all(d.exercice <= 2023 for d in a.market.dividends)  # dividende 2024 payé en juillet 2025
+    assert a.as_of == date(2025, 3, 31) and "31/03/2025" in a.date_note
+    full = run_analysis(wb, "DBQC", Settings(en_ligne=False), market_base=mb)
+    assert max(full.company.years) == 2025 and full.market.price != a.market.price

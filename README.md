@@ -427,3 +427,20 @@ Logos, modèles et pictogrammes de `assets/brand/` et `assets/templates/` : prop
 - Exclusions de principe : banques et établissements financiers, tabac (STBC), jeux (LNBB), alcool (SLBC). Le symbole SOGB du fichier est rattaché à SOGC.
 - Sans fichier, recalcul depuis les états financiers du classeur (dette financière, créances, trésorerie, total actif, moyennes des capitaux propres).
 - Information de screening : aucun effet sur le signal ni la valorisation. Présente dans la fiche PDF, le PowerPoint, l'onglet Charia de l'Excel, l'onglet Synthèse de l'application et le tableau multi-valeurs.
+
+## Date d'arrêté
+
+Après le chargement des fichiers, le panneau latéral propose une **date d'arrêté** (par défaut : dernière date à jour
+des fichiers chargés, c'est-à-dire la dernière séance de la base SMF ou de l'historique, ou la dernière publication
+intermédiaire). Les fiches sont alors produites avec les seules données connues à cette date :
+
+- états financiers annuels : exercices clos jusqu'au 31/12 de l'année précédente (au 31/10/2026 : jusqu'à 2025 ;
+  au 31/12/2026, l'exercice 2026 est inclus) ;
+- publications intermédiaires : parues au plus tard à cette date (date de publication si elle est renseignée, sinon
+  fin de période : 31/03, 30/06, 30/09) ; il en va de même des publications lues en ligne ;
+- cours, volumes et BRVM Composite : séances jusqu'à cette date ;
+- dividendes : versements payés au plus tard à cette date (sans date de paiement, un dividende de l'exercice N est
+  réputé payé le 1er juillet N+1) ;
+- actualités : fenêtre d'un an se terminant à cette date ; les cours du jour de brvm.org sont écartés pour une date passée.
+
+En ligne de commande : `--date-arrete 31/10/2026`.

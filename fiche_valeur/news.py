@@ -7,7 +7,7 @@ import re
 import urllib.parse
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 
 import requests
@@ -88,12 +88,16 @@ def _short_name(name: str) -> str:
     return s or name
 
 
-def fetch_news(ticker: str, name: str, country: str = "CI", days: int = 365, limit: int = 25) -> News:
+def fetch_news(ticker: str, name: str, country: str = "CI", days: int = 365, limit: int = 25,
+               as_of=None) -> News:
     gl = config.COUNTRIES.get(country, {}).get("gl", "CI")
     short = _short_name(name)
     others = [a for a in config.TICKERS.get(ticker, {}).get("autres_noms", [])[:2] if a.upper() not in (name.upper(), short.upper())]
     terms = " OR ".join(f'"{x}"' for x in [name, short] + others)
     q = f'({terms} OR {ticker}) when:{days}d'
+    if as_of is not None and as_of < date.today() - timedelta(days=4):
+        # fenêtre d'un an se terminant à la date d'arrêté
+        q = f'({terms} OR {ticker}) after:{as_of - timedelta(days=days):%Y-%m-%d} before:{as_of + timedelta(days=1):%Y-%m-%d}'
     try:
         url = RSS.format(q=urllib.parse.quote(q), gl=gl)
         r = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0 FicheValeurBRVM/1.0"})
@@ -101,7 +105,7 @@ def fetch_news(ticker: str, name: str, country: str = "CI", days: int = 365, lim
         content = r.content
     except Exception as exc:
         return News(query=q, error=f"Actualités indisponibles ({type(exc).__name__}).")
-    news = parse_rss(content, ticker, name, limit)
+    news = parse_rss(content, ticker, name, limit, as_of)
     news.query = q
     return news
 
@@ -122,7 +126,7 @@ def _relevant(t_norm: str, ticker: str, short: str) -> bool:
     return bool(phrase) and phrase in " ".join(re.findall(r"[a-z0-9]{3,}", t_norm))
 
 
-def parse_rss(content: bytes, ticker: str, name: str, limit: int = 25) -> News:
+def parse_rss(content: bytes, ticker: str, name: str, limit: int = 25, as_of=None) -> News:
     """Flux RSS Google Actualités -> articles pertinents, tonalité et événements."""
     news = News()
     short = _short_name(name)
@@ -156,13 +160,17 @@ def parse_rss(content: bytes, ticker: str, name: str, limit: int = 25) -> News:
         news.items.append(NewsItem(title=title, link=it.findtext("link") or "", published=pub, source=source,
                                    sentiment=sentiment_of(title), events=events_of(title)))
     news.items.sort(key=lambda n: n.published or datetime(1970, 1, 1, tzinfo=timezone.utc), reverse=True)
+    if as_of is not None:
+        end = datetime(as_of.year, as_of.month, as_of.day, 23, 59, tzinfo=timezone.utc)
+        news.items = [n for n in news.items if n.published is None or n.published <= end]
     news.items = news.items[:limit]
-    _aggregate(news)
+    _aggregate(news, as_of)
     return news
 
 
-def _aggregate(news: News) -> None:
-    now = datetime.now(timezone.utc)
+def _aggregate(news: News, as_of=None) -> None:
+    now = (datetime(as_of.year, as_of.month, as_of.day, 23, 59, tzinfo=timezone.utc) if as_of is not None
+           else datetime.now(timezone.utc))
     num, den = 0.0, 0.0
     for n in news.items:
         age = (now - n.published).days if n.published else 180

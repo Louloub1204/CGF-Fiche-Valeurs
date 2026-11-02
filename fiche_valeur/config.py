@@ -300,6 +300,8 @@ class Settings:
     claude_model: str = "claude-sonnet-5-5"
     maison: str = DEFAULT_HOUSE
     analyste: str = ""
+    # Date d'arrêté des données (None : données les plus récentes)
+    date_arrete: "date | None" = None
 
     @property
     def cout_fonds_propres_base(self) -> float:

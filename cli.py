@@ -41,6 +41,7 @@ def main(argv=None) -> int:
     ap.add_argument("--prime", type=float, default=5.5, help="Prime de risque actions (défaut 5,5)")
     ap.add_argument("--g", type=float, default=3.0, help="Croissance perpétuelle (défaut 3)")
     ap.add_argument("--maison", default="CGF Gestion", help="Société de gestion affichée sur les documents")
+    ap.add_argument("--date-arrete", help="Date d'arrêté JJ/MM/AAAA (défaut : dernière date à jour des fichiers)")
     args = ap.parse_args(argv)
 
     wb = parse_workbook(args.ef) if args.ef else None
@@ -59,6 +60,11 @@ def main(argv=None) -> int:
             print(n_, file=sys.stderr)
     st = Settings(taux_sans_risque=args.rf, prime_risque_marche=args.prime, croissance_long_terme=args.g,
                   en_ligne=not args.hors_ligne, maison=args.maison)
+    from datetime import datetime
+    from fiche_valeur.cutoff import default_as_of
+    st.date_arrete = (datetime.strptime(args.date_arrete, "%d/%m/%Y").date() if args.date_arrete
+                      else default_as_of(mb, idata))
+    print(f"Date d'arrêté : {st.date_arrete:%d/%m/%Y}")
     if args.all:
         # en démonstration (classeur sans titre du référentiel), seules les sociétés du classeur
         tickers = sorted(known) if set(config.TICKERS) & in_wb or not in_wb else sorted(in_wb)
