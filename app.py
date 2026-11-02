@@ -415,6 +415,12 @@ with st.sidebar:
         beta = st.number_input("Bêta par défaut", value=float(ap.beta) if ap else 1.00, step=0.05, key=f"beta_{sfx}",
                                help="Utilisé si la régression du titre sur le BRVM Composite n'est pas significative.")
         _src(ap.beta_src if ap else "")
+        dyn_val = st.checkbox(
+            "Intégrer la dynamique des publications intermédiaires dans la juste valeur", value=False,
+            key="dyn_val",
+            help="Le PER est appliqué pour moitié au BPA des 12 mois glissants (30% après un seul trimestre publié) "
+                 "et pour moitié au BPA du dernier exercice clos. Décoché (réglage standard), la dynamique n'agit que "
+                 "sur le pilier croissance et la juste valeur reste identique à celle de l'application SMF.")
         s_buy = st.number_input("Potentiel minimal pour ACHAT (%)", value=float(ap.seuil_achat) if ap else 15.0,
                                 step=1.0, key=f"sb_{sfx}",
                                 help="Potentiel de hausse vers la juste valeur à partir duquel un titre est "
@@ -426,6 +432,25 @@ with st.sidebar:
         use_def = st.toggle("Multiples de référence si pairs insuffisants", value=True,
                             help="Quand le classeur compte moins de deux comparables, utilise des multiples "
                                  "sectoriels de référence (config.SECTOR_MULTIPLES), signalés dans la fiche.")
+    with st.expander("Pondération des méthodes de valorisation"):
+        from fiche_valeur import valorisation_commune as _vcp
+        st.caption("Poids de chaque méthode dans la juste valeur (renormalisés sur les méthodes applicables ; 0 écarte "
+                   "la méthode). Les valeurs proposées sont les réglages standards, identiques dans l'application SMF : "
+                   "tout autre choix peut écarter les deux valorisations. Pour un titre absent du classeur commun, "
+                   "« DCF » s'applique à la méthode VE/EBE de la fiche.")
+        poids_m = {}
+        for fam, lib in (("entreprise", "Entreprises"), ("banque", "Banques")):
+            st.markdown(f"**{lib}**")
+            std = _vcp.poids_standards(fam == "banque")
+            cols_m = st.columns(len(std))
+            poids_m[fam] = {m: cols_m[i].number_input(m, min_value=0.0, max_value=100.0, value=float(v), step=5.0,
+                                                        key=f"pm_{fam}_{m}")
+                            for i, (m, v) in enumerate(std.items())}
+        poids_std = all(abs(poids_m[f][m] - v) < 1e-9 for f in poids_m
+                        for m, v in _vcp.poids_standards(f == "banque").items())
+        if not poids_std:
+            st.warning("Pondérations différentes des réglages standards : la juste valeur peut différer de la valeur "
+                       "fondamentale de l'application SMF.")
     with st.expander("Pondération des piliers" + (" (adaptée au titre)" if ap else "")):
         st.caption("Poids relatifs des six piliers dans la note globale (renormalisés automatiquement). "
                    "Un pilier non évalué faute de données est ignoré.")
@@ -466,7 +491,8 @@ settings = Settings(taux_sans_risque=rf, prime_risque_marche=erp, croissance_lon
                     poids=w, seuil_potentiel_achat=s_buy, seuil_potentiel_vente=s_sell, en_ligne=online,
                     multiples_defaut=use_def, claude_api_key=api_key or "", claude_model=model,
                     maison=house or config.DEFAULT_HOUSE, analyste=analyst, date_arrete=as_of,
-                    taux_sans_risque_saisi=bool(ap) and abs(float(rf) - float(ap.rf)) > 1e-9)
+                    taux_sans_risque_saisi=bool(ap) and abs(float(rf) - float(ap.rf)) > 1e-9,
+                    dynamique_valorisation=dyn_val, poids_methodes=None if poids_std else poids_m)
 commun = _commun(ef_bytes, mkt_bytes, VER) if (ef_bytes and mkt_bytes) else None
 overrides = {}
 
@@ -662,7 +688,8 @@ with tab_one:
     run_key = (ticker, ef_name, len(ef_bytes or b""), online, tuple(sorted(overrides.items())), rf, erp, g, beta,
                tuple(sorted(w.items())), s_buy, s_sell, major, notes, use_ai, tuple(sorted(b.items())), house, analyst,
                px_file.name if px_file else None, use_def, len(mkt_bytes or b""), len(int_bytes or b""), len(ch_bytes or b""),
-               (report.title, report.period, len(report.lines)) if report is not None else None, as_of)
+               (report.title, report.period, len(report.lines)) if report is not None else None, as_of, dyn_val,
+               tuple((f, tuple(sorted(v.items()))) for f, v in sorted(poids_m.items())))
     c1, c2 = st.columns([1, 3])
     go = c1.button("Lancer l'analyse", type="primary", width="stretch")
     if go or (st.session_state.get("run_key") != run_key and st.session_state.get("auto", False)):
@@ -870,6 +897,10 @@ with tab_one:
 
 
     with t3:
+        if getattr(v, "moteur_commun", False):
+            (st.success if v.reglages_standards else st.info)(
+                "Juste valeur alignée sur l'application SMF (moteur commun, réglages standards)." if v.reglages_standards
+                else "Réglages non standards : la juste valeur peut différer de la valeur fondamentale de l'application SMF.")
         st.write(tx.get("valorisation", ""))
         if v.methods:
             tw = sum(m_.weight for m_ in v.methods)
@@ -879,8 +910,8 @@ with tab_one:
         img = charts.valuation_chart(v, t, size=(8, 2.6))
         if img:
             st.image(img, width="stretch")
-        for n_ in v.notes:
-            st.warning(n_)
+        for i_, n_ in enumerate(v.notes):
+            (st.caption if (i_ == 0 and getattr(v, "moteur_commun", False)) else st.warning)(n_)
         st.caption(f"Coût des fonds propres {fmt_pct(v.cost_of_equity)} ; bêta {fmt_num(v.beta, 2)} "
                    f"({v.beta_source}) ; croissance perpétuelle {fmt_pct(v.g)}.")
 

@@ -132,10 +132,19 @@ def run_analysis(wb: Workbook | None, ticker: str, settings: Settings | None = N
     res_commun = None
     if commun is not None and commun[0] and commun[1] is not None and ticker in commun[0]:
         from . import valorisation_commune as vc
+        prm = {"prime_risque": st.prime_risque_marche / 100, "croissance_perpetuelle": st.croissance_long_terme / 100}
+        if st.poids_methodes:
+            prm["poids_entreprise"] = st.poids_methodes.get("entreprise", vc.PARAMS["poids_entreprise"])
+            prm["poids_banque"] = st.poids_methodes.get("banque", vc.PARAMS["poids_banque"])
+        dyn_v = None
+        if st.dynamique_valorisation and dyn is not None and is_num(dyn.ltm.get("rn")):
+            dyn_v = {"rn_ltm": dyn.ltm["rn"], "label": f"12 mois à {dyn.label}", "periode": dyn.period}
         res_commun = vc.valeur_fondamentale(
-            ticker, commun[0], commun[1], date_arrete=as_of,
-            params={"prime_risque": st.prime_risque_marche / 100, "croissance_perpetuelle": st.croissance_long_terme / 100},
-            taux_sans_risque=st.taux_sans_risque / 100 if st.taux_sans_risque_saisi else None)
+            ticker, commun[0], commun[1], date_arrete=as_of, params=prm,
+            taux_sans_risque=st.taux_sans_risque / 100 if st.taux_sans_risque_saisi else None, dynamique=dyn_v)
+        if st.dynamique_valorisation and dyn_v is None:
+            res_commun.notes.append("Option « dynamique des publications intermédiaires » cochée, mais aucune publication "
+                                    "intermédiaire exploitable (résultat net des 12 mois glissants) pour ce titre.")
     val = analyse_valuation(c, fd, md, tech, st, dyn, commun=res_commun)
     if commun is not None and res_commun is None:
         val.notes.insert(0, "Titre absent du classeur d'états financiers lu par le moteur commun : juste valeur propre "

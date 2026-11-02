@@ -304,6 +304,10 @@ class Settings:
     date_arrete: "date | None" = None
     # Taux sans risque saisi par l'analyste (sinon : taux souverain du pays, comme dans le moteur commun)
     taux_sans_risque_saisi: bool = False
+    # Juste valeur : intégrer la dynamique des publications intermédiaires (BPA 12 mois glissants) - hors standard
+    dynamique_valorisation: bool = False
+    # Pondérations des méthodes {"entreprise": {...}, "banque": {...}} ; None = pondérations standards
+    poids_methodes: "dict | None" = None
 
     @property
     def cout_fonds_propres_base(self) -> float:

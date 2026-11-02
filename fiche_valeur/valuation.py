@@ -57,6 +57,7 @@ class Valuation:
     parts: list = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     moteur_commun: bool = False
+    reglages_standards: bool = True
 
 
 def _dividend_growth(md: MarketData) -> float | None:
@@ -156,10 +157,15 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
     bank = c.is_bank
     w = ({"pe": 25, "pb": 20, "pbj": 30, "ddm": 25, "ev": 0} if bank else
          {"pe": 30, "pb": 10, "pbj": 10, "ddm": 25, "ev": 25})
+    if st.poids_methodes and commun is None:
+        # pondérations choisies par l'analyste (mêmes libellés que le moteur commun) : DCF -> VE/EBE
+        u = st.poids_methodes.get("banque" if bank else "entreprise") or {}
+        w = {"pe": u.get("PER", 0), "pb": u.get("P/B", 0), "pbj": u.get("P/B justifié", 0),
+             "ddm": u.get("Dividendes", 0), "ev": u.get("DCF", 0)}
     dflt = set(fd.default_multiples)
     methods: list[Method] = []
     if is_num(v.eps) and v.eps > 0 and is_num(med.get("pe")):
-        use_ltm = is_num(v.eps_ltm) and v.eps_ltm > 0
+        use_ltm = st.dynamique_valorisation and is_num(v.eps_ltm) and v.eps_ltm > 0
         # la dynamique de l'exercice en cours (12 mois glissants) prend la moitié du poids du PER ; un seul trimestre en pèse 30%
         share_ltm = (0.3 if dyn is not None and dyn.period == "T1" else 0.5) if use_ltm else 0.0
         methods.append(Method("PER sectoriel", med["pe"] * v.eps, w["pe"] * (1 - share_ltm),
@@ -228,9 +234,15 @@ def analyse_valuation(c: CompanyData, fd: Fundamentals, md: MarketData, tech: Te
         from .valorisation_commune import VERSION, empreinte_moteur
         methods = [Method(m.nom, m.valeur, m.poids, m.detail) for m in commun.methodes]
         v.notes = [n for n in v.notes if not any(x in n for x in ("Multiples de référence", "aberrante", "Derniers résultats connus", "Aucune méthode"))]
-        v.notes.insert(0, f"Juste valeur calculée par le moteur commun v{VERSION} (empreinte {empreinte_moteur()}), "
-                          f"identique à la valeur fondamentale de l'application SMF : mêmes fichiers, même méthode, "
-                          f"mêmes paramètres.")
+        if commun.reglages_standards:
+            v.notes.insert(0, f"Juste valeur calculée par le moteur commun v{VERSION} (empreinte {empreinte_moteur()}), "
+                              f"identique à la valeur fondamentale de l'application SMF : mêmes fichiers, même méthode, "
+                              f"réglages standards.")
+        else:
+            v.notes.insert(0, f"Juste valeur calculée par le moteur commun v{VERSION} (empreinte {empreinte_moteur()}) "
+                              f"avec des réglages non standards ({' ; '.join(commun.ecarts_reglages)}) : elle peut "
+                              f"différer de la valeur fondamentale de l'application SMF.")
+        v.reglages_standards = commun.reglages_standards
         v.notes += list(commun.notes)
         v.notes += [f"Méthode écartée - {n} : {w}." for n, w in commun.ecartees]
         v.moteur_commun = True

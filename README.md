@@ -460,3 +460,9 @@ bêta hebdomadaire sur 2 ans contre le BRVM Composite (Blume, borné 0,6-1,4), t
 2,5 fois les précédents et au bénéfice par action est traité comme exceptionnel ; un exercice sans dividende rend la
 méthode inapplicable. Une méthode hors de [0,2x ; 5x] le cours est écartée. Pour un titre absent du classeur commun, la
 fiche conserve sa propre valorisation (signalée comme sans équivalent dans SMF).
+
+Réglages facultatifs (barre latérale) : case « Intégrer la dynamique des publications intermédiaires dans la juste
+valeur » (le PER est alors appliqué pour moitié au BPA des 12 mois glissants, 30% après un seul trimestre) et
+pondérations des méthodes (entreprises : PER, P/B, Dividendes, DCF ; banques : PER, P/B, Dividendes, P/B justifié).
+Les valeurs proposées sont les réglages standards ; tout autre réglage est signalé dans la fiche, car la juste valeur peut
+alors différer de la valeur fondamentale de l'application SMF.

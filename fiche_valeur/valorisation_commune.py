@@ -34,6 +34,15 @@ Méthode (version 1) :
 - résultats antérieurs de plus de 3 ans à la date d'arrêté : seule l'actualisation des dividendes est retenue ;
 - date d'arrêté : exercices clos à cette date, dividendes payés à cette date (exercice N réputé payé le 1er
   juillet N+1), cours jusqu'à cette date ; elle est plafonnée à la dernière séance de la base SMF.
+
+Réglages facultatifs (les valeurs par défaut sont les « réglages standards » qui alignent les deux applications ;
+tout autre réglage est signalé dans le résultat, ``reglages_standards`` et ``ecarts_reglages``) :
+- ``params["poids_entreprise"]`` / ``params["poids_banque"]`` : pondérations des méthodes ;
+- ``params["beta_manuel"]`` : bêta imposé, nombre ou {ticker: bêta} ;
+- ``params["beta_debut"]`` / ``params["beta_fin"]`` : fenêtre de régression du bêta (dates) au lieu des 2 ans
+  précédant la date d'arrêté ;
+- ``dynamique`` : résultat net des 12 mois glissants issu des publications intermédiaires ; il prend la moitié du
+  poids du PER (30% après un seul trimestre publié), le reste restant appliqué au BPA du dernier exercice clos.
 """
 from __future__ import annotations
 
@@ -49,7 +58,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 # ---------------------------------------------------------------------------
 # Paramètres communs (modifiables dans les deux applications, alignées tant qu'ils restent identiques)
@@ -480,6 +489,9 @@ class Resultat:
     pb_source: str = ""
     notes: list = field(default_factory=list)
     version: str = VERSION
+    bpa_ltm: float | None = None
+    reglages_standards: bool = True
+    ecarts_reglages: list = field(default_factory=list)
 
     @property
     def fourchette(self):
@@ -501,12 +513,19 @@ def cours_a_date(base: BaseMarche, ticker: str, d: date) -> float | None:
     return float(s.iloc[-1]) if not s.empty else None
 
 
+def _fenetre_beta(d: date, p: dict) -> tuple[pd.Timestamp, pd.Timestamp]:
+    fin = pd.Timestamp(min(p["beta_fin"], d)) if p.get("beta_fin") else pd.Timestamp(d)
+    debut = pd.Timestamp(p["beta_debut"]) if p.get("beta_debut") else fin - pd.Timedelta(weeks=p["beta_semaines"])
+    return debut, fin
+
+
 def _beta_regression(base: BaseMarche, ticker: str, d: date, p: dict) -> tuple[float | None, float | None]:
     if base is None or ticker not in base.cours or INDICE not in base.cours:
         return None, None
     src = base.cours_ajustes if base.cours_ajustes is not None else base.cours
     df = src[[ticker, INDICE]]
-    df = df[(df.index <= pd.Timestamp(d)) & (df.index > pd.Timestamp(d) - pd.Timedelta(weeks=p["beta_semaines"]))]
+    debut, fin = _fenetre_beta(d, p)
+    df = df[(df.index <= fin) & (df.index > debut)]
     w = df.ffill().resample("W-FRI").last().pct_change().dropna()
     w = w[(w[ticker] != 0)]
     if len(w) < 40 or w[INDICE].var() == 0:
@@ -518,9 +537,18 @@ def _beta_regression(base: BaseMarche, ticker: str, d: date, p: dict) -> tuple[f
 
 def beta(base: BaseMarche, ticker: str, d: date, p: dict | None = None) -> tuple[float, str]:
     p = p or PARAMS
+    man = p.get("beta_manuel")
+    man = man.get(ticker) if isinstance(man, dict) else man
+    if _num(man) and man > 0:
+        return float(man), "bêta saisi par l'analyste"
     b, corr = _beta_regression(base, ticker, d, p)
+    if p.get("beta_debut") or p.get("beta_fin"):
+        debut, fin = _fenetre_beta(d, p)
+        lib = f"régression hebdomadaire du {debut:%d/%m/%Y} au {fin:%d/%m/%Y} (Blume)"
+    else:
+        lib = "régression hebdomadaire sur 2 ans (Blume)"
     if b is not None and corr is not None and corr >= 0.15:
-        return min(p["beta_max"], max(p["beta_min"], 0.67 * b + 0.33)), "régression hebdomadaire sur 2 ans (Blume)"
+        return min(p["beta_max"], max(p["beta_min"], 0.67 * b + 0.33)), lib
     sect = pays_secteur(ticker)[1]
     bs = []
     for t, (_, s) in REFERENTIEL.items():
@@ -658,10 +686,43 @@ def base_depuis_json(txt: str) -> BaseMarche:
     return base
 
 
+def ecarts_reglages(params: dict | None = None, dynamique: dict | None = None,
+                    taux_sans_risque: float | None = None, banque: bool | None = None,
+                    ticker: str | None = None) -> list[str]:
+    """Réglages qui diffèrent des réglages standards (et peuvent donc écarter les deux applications). Avec
+    ``banque`` et ``ticker``, seuls les réglages qui s'appliquent à ce titre sont retenus."""
+    p = dict(PARAMS)
+    p.update(params or {})
+    out = []
+    for k, lib in (("prime_risque", "prime de risque"), ("croissance_perpetuelle", "croissance perpétuelle")):
+        if abs(float(p[k]) - float(PARAMS[k])) > 1e-9:
+            out.append(f"{lib} {p[k]:.2%} (standard {PARAMS[k]:.2%})".replace(".", ","))
+    if taux_sans_risque is not None:
+        out.append(f"taux sans risque saisi {taux_sans_risque:.2%} (standard : taux souverain du pays)".replace(".", ","))
+    for k, lib in (("poids_entreprise", "pondérations entreprises"), ("poids_banque", "pondérations banques")):
+        if banque is not None and (k == "poids_banque") != banque:
+            continue
+        a = {m: float(v) for m, v in (p[k] or {}).items()}
+        b = {m: float(v) for m, v in PARAMS[k].items()}
+        ta, tb = sum(a.values()) or 1, sum(b.values())
+        if any(abs(a.get(m, 0) / ta - b.get(m, 0) / tb) > 1e-6 for m in set(a) | set(b)):
+            out.append(lib + " " + ", ".join(f"{m} {v:g}" for m, v in a.items()))
+    man = p.get("beta_manuel")
+    if (isinstance(man, dict) and (man.get(ticker) if ticker else man)) or (_num(man) and man > 0):
+        out.append("bêta saisi")
+    if p.get("beta_debut") or p.get("beta_fin"):
+        out.append("fenêtre de bêta personnalisée")
+    if dynamique:
+        out.append(f"dynamique des publications intermédiaires ({dynamique.get('label', '12 mois glissants')})")
+    return out
+
+
 def valeur_fondamentale(ticker: str, ef: dict[str, Societe] | None, base: BaseMarche | None,
                         date_arrete: date | None = None, params: dict | None = None,
-                        taux_sans_risque: float | None = None) -> Resultat:
-    """Valeur fondamentale d'un titre. ``taux_sans_risque`` (décimal) remplace le taux souverain du pays."""
+                        taux_sans_risque: float | None = None, dynamique: dict | None = None) -> Resultat:
+    """Valeur fondamentale d'un titre. ``taux_sans_risque`` (décimal) remplace le taux souverain du pays.
+    ``dynamique`` : {"rn_ltm": résultat net des 12 mois glissants en FCFA, "label": "12 mois à S1 2026",
+    "periode": "T1" | "S1" | "T3"}."""
     p = dict(PARAMS)
     p.update(params or {})
     d = date_arrete or (base.derniere_date if base is not None else None) or date.today()
@@ -669,6 +730,9 @@ def valeur_fondamentale(ticker: str, ef: dict[str, Societe] | None, base: BaseMa
         d = base.derniere_date                            # date d'arrêté plafonnée à la dernière séance de la base
     res = Resultat(ticker=ticker, date_arrete=d)
     soc = (ef or {}).get(ticker)
+    res.ecarts_reglages = ecarts_reglages(params, dynamique, taux_sans_risque,
+                                          banque=bool(soc and soc.banque) or pays_secteur(ticker)[1] == _FIN, ticker=ticker)
+    res.reglages_standards = not res.ecarts_reglages
     ly = dernier_exercice_clos(d)
     res.cours = cours_a_date(base, ticker, d)
     shares = base.nb_titres.get(ticker) if base is not None else None
@@ -683,7 +747,9 @@ def valeur_fondamentale(ticker: str, ef: dict[str, Societe] | None, base: BaseMa
         return res
     years = sorted(y for y in (soc.annees if soc else {}) if y <= ly and _num(soc.rn(y)))
     banque = bool(soc and soc.banque) or secteur == _FIN
-    poids = p["poids_banque"] if banque else p["poids_entreprise"]
+    poids = {m: float(v) for m, v in (p["poids_banque"] if banque else p["poids_entreprise"]).items()}
+    for m in ("PER", "P/B", "Dividendes", "DCF", "P/B justifié"):
+        poids.setdefault(m, 0.0)
     cands: list[Methode] = []
     bpa_ex = {y: soc.rn(y) / shares for y in years} if soc else {}
     if years:
@@ -696,10 +762,23 @@ def valeur_fondamentale(ticker: str, ef: dict[str, Societe] | None, base: BaseMa
         if stale:
             res.notes.append(f"Derniers résultats connus datant de {y} : seules les méthodes fondées sur le "
                              f"dividende sont retenues.")
-        if not stale and res.bpa > 0:
+        rn_ltm = (dynamique or {}).get("rn_ltm")
+        bpa_ltm = rn_ltm / shares if _num(rn_ltm) and rn_ltm > 0 else None
+        if dynamique and bpa_ltm is None:
+            res.notes.append("Dynamique des publications intermédiaires demandée mais résultat des 12 mois glissants "
+                             "indisponible ou négatif : PER appliqué au seul dernier exercice clos.")
+        if not stale and (res.bpa > 0 or bpa_ltm):
             res.pe_cible, res.pe_source = _multiple_historique(soc, base, ticker, shares, y, d, "pe", p)
-            cands.append(Methode("PER", res.bpa * res.pe_cible, poids["PER"],
-                                 f"BPA {y} {res.bpa:,.0f} FCFA x PER {res.pe_cible:.1f}x ({res.pe_source})"))
+            part = (0.3 if (dynamique or {}).get("periode") == "T1" else 0.5) if bpa_ltm else 0.0
+            if res.bpa > 0:
+                cands.append(Methode("PER", res.bpa * res.pe_cible, poids["PER"] * (1 - part),
+                                     f"BPA {y} {res.bpa:,.0f} FCFA x PER {res.pe_cible:.1f}x ({res.pe_source})"))
+            if bpa_ltm:
+                res.bpa_ltm = bpa_ltm
+                cands.append(Methode("PER 12 mois glissants", bpa_ltm * res.pe_cible,
+                                     poids["PER"] * (part if res.bpa > 0 else 1.0),
+                                     f"BPA {dynamique.get('label', '12 mois glissants')} {bpa_ltm:,.0f} FCFA x PER "
+                                     f"{res.pe_cible:.1f}x ({part:.0%} du poids du PER)"))
         if not stale and _num(res.fpa) and res.fpa > 0:
             res.pb_cible, res.pb_source = _multiple_historique(soc, base, ticker, shares, y, d, "pb", p)
             cands.append(Methode("P/B", res.fpa * res.pb_cible, poids["P/B"],
@@ -754,6 +833,9 @@ def valeur_fondamentale(ticker: str, ef: dict[str, Societe] | None, base: BaseMa
             if m not in retenues:
                 res.ecartees.append((m.nom, f"valeur {m.valeur:,.0f} FCFA hors de [{p['garde_fou_bas']}x ; "
                                             f"{p['garde_fou_haut']}x] le cours : donnée source à vérifier".replace(",", " ")))
+    for m in retenues:
+        if m.poids <= 0:
+            res.ecartees.append((m.nom, "pondération nulle"))
     retenues = [m for m in retenues if _num(m.valeur) and m.valeur > 0 and m.poids > 0]
     res.methodes = retenues
     if retenues:
@@ -810,3 +892,7 @@ def _dcf(soc: Societe, y: int, years: list, k: float, g: float, shares: float, p
 def valoriser_tout(ef, base, date_arrete=None, params=None, tickers=None) -> dict[str, Resultat]:
     tickers = tickers or sorted(set(ef or {}) | {t for t in (base.nb_titres if base else {})})
     return {t: valeur_fondamentale(t, ef, base, date_arrete, params) for t in tickers}
+
+
+def poids_standards(banque: bool) -> dict:
+    return dict(PARAMS["poids_banque" if banque else "poids_entreprise"])

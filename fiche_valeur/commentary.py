@@ -152,8 +152,10 @@ def build_commentary(a) -> dict:
                     else (f" et ne verse pas de dividende au titre de {val.dps_exercice}" if val.dps == 0 and val.dps_exercice else ""))
                  + ".")
     if is_num(val.eps_ltm) and is_num(val.pe_ltm):
+        dans_jv = (not getattr(val, "moteur_commun", False)) or any(m.name == "PER 12 mois glissants" for m in val.methods)
         v.append(f"Sur {val.ltm_label}, le BPA ressort à {fmt_num(val.eps_ltm)} FCFA (PER glissant de {fmt_x(val.pe_ltm)}), "
-                 f"ce qui intègre la dynamique de l'exercice en cours dans la juste valeur.")
+                 + ("ce qui intègre la dynamique de l'exercice en cours dans la juste valeur." if dans_jv else
+                    "dynamique prise en compte dans le pilier croissance mais pas dans la juste valeur (option non retenue)."))
     if is_num(val.fair_value):
         v.append(f"La juste valeur multicritère ressort à {fmt_price(val.fair_value)} "
                  f"(fourchette {fmt_price(val.fv_low)} - {fmt_price(val.fv_high)}), soit un potentiel de "

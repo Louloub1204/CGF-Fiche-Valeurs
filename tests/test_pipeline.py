@@ -791,3 +791,45 @@ def test_moteur_commun_regles_donnees(tmp_path):
     assert d0 == 900 and not note                      # distribution couverte par le bénéfice : ordinaire
     base.dividendes["AAAA"][2025] = 0.0
     assert vc.dividende_retenu(base, "AAAA", date(2026, 7, 2))[0] == 0.0
+
+
+def test_moteur_commun_reglages_optionnels(tmp_path):
+    """Pondérations, bêta et dynamique intermédiaire : valeurs modifiées et écart signalé ; standards = alignés."""
+    from datetime import date
+    from dataclasses import replace
+
+    from fiche_valeur import valorisation_commune as vc
+    ef_path, mb_path = _common_files(tmp_path)
+    ef_c, base_c = vc.lire_etats_financiers(ef_path), vc.lire_base_smf(mb_path)
+    std = vc.valeur_fondamentale("DAGC", ef_c, base_c)
+    assert std.reglages_standards and not std.ecarts_reglages
+    # pondérations : PER seul
+    per = vc.valeur_fondamentale("DAGC", ef_c, base_c, params={"poids_entreprise": {"PER": 100, "P/B": 0,
+                                                                                    "Dividendes": 0, "DCF": 0}})
+    assert [m.nom for m in per.methodes] == ["PER"] and not per.reglages_standards
+    assert abs(per.valeur - per.bpa * per.pe_cible) < 1e-6
+    # mêmes proportions que les standards : toujours standard
+    assert vc.valeur_fondamentale("DAGC", ef_c, base_c, params={"poids_entreprise": {
+        "PER": 3, "P/B": 2, "Dividendes": 2, "DCF": 3}}).reglages_standards
+    # bêta saisi et fenêtre de bêta
+    b2 = vc.valeur_fondamentale("DAGC", ef_c, base_c, params={"beta_manuel": {"DAGC": 1.3}})
+    assert b2.beta == 1.3 and b2.k > std.k and b2.valeur != std.valeur
+    fen = vc.valeur_fondamentale("DAGC", ef_c, base_c, params={"beta_debut": date(2022, 1, 1),
+                                                               "beta_fin": date(2024, 12, 31)})
+    assert "2024" in fen.beta_source and "fenêtre" in " ".join(fen.ecarts_reglages)
+    # dynamique : BPA 12 mois glissants à la moitié du poids du PER
+    dyn = vc.valeur_fondamentale("DAGC", ef_c, base_c, dynamique={"rn_ltm": 16000e6, "label": "12 mois à S1 2026",
+                                                                  "periode": "S1"})
+    w = {m.nom: m.poids for m in dyn.methodes}
+    assert w["PER"] == w["PER 12 mois glissants"] == 15 and dyn.valeur > std.valeur
+    # dans la fiche : option décochée = standard, pondérations choisies transmises
+    config.register_ticker("DAGC", "Société test", "CI", "Consommation de base")
+    st = Settings(en_ligne=False, date_arrete=base_c.derniere_date)
+    mb = load_market_base(mb_path)
+    a = run_analysis(None, "DAGC", st, market_base=mb, commun=(ef_c, base_c))
+    assert a.valuation.reglages_standards and abs(a.valuation.fair_value - std.valeur) < 1e-6
+    st2 = replace(st, poids_methodes={"entreprise": {"PER": 100, "P/B": 0, "Dividendes": 0, "DCF": 0},
+                                      "banque": vc.poids_standards(True)})
+    a2 = run_analysis(None, "DAGC", st2, market_base=mb, commun=(ef_c, base_c))
+    assert abs(a2.valuation.fair_value - per.valeur) < 1e-6 and not a2.valuation.reglages_standards
+    assert "peut différer" in a2.valuation.notes[0]
