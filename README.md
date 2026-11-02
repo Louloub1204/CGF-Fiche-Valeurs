@@ -466,3 +466,12 @@ valeur » (le PER est alors appliqué pour moitié au BPA des 12 mois glissants,
 pondérations des méthodes (entreprises : PER, P/B, Dividendes, DCF ; banques : PER, P/B, Dividendes, P/B justifié).
 Les valeurs proposées sont les réglages standards ; tout autre réglage est signalé dans la fiche, car la juste valeur peut
 alors différer de la valeur fondamentale de l'application SMF.
+
+## Hypothèses personnalisées (conservées d'un titre à l'autre)
+
+Dans la barre latérale, tout champ d'hypothèse modifié (taux sans risque, prime de risque, croissance, bêta par défaut,
+dynamique intermédiaire, seuils, multiples de référence, poids des méthodes et des piliers) est verrouillé (🔒) : il
+garde sa valeur quand on change de titre et s'applique aussi au tableau de bord multi-valeurs. Les champs non modifiés
+restent automatiques, propres à chaque titre, y compris dans le tableau multi-valeurs (auparavant, celui-ci appliquait à
+toute la sélection les paramètres automatiques du titre affiché). Le bouton « Revenir aux paramètres automatisés »
+déverrouille tout. Les données de marché saisies (cours, nombre de titres, dividende) restent propres au titre affiché.

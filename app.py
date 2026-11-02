@@ -95,6 +95,33 @@ def _market(data: bytes, ver: str = ""):
     return load_market_base(io.BytesIO(data))
 
 
+PERSO_LABELS = {"rf": "taux sans risque", "erp": "prime de risque", "g": "croissance perpétuelle",
+                "beta": "bêta par défaut", "dyn_val": "dynamique intermédiaire dans la juste valeur",
+                "s_buy": "seuil d'achat", "s_sell": "seuil de vente", "use_def": "multiples de référence",
+                "pm": "poids de la méthode {m}", "w": "poids du pilier {m}"}
+
+
+def settings_for(ap_t, base: Settings) -> Settings:
+    """Paramètres d'un titre : valeurs automatiques du titre, remplacées par les hypothèses personnalisées."""
+    from fiche_valeur import valorisation_commune as vc_
+    pr = st.session_state.get("perso", {})
+    d0 = Settings()
+    auto_w = dict(ap_t.poids) if ap_t is not None and ap_t.poids else dict(d0.poids)
+    w_t = {k: float(pr.get(f"w|{k}", auto_w.get(k, d0.poids[k]))) for k in config.PILLAR_LABELS}
+    pm = {f: {m: float(pr.get(f"pm|{f}|{m}", v)) for m, v in vc_.poids_standards(f == "banque").items()}
+          for f in ("entreprise", "banque")}
+    pm_std = all(pm[f][m] == v for f in pm for m, v in vc_.poids_standards(f == "banque").items())
+    return replace(
+        base,
+        taux_sans_risque=float(pr.get("rf", ap_t.rf if ap_t is not None else 6.5)),
+        prime_risque_marche=float(pr.get("erp", 5.5)), croissance_long_terme=float(pr.get("g", 3.0)),
+        beta_defaut=float(pr.get("beta", ap_t.beta if ap_t is not None else 1.0)),
+        seuil_potentiel_achat=float(pr.get("s_buy", ap_t.seuil_achat if ap_t is not None else 15.0)),
+        seuil_potentiel_vente=float(pr.get("s_sell", ap_t.seuil_vente if ap_t is not None else -15.0)),
+        multiples_defaut=bool(pr.get("use_def", True)), dynamique_valorisation=bool(pr.get("dyn_val", False)),
+        poids=w_t, poids_methodes=None if pm_std else pm, taux_sans_risque_saisi="rf" in pr)
+
+
 @st.cache_data(show_spinner="Lecture des fichiers par le moteur commun de valorisation...")
 def _commun(ef: bytes | None, mkt: bytes | None, ver: str = ""):
     """États financiers et base SMF lus par le moteur commun (identique à l'application SMF)."""
@@ -358,6 +385,36 @@ with st.sidebar:
     ap = _auto_params(ticker, ef_bytes, ef_name, mkt_bytes, online, VER) if (auto and ticker) else None
     sfx = f"{ticker}_{int(auto)}_{int(online)}_{len(mkt_bytes or b'')}"
 
+    # Hypothèses personnalisées : un champ modifié est verrouillé (il ne revient pas à sa valeur automatique quand
+    # on change de titre) jusqu'au retour explicite aux paramètres automatisés ; il s'applique aussi au tableau de
+    # bord multi-valeurs. Les champs non modifiés restent automatiques, propres à chaque titre.
+    perso = st.session_state.setdefault("perso", {})
+    gen = st.session_state.get("perso_gen", 0)
+    if perso:
+        st.info("Hypothèses personnalisées, conservées pour tous les titres et le tableau multi-valeurs : "
+                + ", ".join(PERSO_LABELS.get(k_.split("|")[0], k_).replace("{m}", k_.split("|")[-1]) for k_ in perso)
+                + ".")
+        if st.button("Revenir aux paramètres automatisés", width="stretch"):
+            st.session_state["perso"] = {}
+            st.session_state["perso_gen"] = gen + 1
+            st.rerun()
+
+    def _lock(field, widget, label, auto_value, **kw):
+        """Champ verrouillable : valeur personnalisée si elle existe, sinon valeur automatique du titre."""
+        locked = field in perso
+        key = f"{field}_perso_g{gen}" if locked else f"{field}_{sfx}_g{gen}"
+        if key in st.session_state:
+            val = widget(label + (" 🔒" if locked else ""), key=key, **kw)
+        else:
+            val = widget(label + (" 🔒" if locked else ""), value=perso.get(field, auto_value), key=key, **kw)
+        if locked or val != auto_value:
+            if not locked:
+                perso[field] = val
+                st.session_state[f"{field}_perso_g{gen}"] = val
+                st.rerun()
+            perso[field] = val
+        return val
+
     def _src(txt):
         if ap is not None and txt:
             st.caption(f"Auto : {txt}")
@@ -403,33 +460,32 @@ with st.sidebar:
         _src(ap.notes_src if ap else "")
     with st.expander("Hypothèses de valorisation" + (" (préremplies)" if ap else "")):
         st.caption("Ces paramètres fixent le coût des fonds propres k = taux sans risque + bêta x prime de risque.")
-        rf = st.number_input("Taux sans risque (%)", value=float(ap.rf) if ap else 6.50, step=0.05, key=f"rf_{sfx}",
-                             help="Rendement des titres souverains UMOA de maturité longue (5 à 10 ans).")
+        rf = _lock("rf", st.number_input, "Taux sans risque (%)", float(ap.rf) if ap else 6.50, step=0.05,
+                   help="Rendement des titres souverains UMOA de maturité longue (5 à 10 ans).")
         _src(ap.rf_src if ap else "")
-        erp = st.number_input("Prime de risque actions (%)", value=5.50, step=0.25,
+        erp = _lock("erp", st.number_input, "Prime de risque actions (%)", 5.50, step=0.25,
                               help="Rendement supplémentaire exigé pour détenir des actions plutôt que le "
                                    "sans-risque. Usuel : 5 à 7% sur la BRVM.")
-        g = st.number_input("Croissance perpétuelle (%)", value=3.00, step=0.25,
+        g = _lock("g", st.number_input, "Croissance perpétuelle (%)", 3.00, step=0.25,
                             help="Croissance des dividendes à très long terme. Ne doit pas dépasser la "
                                  "croissance nominale de l'économie (3 à 4%).")
-        beta = st.number_input("Bêta par défaut", value=float(ap.beta) if ap else 1.00, step=0.05, key=f"beta_{sfx}",
+        beta = _lock("beta", st.number_input, "Bêta par défaut", float(ap.beta) if ap else 1.00, step=0.05,
                                help="Utilisé si la régression du titre sur le BRVM Composite n'est pas significative.")
         _src(ap.beta_src if ap else "")
-        dyn_val = st.checkbox(
-            "Intégrer la dynamique des publications intermédiaires dans la juste valeur", value=False,
-            key="dyn_val",
+        dyn_val = _lock(
+            "dyn_val", st.checkbox, "Intégrer la dynamique des publications intermédiaires dans la juste valeur", False,
             help="Le PER est appliqué pour moitié au BPA des 12 mois glissants (30% après un seul trimestre publié) "
                  "et pour moitié au BPA du dernier exercice clos. Décoché (réglage standard), la dynamique n'agit que "
                  "sur le pilier croissance et la juste valeur reste identique à celle de l'application SMF.")
-        s_buy = st.number_input("Potentiel minimal pour ACHAT (%)", value=float(ap.seuil_achat) if ap else 15.0,
-                                step=1.0, key=f"sb_{sfx}",
+        s_buy = _lock("s_buy", st.number_input, "Potentiel minimal pour ACHAT (%)",
+                      float(ap.seuil_achat) if ap else 15.0, step=1.0,
                                 help="Potentiel de hausse vers la juste valeur à partir duquel un titre est "
                                      "considéré en décote.")
-        s_sell = st.number_input("Potentiel maximal pour VENDRE (%)", value=float(ap.seuil_vente) if ap else -15.0,
-                                 step=1.0, key=f"ss_{sfx}",
+        s_sell = _lock("s_sell", st.number_input, "Potentiel maximal pour VENDRE (%)",
+                       float(ap.seuil_vente) if ap else -15.0, step=1.0,
                                  help="Potentiel en dessous duquel un titre est considéré en surcote.")
         _src(ap.seuil_src if ap else "")
-        use_def = st.toggle("Multiples de référence si pairs insuffisants", value=True,
+        use_def = _lock("use_def", st.toggle, "Multiples de référence si pairs insuffisants", True,
                             help="Quand le classeur compte moins de deux comparables, utilise des multiples "
                                  "sectoriels de référence (config.SECTOR_MULTIPLES), signalés dans la fiche.")
     with st.expander("Pondération des méthodes de valorisation"):
@@ -443,9 +499,11 @@ with st.sidebar:
             st.markdown(f"**{lib}**")
             std = _vcp.poids_standards(fam == "banque")
             cols_m = st.columns(len(std))
-            poids_m[fam] = {m: cols_m[i].number_input(m, min_value=0.0, max_value=100.0, value=float(v), step=5.0,
-                                                        key=f"pm_{fam}_{m}")
-                            for i, (m, v) in enumerate(std.items())}
+            poids_m[fam] = {}
+            for i, (m, v) in enumerate(std.items()):
+                with cols_m[i]:
+                    poids_m[fam][m] = _lock(f"pm|{fam}|{m}", st.number_input, m, float(v), min_value=0.0,
+                                            max_value=100.0, step=5.0)
         poids_std = all(abs(poids_m[f][m] - v) < 1e-9 for f in poids_m
                         for m, v in _vcp.poids_standards(f == "banque").items())
         if not poids_std:
@@ -464,8 +522,8 @@ with st.sidebar:
                  "macro": "Croissance, inflation, politique monétaire, sensibilité du secteur.",
                  "sentiment": "Tonalité des actualités récentes."}
         for k, lab in config.PILLAR_LABELS.items():
-            w[k] = st.slider(lab, 0, 50, int(base_w.get(k, defaults.poids[k])), step=5, help=helps.get(k),
-                             key=f"w_{k}_{sfx}")
+            w[k] = _lock(f"w|{k}", st.slider, lab, int(base_w.get(k, defaults.poids[k])), min_value=0, max_value=50,
+                         step=5, help=helps.get(k))
     with st.expander("Politique monétaire BCEAO"):
         st.caption("Dernière décision du Comité de Politique Monétaire. À vérifier avant diffusion.")
         b = dict(config.BCEAO)
@@ -491,7 +549,7 @@ settings = Settings(taux_sans_risque=rf, prime_risque_marche=erp, croissance_lon
                     poids=w, seuil_potentiel_achat=s_buy, seuil_potentiel_vente=s_sell, en_ligne=online,
                     multiples_defaut=use_def, claude_api_key=api_key or "", claude_model=model,
                     maison=house or config.DEFAULT_HOUSE, analyste=analyst, date_arrete=as_of,
-                    taux_sans_risque_saisi=bool(ap) and abs(float(rf) - float(ap.rf)) > 1e-9,
+                    taux_sans_risque_saisi="rf" in perso,
                     dynamique_valorisation=dyn_val, poids_methodes=None if poids_std else poids_m)
 commun = _commun(ef_bytes, mkt_bytes, VER) if (ef_bytes and mkt_bytes) else None
 overrides = {}
@@ -567,6 +625,12 @@ with tab_batch:
     chosen = st.multiselect("Valeurs à analyser", all_tickers, default=all_tickers,
                             format_func=lambda t_: f"{t_} - {config.TICKERS.get(t_, {}).get('nom', t_)}")
     with_pdf = st.checkbox("Inclure les fiches PDF dans l'archive", value=True)
+    _pr = st.session_state.get("perso", {})
+    st.caption(("Hypothèses personnalisées appliquées à tous les titres : "
+                + ", ".join(PERSO_LABELS.get(k_.split("|")[0], k_).replace("{m}", k_.split("|")[-1]) for k_ in _pr)
+                + ". Les autres paramètres sont " + ("automatiques, propres à chaque titre." if auto else "les valeurs par défaut."))
+               if _pr else ("Paramètres automatiques propres à chaque titre (taux souverain du pays, bêta du secteur, "
+                            "seuils, pondérations)." if auto else "Paramètres par défaut pour tous les titres."))
     if st.button("Analyser la sélection", type="primary", disabled=not chosen):
         results, errors = [], []
         bar = st.progress(0.0, text="Démarrage...")
@@ -574,7 +638,9 @@ with tab_batch:
         for i, t_ in enumerate(chosen):
             bar.progress(i / max(1, len(chosen)), text=f"{t_} ({i + 1}/{len(chosen)})")
             try:
-                results.append(run_analysis(wb, t_, batch_settings, market_base=mb, bceao=b, interim_data=idata,
+                ap_t = _auto_params(t_, ef_bytes, ef_name, mkt_bytes, online, VER) if auto else None
+                results.append(run_analysis(wb, t_, settings_for(ap_t, batch_settings), market_base=mb, bceao=b,
+                                            interim_data=idata,
                                         charia_data=chdata, commun=commun))
             except Exception as exc:  # une valeur en erreur n'arrête pas le lot
                 errors.append(f"{t_} : {type(exc).__name__} {exc}")
