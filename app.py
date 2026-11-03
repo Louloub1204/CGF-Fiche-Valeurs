@@ -687,6 +687,43 @@ with tab_batch:
         for e_ in st.session_state.get("batch_errors", []):
             st.error(e_)
 
+        # Présentation PowerPoint « Contexte de marché actions » -----------------------------------------------
+        st.markdown("#### Présentation du contexte de marché")
+        st.caption(f"Quatre diapositives au {as_of:%d/%m/%Y} : la première sur le modèle CGF « Le marché des actions de la "
+                   "BRVM » (chiffres du Bulletin Officiel de la Cote du jour d'arrêté, sinon de la séance précédente, "
+                   "complétés par la base SMF ; actualités du marché en ligne), puis les signaux de la cote, la "
+                   "performance et la valorisation par secteur, les convictions et points de vigilance issus des fiches. "
+                   + ("Textes rédigés par Claude (clé API renseignée)." if settings.claude_api_key else
+                      "Textes rédigés automatiquement à partir des chiffres ; renseignez une clé API Claude (barre "
+                      "latérale) pour une rédaction assistée."))
+        tpl_file = st.file_uploader("Autre modèle PowerPoint (facultatif, même structure que le modèle CGF)",
+                                    type=["pptx"], key="deck_tpl")
+        if st.button("Préparer la présentation PowerPoint", key="deck_btn"):
+            from fiche_valeur.market_deck import build_market_deck
+            errs_d: list[str] = []
+            with st.status("Préparation de la présentation...", expanded=False) as status_d:
+                try:
+                    deck, info_d = build_market_deck(
+                        results, as_of, mb, online=online, template=tpl_file.getvalue() if tpl_file else None,
+                        api_key=settings.claude_api_key, model=settings.claude_model, errors=errs_d,
+                        progress=lambda m_: status_d.update(label=m_))
+                    st.session_state["deck"] = (deck, info_d, errs_d)
+                    status_d.update(label="Présentation prête", state="complete")
+                except Exception as exc:
+                    status_d.update(label="Échec de la préparation", state="error")
+                    st.error(f"Présentation : {type(exc).__name__} {exc}")
+        if st.session_state.get("deck"):
+            deck, info_d, errs_d = st.session_state["deck"]
+            st.download_button("Télécharger la présentation (PowerPoint)", deck,
+                               f"Contexte_marche_actions_BRVM_{info_d['date']:%Y%m%d}.pptx",
+                               "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                               type="primary", on_click="ignore")
+            st.caption(("Chiffres du BOC du " + f"{info_d['date']:%d/%m/%Y}" if info_d["boc"] else
+                        "BOC indisponible : chiffres de la base SMF") + f" ; {info_d['actualites']} actualité(s) du marché ; "
+                       f"rédaction : {info_d['redaction']}.")
+            for e_ in errs_d:
+                st.warning(e_)
+
 
 # ---------------------------------------------------------------------------
 # Analyse d'une valeur

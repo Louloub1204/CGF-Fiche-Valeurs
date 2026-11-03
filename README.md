@@ -475,3 +475,20 @@ garde sa valeur quand on change de titre et s'applique aussi au tableau de bord 
 restent automatiques, propres à chaque titre, y compris dans le tableau multi-valeurs (auparavant, celui-ci appliquait à
 toute la sélection les paramètres automatiques du titre affiché). Le bouton « Revenir aux paramètres automatisés »
 déverrouille tout. Les données de marché saisies (cours, nombre de titres, dividende) restent propres au titre affiché.
+
+## Présentation « Contexte de marché actions » (tableau de bord multi-valeurs)
+
+Après l'analyse d'une sélection, le bouton « Préparer la présentation PowerPoint » produit quatre diapositives à la
+date d'arrêté :
+
+1. **Le marché des actions de la BRVM**, sur le modèle CGF (`fiche_valeur/templates/modele_contexte_marche.pptx`, ou un
+   autre modèle chargé de même structure) : BRVM Composite depuis janvier, capitalisation et sa variation depuis le 31/12,
+   valeurs en hausse, Top 5 et Flop 5, bilan, signaux de vigilance et perspectives. Chiffres du Bulletin Officiel de la
+   Cote (`https://bfin.brvm.org/boc/BOC_JOUR/BOC_AAAAMMJJ.pdf`) du jour d'arrêté, ou de la séance précédente la plus
+   proche, complétés par la base SMF (performances par titre, capitalisation de fin d'année, liquidité moyenne) ; si le
+   BOC est indisponible, tout vient de la base SMF. Actualités du marché : Google Actualités (45 jours jusqu'à la date
+   d'arrêté). Textes rédigés par Claude si une clé API est renseignée, sinon par des règles fixes à partir des chiffres
+   et des fiches (titres en forte hausse en perte, sans dividende ou en forte surcote).
+2. **Les signaux de la cote** : répartition des signaux et meilleures opportunités (potentiel vers la juste valeur).
+3. **Performance et valorisation par secteur** : hausse depuis janvier et potentiel médian, PER, rendement, signal dominant.
+4. **Convictions et points de vigilance** : trois convictions, titres spéculatifs, actualité du marché.

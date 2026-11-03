@@ -833,3 +833,39 @@ def test_moteur_commun_reglages_optionnels(tmp_path):
     a2 = run_analysis(None, "DAGC", st2, market_base=mb, commun=(ef_c, base_c))
     assert abs(a2.valuation.fair_value - per.valeur) < 1e-6 and not a2.valuation.reglages_standards
     assert "peut différer" in a2.valuation.notes[0]
+
+
+def test_boc_parser_extrait_reel():
+    """Extrait réel du BOC du 30/10/2026 (texte tel qu'extrait du PDF, lignes de titres sur plusieurs lignes)."""
+    from datetime import date
+
+    from fiche_valeur.market_deck import parse_boc_text
+    b = parse_boc_text((ROOT / "tests" / "fixtures" / "boc_extrait.txt").read_text(encoding="utf-8"))
+    assert b.date == date(2026, 10, 30) and b.composite == 534.71 and abs(b.composite_ytd - 0.5465) < 1e-9
+    assert b.capitalisation == 20968742899471 and b.volume == 942081 and b.valeur == 2038955431
+    assert (b.n_transiges, b.n_hausse, b.n_baisse, b.n_inchanges) == (46, 25, 16, 5)
+    sect = {x[0]: x for x in b.secteurs}
+    assert abs(sect["Services pub."][4] - 1.298) < 1e-9 and sect["Industrie"][5] == 150.32
+    c = b.cotations
+    assert len(c) == 10 and c["NSBC"].nom == "NSIA BANQUE COTE D'IVOIRE" and abs(c["NSBC"].ytd - 0.6295) < 1e-9
+    assert c["NTLC"].cours == 13400 and c["NTLC"].volume == 647 and c["NTLC"].valeur == 8579880 and c["NTLC"].per == 16.05
+    assert c["SIVC"].cours == 1695 and c["SIVC"].rendement is None and c["SIVC"].per == 82.57
+    assert abs(c["STAC"].rendement - 0.0372) < 1e-9 and c["STAC"].per is None and c["SAFC"].per == 63.67
+
+
+def test_presentation_contexte_marche(analyses, mb):
+    from datetime import date
+    from pptx import Presentation
+
+    from fiche_valeur.market_deck import build_market_deck, parse_boc_text
+    boc = parse_boc_text((ROOT / "tests" / "fixtures" / "boc_extrait.txt").read_text(encoding="utf-8"))
+    data, info = build_market_deck(list(analyses.values()), date(2026, 10, 30), mb, online=False, boc=boc, actus=[])
+    prs = Presentation(io.BytesIO(data))
+    assert len(prs.slides) == 4 and info["boc"] and info["redaction"] == "règles"
+    s1 = {sh.name: sh for sh in prs.slides[0].shapes}
+    assert s1["Text 5"].text_frame.text == "+54,65%" and s1["Text 8"].text_frame.text == "20 969"
+    assert "OCTOBRE 2026" in s1["Text 17"].text_frame.text
+    tableaux = " ".join(c.text for n_, sh in s1.items() if n_.startswith("Table ") for c in sh.table.rows[0].cells)
+    assert "SUCRIVOIRE" not in tableaux and "SAPH CI" not in tableaux     # aucune ligne du modèle ne subsiste
+    txt = " ".join(sh.text_frame.text for sl in prs.slides for sh in sl.shapes if sh.has_text_frame)
+    assert "—" not in txt and " %" not in txt.replace("Base = 100", "")

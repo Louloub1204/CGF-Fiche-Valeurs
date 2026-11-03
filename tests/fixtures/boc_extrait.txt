@@ -1,0 +1,47 @@
+vendredi 30 octobre 2026 N° 207
+BRVM COMPOSITE 534,71
+Variation Jour 1,22 %
+Variation annuelle 54,65 %
+BRVM PRESTIGE 198,32
+Variation Jour 1,22 %
+Variation annuelle 37,48 %
+Actions Niveau Evol. Jour
+Capitalisation boursière (FCFA)(Actions & Droits) 20 968 742 899 471 1,22 %
+Volume échangé (Actions & Droits) 942 081 -13,76 %
+Valeur transigée (FCFA) (Actions & Droits) 2 038 955 431 -6,99 %
+Nombre de titres transigés 46 0,00 %
+Nombre de titres en hausse 25 19,05 %
+Nombre de titres en baisse 16 0,00 %
+Nombre de titres inchangés 5 -44,44 %
+Obligations Niveau Evol. Jour
+Capitalisation boursière (FCFA) 13 443 390 245 828 0,04 %
+Volume échangé 12 144 8 452,11 %
+Valeur transigée (FCFA) 70 587 670 5 667,26 %
+Nombre de titres transigés 9 28,57 %
+Nombre de titres en hausse 5 400,00 %
+Nombre de titres en baisse 1
+Nombre de titres inchangés 3 -50,00 %
+Base = 100 au 02 janvier 2025 Nombre de sociétés Valeur Evol. Jour Evol. annuelle Volume Valeur PER moyen
+BRVM - TELECOMMUNICATIONS 3 149,57 3,25 % 57,61 % 192 353 810 500 075 14,17
+BRVM - CONSOMMATION DISCRETIONNAIRE 7 181,71 0,13 % 5,02 % 21 573 56 323 910 42,02
+BRVM - SERVICES FINANCIERS 17 241,97 -0,71 % 65,89 % 660 641 836 778 736 16,31
+BRVM - CONSOMMATION DE BASE (**) 9 264,97 2,45 % 22,63 % 24 245 190 621 705 12,63
+BRVM - INDUSTRIELS 6 212,90 1,97 % 60,89 % 33 315 92 077 120 150,32
+BRVM - ENERGIE 4 158,59 0,85 % 42,99 % 6 410 26 899 930 18,25
+BRVM - SERVICES PUBLICS 2 243,36 1,67 % 129,80 % 3 544 25 753 955 22,43
+CB NTLC NESTLE CI 13 190 13 190 13 400 1,59 % 647 8 579 880 13 400 25,82 % 369,6 7-sept.-26 2,76 % 16,05
+CB PALC PALM CI 7 500 7 600 7 360 -1,87 % 4 923 36 541 910 7 360 -9,14 % 441,04 29-juin-26 5,99 % 7,34
+CB SPHC SAPH CI 8 150 8 500 8 300 1,84 % 5 777 48 154 825 8 300 5,06 % 430,32 28-août-26 5,18 % 8,49
+FIN NSBC NSIA BANQUE COTE
+D'IVOIRE 18 650 18 650 18 650 0,00 % 2 343 43 513 700 18 650 62,95 % 675,98 4-août-26 3,62 % 11,33
+FIN ORGT ORAGROUP TOGO 2 700 2 700 2 705 0,19 % 2 049 5 543 925 2 705 12,71 % 59,52 17-juil.-20 2,20 % 8,68
+FIN SAFC SAFCA CI 3 770 3 770 3 760 -0,27 % 3 378 12 685 380 3 760 13,77 % 23,04 29-juil.-11 63,67
+IND
+SIVC ERIUM CI (Ex AIR LIQUIDE
+CI)
+ 1 685 1 690 1 695 0,59 % 2 009 3 395 730 1 695 7,28 % 63 29-sept.-17 82,57
+IND STAC SETAO CI 1 745 1 745 1 780 2,01 % 1 387 2 457 265 1 780 34,34 % 66,15 18-juil.-22 3,72 %
+SPU CIEC CIE CI 5 400 5 400 5 500 1,85 % 2 643 14 303 140 5 500 133,05 % 205,92 28-juil.-26 3,74 % 23,46
+SPU SDCC SODE CI 12 700 12 750 12 850 1,18 % 901 11 450 815 12 850 121,55 % 462 16-sept.-26 3,60 % 19,67
+TOTAL 713 073 584 166 126
+TOTAL - MARCHE DES ACTIONS 942 081 2 038 955 431
