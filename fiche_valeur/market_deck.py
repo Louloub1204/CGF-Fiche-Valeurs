@@ -39,6 +39,8 @@ SECTEURS_BOC = {"CB": "Consommation base", "CD": "Consommation discr.", "FIN": "
 SECTEURS_INDICES = {"TELECOMMUNICATIONS": "Télécoms", "CONSOMMATION DISCRETIONNAIRE": "Consommation discr.",
                     "SERVICES FINANCIERS": "Finances", "CONSOMMATION DE BASE": "Consommation base",
                     "INDUSTRIELS": "Industrie", "ENERGIE": "Énergie", "SERVICES PUBLICS": "Services pub."}
+INDICES_BASE = {"BRVMTEL": "Télécoms", "BRVMCD": "Consommation discr.", "BRVMSFIN": "Finances",
+                "BRVMCB": "Consommation base", "BRVMIND": "Industrie", "BRVMENER": "Énergie", "BRVMSPUB": "Services pub."}
 SECTEURS_REF = {"Services financiers": "Finances", "Télécommunications": "Télécoms",
                 "Consommation de base": "Consommation base", "Consommation discrétionnaire": "Consommation discr.",
                 "Industriels": "Industrie", "Énergie": "Énergie", "Services publics": "Services pub."}
@@ -258,6 +260,7 @@ def parse_boc(data: bytes) -> Boc:
 
 def fetch_boc(d: date, errors: list[str] | None = None, max_back: int = 8) -> Boc | None:
     """BOC du jour d'arrêté ou, à défaut (week-end, jour férié), de la séance précédente la plus proche."""
+    motifs = []
     for i in range(max_back):
         dd = d - timedelta(days=i)
         if dd.weekday() >= 5:
@@ -265,18 +268,22 @@ def fetch_boc(d: date, errors: list[str] | None = None, max_back: int = 8) -> Bo
         url = BOC_URL.format(d=dd)
         try:
             r = requests.get(url, timeout=30, headers=UA)
-            if r.status_code != 200 or not r.content.startswith(b"%PDF"):
+            if r.status_code != 200:
+                motifs.append(f"{dd:%d/%m} : réponse HTTP {r.status_code}")
+                continue
+            if not r.content.startswith(b"%PDF"):
+                motifs.append(f"{dd:%d/%m} : le site n'a pas renvoyé de PDF")
                 continue
             b = parse_boc(r.content)
             b.url, b.date = url, b.date or dd
             if b.composite is not None or b.cotations:
                 return b
+            motifs.append(f"{dd:%d/%m} : PDF lu mais sans données reconnues")
         except Exception as exc:
-            if errors is not None and i == 0:
-                errors.append(f"BOC du {dd:%d/%m/%Y} : {type(exc).__name__}")
+            motifs.append(f"{dd:%d/%m} : {type(exc).__name__} ({str(exc)[:80]})")
     if errors is not None:
-        errors.append(f"BOC indisponible entre le {d - timedelta(days=max_back - 1):%d/%m/%Y} et le {d:%d/%m/%Y} : "
-                      "données de la base SMF utilisées.")
+        errors.append(f"BOC indisponible entre le {d - timedelta(days=max_back - 1):%d/%m/%Y} et le {d:%d/%m/%Y} "
+                      f"({' ; '.join(motifs[:3]) or 'aucune séance'}) : données de la base SMF utilisées.")
     return None
 
 
@@ -332,7 +339,8 @@ def instantane(d: date, mb=None, boc: Boc | None = None, boc_fin: Boc | None = N
     fin_ = fin.iloc[-1] if fin is not None and not fin.empty else None
     fin2 = closes[closes.index <= pd.Timestamp(date(ins.date.year - 2, 12, 31))].ffill() if last is not None else None
     fin2_ = fin2.iloc[-1] if fin2 is not None and not fin2.empty else None
-    idx = ".BRVMCI"
+    from .market import INDEX_TICKER
+    idx = INDEX_TICKER if closes is not None and INDEX_TICKER in closes.columns else ".BRVMCI"
     if boc and boc.composite:
         ins.composite, ins.composite_ytd = boc.composite, boc.composite_ytd
         ins.sources.append(f"BRVM, Bulletin Officiel de la Cote du {ins.date:%d/%m/%Y}")
@@ -363,9 +371,14 @@ def instantane(d: date, mb=None, boc: Boc | None = None, boc_fin: Boc | None = N
                                        cours=float(last[t]), ytd=float(last[t]) / float(fin_[t]) - 1))
         if not ins.sources:
             ins.sources.append("Base de données SMF (cours de clôture)")
-    if boc:
+    if boc and boc.secteurs:
         ins.secteurs = boc.secteurs
         ins.seance_volume, ins.seance_valeur = boc.volume, boc.valeur
+    elif last is not None and fin_ is not None:
+        # indices sectoriels de la base SMF
+        for col, lab in INDICES_BASE.items():
+            if col in last and is_num(last[col]) and is_num(fin_.get(col)) and fin_[col]:
+                ins.secteurs.append((lab, None, float(last[col]), None, float(last[col]) / float(fin_[col]) - 1, None))
     vols = getattr(mb, "volumes", None)
     if vols is not None and closes is not None:
         cols = [t for t in vols.columns if t in closes.columns and t != idx]

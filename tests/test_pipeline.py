@@ -869,3 +869,15 @@ def test_presentation_contexte_marche(analyses, mb):
     assert "SUCRIVOIRE" not in tableaux and "SAPH CI" not in tableaux     # aucune ligne du modèle ne subsiste
     txt = " ".join(sh.text_frame.text for sl in prs.slides for sh in sl.shapes if sh.has_text_frame)
     assert "—" not in txt and " %" not in txt.replace("Base = 100", "")
+
+
+def test_presentation_sans_boc_composite_de_la_base(analyses, mb):
+    """BOC indisponible : le BRVM Composite vient de la base SMF (code BRVMC), jamais « n.d. »."""
+    from datetime import date
+
+    from fiche_valeur.market import INDEX_TICKER
+    from fiche_valeur.market_deck import instantane
+    assert INDEX_TICKER in mb.closes.columns
+    ins = instantane(mb.closes.index.max().date(), mb, None, None)
+    assert ins.composite and ins.composite_ytd is not None
+    assert all(not c.symbole.upper().startswith("BRVM") for c in ins.titres)
