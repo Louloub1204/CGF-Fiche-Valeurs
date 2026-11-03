@@ -866,7 +866,7 @@ def test_presentation_contexte_marche(analyses, mb):
     assert s1["Text 5"].text_frame.text == "+54,65%" and s1["Text 8"].text_frame.text == "20 969"
     assert "OCTOBRE 2026" in s1["Text 17"].text_frame.text
     tableaux = " ".join(c.text for n_, sh in s1.items() if n_.startswith("Table ") for c in sh.table.rows[0].cells)
-    assert "SUCRIVOIRE" not in tableaux and "SAPH CI" not in tableaux     # aucune ligne du modèle ne subsiste
+    assert "+161,79%" not in tableaux and "-12,03%" not in tableaux       # aucune ligne du modèle ne subsiste
     txt = " ".join(sh.text_frame.text for sl in prs.slides for sh in sl.shapes if sh.has_text_frame)
     assert "—" not in txt and " %" not in txt.replace("Base = 100", "")
 
