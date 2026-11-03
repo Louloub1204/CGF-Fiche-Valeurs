@@ -208,7 +208,7 @@ _LIGNE = re.compile(r"(?<![A-Z])(CB|CD|FIN|IND|ENE|SPU|TEL)\s+([A-Z]{3,6})\s+(.+
                     r"\s+[A-Z]{3,6}\s|TOTAL|$)", re.S)
 
 
-def parse_boc_text(text: str) -> Boc:
+def parse_boc_text(text: str, symboles=None) -> Boc:
     t = text.replace(" ", " ").replace("\xa0", " ")
     b = Boc()
     m = re.search(r"(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+(\d{1,2})\s+([a-zéû]+)\s+(\d{4})", t, re.I)
@@ -238,16 +238,30 @@ def parse_boc_text(text: str) -> Boc:
         b.secteurs.append((SECTEURS_INDICES.get(nom, nom.capitalize()), int(mm.group(2)), _f(mm.group(3)),
                            _p(mm.group(4)), _p(mm.group(5)), _f(per.group(1)) if per else None))
     flat = re.sub(r"\s+", " ", t)
-    for mm in _LIGNE.finditer(flat):
-        sect, sym, rest = mm.group(1), mm.group(2), mm.group(3)
-        k = re.search(r"\s(\d{1,3}(?: \d{3})* \d{1,3}(?: \d{3})* )", " " + rest)
-        first = re.search(r"(?<![A-Za-z(])\d", rest)
+    # Lignes de cotation repérées par le symbole (connu du référentiel) : le code secteur n'est pas toujours
+    # imprimé sur chaque ligne du BOC (cellule fusionnée par groupe), il n'est donc pas utilisé pour le découpage.
+    syms = sorted(set(symboles or config.TICKERS), key=len, reverse=True)
+    pat = re.compile(r"(?<![A-Z0-9])(" + "|".join(map(re.escape, syms)) + r")(?![A-Z0-9])")
+    occ = [m_ for m_ in pat.finditer(flat)]
+    fin_tab = [m_.start() for m_ in re.finditer(r"\bTOTAL\b", flat)]
+    for i, m_ in enumerate(occ):
+        sym = m_.group(1)
+        if sym in b.cotations:
+            continue
+        end = occ[i + 1].start() if i + 1 < len(occ) else len(flat)
+        end = min([end] + [f for f in fin_tab if f > m_.end()])
+        seg = flat[m_.end():end]
+        seg = re.sub(r"\s(?:CB|CD|FIN|IND|ENE|SPU|TEL)\s*$", " ", seg)        # code secteur de la ligne suivante
+        first = re.search(r"(?<![A-Za-z(])\d", seg)
         if not first:
             continue
-        nom, queue = rest[:first.start()].strip(), rest[first.start():]
-        champs = _parse_queue(queue)
-        if champs and sym not in b.cotations:
-            b.cotations[sym] = Cotation(sym, clean_text(nom), SECTEURS_BOC.get(sect, sect), **champs)
+        nom = re.sub(r"^(?:CB|CD|FIN|IND|ENE|SPU|TEL)\s+", "", seg[:first.start()].strip())
+        champs = _parse_queue(seg[first.start():])
+        if not champs or not is_num(champs.get("ytd")):
+            continue
+        ref = config.TICKERS.get(sym, {})
+        secteur = SECTEURS_REF.get(ref.get("secteur"), ref.get("secteur", "n.d."))
+        b.cotations[sym] = Cotation(sym, clean_text(nom) or ref.get("nom", sym), secteur, **champs)
     return b
 
 
@@ -360,11 +374,15 @@ def instantane(d: date, mb=None, boc: Boc | None = None, boc_fin: Boc | None = N
     elif fin_ is not None and shares:
         ins.capitalisation_fin_annee = sum(float(fin_[t]) * shares[t] for t in shares if t in fin_ and is_num(fin_[t]))
     # performances par titre
-    if boc and len(boc.cotations) >= 20:
+    if boc and boc.cotations:
+        for c in boc.cotations.values():
+            if c.symbole in config.TICKERS:
+                c.nom = _nom(c.symbole)
         ins.titres = list(boc.cotations.values())
-    elif last is not None and fin_ is not None:
+    if last is not None and fin_ is not None:
+        deja = {c.symbole for c in ins.titres}
         for t in closes.columns:
-            if t == idx or str(t).upper().startswith("BRVM") or not is_num(last[t]) or not is_num(fin_.get(t)) or not fin_[t]:
+            if t in deja or t == idx or str(t).upper().startswith("BRVM") or not is_num(last[t]) or not is_num(fin_.get(t)) or not fin_[t]:
                 continue
             ref = config.TICKERS.get(t, {})
             ins.titres.append(Cotation(t, _nom(t), SECTEURS_REF.get(ref.get("secteur"), ref.get("secteur", "n.d.")),

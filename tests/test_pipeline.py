@@ -881,3 +881,16 @@ def test_presentation_sans_boc_composite_de_la_base(analyses, mb):
     ins = instantane(mb.closes.index.max().date(), mb, None, None)
     assert ins.composite and ins.composite_ytd is not None
     assert all(not c.symbole.upper().startswith("BRVM") for c in ins.titres)
+
+
+def test_boc_codes_secteur_par_groupe(mb):
+    """Code secteur imprimé une seule fois par groupe, nom sur deux lignes, titre non échangé : toutes les lignes
+    sont lues, avec le secteur du référentiel ; les titres absents du BOC sont complétés par la base SMF."""
+    from fiche_valeur.market_deck import instantane, parse_boc_text
+    b = parse_boc_text((ROOT / "tests" / "fixtures" / "boc_codes_groupes.txt").read_text(encoding="utf-8"))
+    c = b.cotations
+    assert set(c) == {"CBIBF", "ETIT", "BOAN", "SICC", "CIEC", "SDCC"}
+    assert c["CIEC"].secteur == "Services pub." and abs(c["ETIT"].ytd - 1.7391) < 1e-9 and c["ETIT"].cours == 63
+    assert c["SICC"].volume == 0 and abs(c["SICC"].ytd - 1.5455) < 1e-9
+    top = [x.symbole for x in instantane(mb.closes.index.max().date(), mb, b, None).top(6)]
+    assert top[:2] == ["CBIBF", "ETIT"]
